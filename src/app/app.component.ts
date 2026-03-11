@@ -9,82 +9,8 @@ import { ConfigComponent } from './components/config/config.component';
   standalone: true,
   imports: [DisplayComponent, KeyboardComponent, ConfigComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="container">
-      <img src="title.svg" alt="Doitoo Numbers" class="title" />
-
-      <app-display
-        [displayValue]="game.displayValue()"
-        [inputValue]="game.inputValue()"
-        [stage]="game.stage()"
-        [mode]="game.mode()"
-        [result]="game.result()"
-        [numberLength]="game.config().numberLength" />
-
-      <app-keyboard
-        [disabled]="game.stage() !== 'input'"
-        (keyPress)="onVirtualKey($event)" />
-
-      <div class="start-button">
-        <button class="active" [disabled]="game.stage() === 'showing'" (click)="game.startGame()">Start Game</button>
-      </div>
-
-      <app-config
-        [mode]="game.mode()"
-        [config]="game.config()"
-        (modeChange)="game.setMode($event)"
-        (configChange)="game.updateConfig($event)" />
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-      font-family: 'Inter', system-ui, sans-serif;
-      min-height: 100vh;
-    }
-    .title {
-      width: 100%;
-      max-width: 320px;
-      height: auto;
-    }
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
-      gap: 1.5rem;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    .start-button {
-      text-align: center;
-      width: 100%;
-    }
-    .start-button button {
-      width: 100%;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: white;
-      background: linear-gradient(135deg, #6366f1, #3b82f6);
-      border: none;
-      border-radius: 0.75rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-    }
-    .start-button button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-    }
-    .start-button button:active:not(:disabled) {
-      transform: translateY(0);
-    }
-    .start-button button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-  `],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
   readonly game = inject(GameService);

@@ -1,0 +1,25 @@
+<div class="container">
+  <img src="title.svg" alt="Doitoo Numbers" class="title" />
+
+  <app-display
+    [displayValue]="game.displayValue()"
+    [inputValue]="game.inputValue()"
+    [stage]="game.stage()"
+    [mode]="game.mode()"
+    [result]="game.result()"
+    [numberLength]="game.config().numberLength" />
+
+  <app-keyboard
+    [disabled]="game.stage() !== 'input'"
+    (keyPress)="onVirtualKey($event)" />
+
+  <div class="start-button">
+    <button class="active" [disabled]="game.stage() === 'showing'" (click)="game.startGame()">Start Game</button>
+  </div>
+
+  <app-config
+    [mode]="game.mode()"
+    [config]="game.config()"
+    (modeChange)="game.setMode($event)"
+    (configChange)="game.updateConfig($event)" />
+</div>
