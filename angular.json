@@ -32,6 +32,16 @@
                 "glob": "icon.png",
                 "input": "icons",
                 "output": "/"
+              },
+              {
+                "glob": "icon-192.png",
+                "input": "icons",
+                "output": "/"
+              },
+              {
+                "glob": "icon-512.png",
+                "input": "icons",
+                "output": "/"
               }
             ],
             "styles": [
