@@ -12,25 +12,48 @@ import { Component, ChangeDetectionStrategy, input, output } from '@angular/core
     </div>
   `,
   styles: [`
+    :host {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
     .keyboard {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 0.5rem;
-      justify-content: center;
+      width: 100%;
+      max-width: 320px;
+      transition: opacity 0.2s ease;
     }
 
     button {
       font-size: 1.25rem;
-      padding: 1rem;
-      background: #4b5563;
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
+      font-weight: 600;
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 0.9rem;
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.75rem;
       cursor: pointer;
+      transition: all 0.15s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0) scale(0.97);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .disabled {
-      filter: opacity(0.5);
+      opacity: 0.3;
       pointer-events: none;
     }
   `],

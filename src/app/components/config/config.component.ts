@@ -25,22 +25,49 @@ import { GameMode, Config } from '../../models/game.models';
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      width: 100%;
+    }
+
     .config {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       margin-top: 0.5rem;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      backdrop-filter: blur(10px);
+    }
+    label {
+      color: #94a3b8;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     button {
-      background: #888888;
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      color: #94a3b8;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 0.5rem;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.1);
     }
     button.active {
-      background: #2563eb;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
     }
     .center {
       display: flex;
@@ -49,18 +76,29 @@ import { GameMode, Config } from '../../models/game.models';
     }
     .flex-column {
       flex-direction: column;
+      gap: 0.5rem;
     }
     .mode-buttons {
       display: flex;
       flex-direction: row;
-      gap: 1rem;
+      gap: 0.5rem;
       justify-content: center;
     }
     input[type='number'] {
       width: 100%;
-      padding: 0.4rem;
-      border: 1px solid #ddd;
-      border-radius: 0.4rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      font-family: 'Inter', system-ui, sans-serif;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    input[type='number']:focus {
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
   `],
 })
