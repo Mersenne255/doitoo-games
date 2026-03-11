@@ -17,7 +17,8 @@ import { ConfigComponent } from './components/config/config.component';
         [displayValue]="game.displayValue()"
         [inputValue]="game.inputValue()"
         [stage]="game.stage()"
-        [result]="game.result()" />
+        [result]="game.result()"
+        [numberLength]="game.config().numberLength" />
 
       <app-keyboard
         [disabled]="game.stage() !== 'input'"
@@ -37,39 +38,58 @@ import { ConfigComponent } from './components/config/config.component';
   styles: [`
     :host {
       display: block;
-      font-family: system-ui, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
     }
     h1 {
       margin: 0;
       text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
     .brand {
-      color: #2563eb;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1rem;
-      gap: 1rem;
+      padding: 2rem 1rem;
+      gap: 1.5rem;
+      max-width: 500px;
+      margin: 0 auto;
     }
     .start-button {
       text-align: center;
-      margin-top: 0.5rem;
+      width: 100%;
     }
-    button {
-      background: #888888;
+    .start-button button {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
       color: white;
-      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
       border: none;
-      border-radius: 0.5rem;
+      border-radius: 0.75rem;
       cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
     }
-    button.active {
-      background: #2563eb;
+    .start-button button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
     }
-    button:disabled {
-      filter: opacity(0.5);
+    .start-button button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .start-button button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
   `],
 })
