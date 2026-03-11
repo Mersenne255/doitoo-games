@@ -1,6 +1,11 @@
 import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { GameStage, GameMode, GameResult } from '../../models/game.models';
 
+interface FeedbackDigit {
+  char: string;
+  wrong: boolean;
+}
+
 @Component({
   selector: 'app-display',
   standalone: true,
@@ -15,6 +20,17 @@ export class DisplayComponent {
   mode = input<GameMode>('sequence');
   result = input<GameResult | null>(null);
   numberLength = input<number>(8);
+
+  feedbackDigits = computed<FeedbackDigit[]>(() => {
+    const r = this.result();
+    if (!r || r.correct) return [];
+    const expected = r.expected;
+    const guess = r.guess;
+    return [...expected].map((char, i) => ({
+      char,
+      wrong: guess[i] !== char,
+    }));
+  });
 
   showSequenceOverlay = computed(() =>
     this.mode() === 'sequence' && this.stage() === 'showing' && this.displayValue() !== ''

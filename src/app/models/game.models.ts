@@ -11,4 +11,5 @@ export interface Config {
 export interface GameResult {
   correct: boolean;
   expected: string;    // the correct answer string
+  guess: string;       // the user's guess
 }

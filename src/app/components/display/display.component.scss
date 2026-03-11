@@ -55,6 +55,19 @@
   animation: fadeIn 0.3s ease;
 }
 
+.feedback-digits {
+  animation: fadeIn 0.3s ease;
+
+  span {
+    color: #f1f5f9;
+  }
+
+  .wrong-digit {
+    color: #f87171;
+    text-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
