@@ -1,2 +1,7 @@
 *.iml
 node_modules
+dist
+.angular
+out-tsc
+.kiro
+.vscode
