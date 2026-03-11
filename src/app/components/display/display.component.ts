@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
-import { GameStage, GameResult } from '../../models/game.models';
+import { GameStage, GameMode, GameResult } from '../../models/game.models';
 
 @Component({
   selector: 'app-display',
@@ -7,7 +7,10 @@ import { GameStage, GameResult } from '../../models/game.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="display-container">
-      <div class="number-line" [style.font-size]="fontSize()">{{ currentValue() || '&nbsp;' }}</div>
+      @if (showSequenceOverlay()) {
+        <div class="sequence-overlay">{{ displayValue() }}</div>
+      }
+      <div class="number-line" [style.font-size]="fontSize()" [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">{{ currentValue() || '&nbsp;' }}</div>
       <div class="number-line feedback-slot" [style.font-size]="fontSize()">
         @if (stage() === 'result' && result()) {
           @if (result()!.correct) {
@@ -28,6 +31,7 @@ import { GameStage, GameResult } from '../../models/game.models';
     }
 
     .display-container {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -38,6 +42,21 @@ import { GameStage, GameResult } from '../../models/game.models';
       padding: 1rem 1.5rem;
       width: 100%;
       backdrop-filter: blur(10px);
+    }
+
+    .sequence-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-weight: 600;
+      font-size: 6rem;
+      line-height: 1;
+      color: #f1f5f9;
+      letter-spacing: 0.12em;
+      z-index: 1;
     }
 
     .number-line {
@@ -73,8 +92,13 @@ export class DisplayComponent {
   displayValue = input<string>('');
   inputValue = input<string>('');
   stage = input<GameStage>('idle');
+  mode = input<GameMode>('sequence');
   result = input<GameResult | null>(null);
   numberLength = input<number>(8);
+
+  showSequenceOverlay = computed(() =>
+    this.mode() === 'sequence' && this.stage() === 'showing' && this.displayValue() !== ''
+  );
 
   currentValue = computed(() => {
     const stage = this.stage();
