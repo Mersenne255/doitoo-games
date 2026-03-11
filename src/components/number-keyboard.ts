@@ -1,11 +1,14 @@
 import { LitElement, html, css } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 
 @customElement('number-keyboard')
 export class NumberKeyboard extends LitElement {
+  @property({ type: Boolean, reflect: true }) disabled = false;
+
   static styles = css`
     :host {
-        box-sizing: border-box;
+      box-sizing: border-box;
+      display: block;
     }
     .keyboard {
       display: grid;
@@ -22,9 +25,17 @@ export class NumberKeyboard extends LitElement {
       border-radius: 0.5rem;
       cursor: pointer;
     }
+    button:disabled {
+      cursor: not-allowed;
+      filter: opacity(.5);
+    }
   `;
 
   private emit(key: string) {
+    if (this.disabled) {
+      return;
+    }
+
     this.dispatchEvent(new CustomEvent('input-key', { detail: { key }, bubbles: true, composed: true }));
   }
 
@@ -32,7 +43,9 @@ export class NumberKeyboard extends LitElement {
     const keys = ['1','2','3','4','5','6','7','8','9','del','0','ok'];
     return html`
       <div class="keyboard">
-        ${keys.map(key => html`<button @click=${() => this.emit(key)}>${key}</button>`)}
+        ${keys.map((key) => html`
+          <button type="button" ?disabled=${this.disabled} @click=${() => this.emit(key)}>${key}</button>
+        `)}
       </div>
     `;
   }
