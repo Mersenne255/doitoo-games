@@ -1,0 +1,17 @@
+<div class="display-container">
+  @if (showSequenceOverlay()) {
+    <div class="sequence-overlay">{{ displayValue() }}</div>
+  }
+  <div class="number-line" [style.font-size]="fontSize()" [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">{{ currentValue() || '&nbsp;' }}</div>
+  <div class="number-line feedback-slot" [style.font-size]="fontSize()">
+    @if (stage() === 'result' && result()) {
+      @if (result()!.correct) {
+        <span class="correct">Correct! 🎉</span>
+      } @else {
+        <span class="incorrect">{{ result()!.expected }}</span>
+      }
+    } @else {
+      &nbsp;
+    }
+  </div>
+</div>

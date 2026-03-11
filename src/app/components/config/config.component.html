@@ -1,0 +1,17 @@
+<div class="config">
+  <label class="center flex-column">
+    Mode
+    <div class="mode-buttons">
+      <button [class.active]="mode() === 'sequence'" (click)="modeChange.emit('sequence')">Sequence</button>
+      <button [class.active]="mode() === 'complete'" (click)="modeChange.emit('complete')">Complete</button>
+    </div>
+  </label>
+  <label class="center flex-column">
+    Numbers count
+    <input type="number" [value]="config().numberLength" (input)="onNumberLength($event)" />
+  </label>
+  <label class="center flex-column">
+    @if (mode() === 'sequence') { Interval (ms) } @else { Duration (ms) }
+    <input type="number" [value]="mode() === 'sequence' ? config().interval : config().duration" (input)="onTiming($event)" />
+  </label>
+</div>
