@@ -1,0 +1,1 @@
+import './components/memory-number-game.ts';
