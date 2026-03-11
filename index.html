@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image" href='/icons/favicon.svg'/>
+    <title>Doitoo Memory Game</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <style>
+    body{
+      margin: 0;
+      background: radial-gradient(circle,rgba(255, 255, 255, 1) 0%, rgba(194, 194, 194, 1) 100%);
+    }
+  </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+                .then((reg) => console.log('✅ Service Worker registered:', reg.scope))
+                .catch((err) => console.error('❌ Service Worker registration failed:', err));
+      });
+    }
+  </script>
+  <body>
+    <memory-number-game></memory-number-game>
+  </body>
+</html>
