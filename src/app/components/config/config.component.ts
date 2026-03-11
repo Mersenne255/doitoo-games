@@ -59,9 +59,13 @@ import { GameMode, Config } from '../../models/game.models';
       font-weight: 600;
       font-size: 0.85rem;
       transition: all 0.15s ease;
+      outline: none;
     }
     button:hover {
       background: rgba(255, 255, 255, 0.1);
+    }
+    button:focus-visible {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
     }
     button.active {
       background: linear-gradient(135deg, #6366f1, #3b82f6);
@@ -95,6 +99,7 @@ import { GameMode, Config } from '../../models/game.models';
       font-family: 'Inter', system-ui, sans-serif;
       outline: none;
       transition: border-color 0.15s ease;
+      text-align: center;
     }
     input[type='number']:focus {
       border-color: rgba(99, 102, 241, 0.5);

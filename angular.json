@@ -27,6 +27,11 @@
                 "glob": "favicon.svg",
                 "input": "icons",
                 "output": "/"
+              },
+              {
+                "glob": "icon.png",
+                "input": "icons",
+                "output": "/"
               }
             ],
             "styles": [

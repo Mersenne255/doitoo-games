@@ -11,12 +11,13 @@ import { ConfigComponent } from './components/config/config.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="container">
-      <h1><span class="brand">Doitoo</span> Numbers</h1>
+      <img src="title.svg" alt="Doitoo Numbers" class="title" />
 
       <app-display
         [displayValue]="game.displayValue()"
         [inputValue]="game.inputValue()"
         [stage]="game.stage()"
+        [mode]="game.mode()"
         [result]="game.result()"
         [numberLength]="game.config().numberLength" />
 
@@ -41,24 +42,16 @@ import { ConfigComponent } from './components/config/config.component';
       font-family: 'Inter', system-ui, sans-serif;
       min-height: 100vh;
     }
-    h1 {
-      margin: 0;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .brand {
-      background: linear-gradient(135deg, #6366f1, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .title {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
     }
     .container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem 1rem;
+      padding: 1rem;
       gap: 1.5rem;
       max-width: 500px;
       margin: 0 auto;
