@@ -8,7 +8,7 @@
       @if (result()!.correct) {
         <span class="correct">Correct! 🎉</span>
       } @else {
-        <span class="incorrect">{{ result()!.expected }}</span>
+        <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {<span [class.wrong-digit]="d.wrong">{{ d.char }}</span>}</span>
       }
     } @else {
       &nbsp;
