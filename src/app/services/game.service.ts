@@ -71,8 +71,9 @@ export class GameService {
 
   private evaluate(): void {
     const correct = this.sequence.join('');
-    const isCorrect = this.inputValue().trim() === correct;
-    this.result.set({ correct: isCorrect, expected: correct });
+    const guess = this.inputValue().trim();
+    const isCorrect = guess === correct;
+    this.result.set({ correct: isCorrect, expected: correct, guess });
     this.stage.set('result');
   }
 
