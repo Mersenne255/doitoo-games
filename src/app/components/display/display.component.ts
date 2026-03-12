@@ -79,6 +79,15 @@ export class DisplayComponent implements AfterViewInit, OnDestroy {
     return `${this.calcFontPx(this.numberLength(), cw)}px`;
   });
 
+  /** Width that reserves space for all digits during guessing, so text can be left-aligned without layout shift */
+  guessSlotWidth = computed(() => {
+    const cw = this.containerWidth();
+    if (!cw || !this.digitWidthAtRef) return 'auto';
+    const fontPx = this.calcFontPx(this.numberLength(), cw);
+    const digitW = this.digitWidthAtRef * (fontPx / REFERENCE_PX);
+    return `${this.numberLength() * digitW}px`;
+  });
+
   /** Measured font size for the sequence overlay (single number, can be bigger) */
   overlayFontSize = computed(() => {
     const cw = this.containerWidth();

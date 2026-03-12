@@ -16,11 +16,14 @@
         }
     </div>
     <div class="number-line" [style.font-size]="fontSize()"
-         [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">
+         [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'"
+         [class.guessing]="stage() === 'input'">
         @if (stage() === 'result' && result() && !result()!.correct) {
             <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {
                 <span [class.wrong-digit]="d.wrong">{{ d.char }}</span>
             }</span>
+        } @else if (stage() === 'input') {
+            <span class="guess-wrapper" [style.width]="guessSlotWidth()">{{ currentValue() || '&nbsp;' }}</span>
         } @else {
             {{ currentValue() || '&nbsp;' }}
         }
