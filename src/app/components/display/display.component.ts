@@ -26,9 +26,9 @@ export class DisplayComponent {
     if (!r || r.correct) return [];
     const expected = r.expected;
     const guess = r.guess;
-    return [...expected].map((char, i) => ({
+    return [...guess].map((char, i) => ({
       char,
-      wrong: guess[i] !== char,
+      wrong: char !== expected[i],
     }));
   });
 

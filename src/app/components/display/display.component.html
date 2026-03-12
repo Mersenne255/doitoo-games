@@ -2,13 +2,19 @@
   @if (showSequenceOverlay()) {
     <div class="sequence-overlay">{{ displayValue() }}</div>
   }
-  <div class="number-line" [style.font-size]="fontSize()" [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">{{ currentValue() || '&nbsp;' }}</div>
+  <div class="number-line" [style.font-size]="fontSize()" [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">
+    @if (stage() === 'result' && result() && !result()!.correct) {
+      <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {<span [class.wrong-digit]="d.wrong">{{ d.char }}</span>}</span>
+    } @else {
+      {{ currentValue() || '&nbsp;' }}
+    }
+  </div>
   <div class="number-line feedback-slot" [style.font-size]="fontSize()">
     @if (stage() === 'result' && result()) {
       @if (result()!.correct) {
-        <span class="correct">Correct! 🎉</span>
+        <span class="correct">Correct!</span>
       } @else {
-        <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {<span [class.wrong-digit]="d.wrong">{{ d.char }}</span>}</span>
+        <span class="expected">{{ result()!.expected }}</span>
       }
     } @else {
       &nbsp;
