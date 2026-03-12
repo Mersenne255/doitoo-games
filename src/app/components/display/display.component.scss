@@ -42,6 +42,11 @@
   text-align: center;
 }
 
+.guess-wrapper {
+  display: inline-block;
+  text-align: left;
+}
+
 .correct {
   color: #34d399;
   text-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
@@ -55,8 +60,6 @@
 }
 
 .feedback-digits {
-  animation: fadeIn 0.3s ease;
-
   span {
     display: inline-block;
     min-width: 0.6em;
