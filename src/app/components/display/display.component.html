@@ -1,23 +1,29 @@
 <div class="display-container" #container>
-  @if (showSequenceOverlay()) {
-    <div class="sequence-overlay" [style.font-size]="overlayFontSize()">{{ displayValue() }}</div>
-  }
-  <div class="number-line" [style.font-size]="fontSize()" [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">
-    @if (stage() === 'result' && result() && !result()!.correct) {
-      <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {<span [class.wrong-digit]="d.wrong">{{ d.char }}</span>}</span>
-    } @else {
-      {{ currentValue() || '&nbsp;' }}
+    @if (showSequenceOverlay()) {
+        <div class="sequence-overlay" [style.font-size]="overlayFontSize()">{{ displayValue() }}</div>
     }
-  </div>
-  <div class="number-line feedback-slot" [style.font-size]="fontSize()">
-    @if (stage() === 'result' && result()) {
-      @if (result()!.correct) {
-        <span class="correct">Correct!</span>
-      } @else {
-        <span class="expected">{{ result()!.expected }}</span>
-      }
-    } @else {
-      &nbsp;
-    }
-  </div>
+    <div class="number-line feedback-slot" [style.font-size]="fontSize()">
+        @if (stage() === 'result' && result()) {
+            @if (result()!.correct) {
+                <span class="correct">Correct!</span>
+            } @else {
+                <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {
+                    <span [class.correction-digit]="d.wrong">{{ d.wrong ? d.expected : '&nbsp;' }}</span>
+                }</span>
+            }
+        } @else {
+            &nbsp;
+        }
+    </div>
+    <div class="number-line" [style.font-size]="fontSize()"
+         [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">
+        @if (stage() === 'result' && result() && !result()!.correct) {
+            <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {
+                <span [class.wrong-digit]="d.wrong">{{ d.char }}</span>
+            }</span>
+        } @else {
+            {{ currentValue() || '&nbsp;' }}
+        }
+    </div>
+
 </div>

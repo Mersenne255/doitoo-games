@@ -14,6 +14,7 @@ import { GameStage, GameMode, GameResult } from '../../models/game.models';
 
 interface FeedbackDigit {
   char: string;
+  expected: string;
   wrong: boolean;
 }
 
@@ -55,9 +56,11 @@ export class DisplayComponent implements AfterViewInit, OnDestroy {
     const guess = r.guess;
     return [...guess].map((char, i) => ({
       char,
+      expected: expected[i] ?? '',
       wrong: char !== expected[i],
     }));
   });
+
 
   showSequenceOverlay = computed(() =>
     this.mode() === 'sequence' && this.stage() === 'showing' && this.displayValue() !== ''
