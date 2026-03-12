@@ -2,6 +2,9 @@
     @if (showSequenceOverlay()) {
         <div class="sequence-overlay" [style.font-size]="overlayFontSize()">{{ displayValue() }}</div>
     }
+    @if (showCompleteOverlay()) {
+        <div class="sequence-overlay" [style.font-size]="fontSize()">{{ displayValue() }}</div>
+    }
     <div class="number-line feedback-slot" [style.font-size]="fontSize()">
         @if (stage() === 'result' && result()) {
             @if (result()!.correct) {
@@ -16,7 +19,7 @@
         }
     </div>
     <div class="number-line" [style.font-size]="fontSize()"
-         [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'"
+         [style.visibility]="showSequenceOverlay() || showCompleteOverlay() ? 'hidden' : 'visible'"
          [class.guessing]="stage() === 'input'">
         @if (stage() === 'result' && result() && !result()!.correct) {
             <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {
