@@ -47,7 +47,8 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "inlineStyleLanguage": "scss"
           },
           "configurations": {
             "production": {

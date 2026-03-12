@@ -1,0 +1,5 @@
+<div class="keyboard" [class.disabled]="disabled()">
+  @for (key of keys; track key) {
+    <button (click)="onKey(key)">{{ key }}</button>
+  }
+</div>
