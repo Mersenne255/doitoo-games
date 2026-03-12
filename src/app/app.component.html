@@ -10,7 +10,7 @@
     [numberLength]="game.config().numberLength" />
 
   <app-keyboard
-    [disabled]="game.stage() !== 'input'"
+    [disabled]="game.stage() !== 'input' && game.stage() !== 'showing'"
     (keyPress)="onVirtualKey($event)" />
 
   <div class="start-button">

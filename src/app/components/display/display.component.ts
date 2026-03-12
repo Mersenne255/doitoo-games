@@ -54,10 +54,10 @@ export class DisplayComponent implements AfterViewInit, OnDestroy {
     if (!r || r.correct) return [];
     const expected = r.expected;
     const guess = r.guess;
-    return [...guess].map((char, i) => ({
-      char,
-      expected: expected[i] ?? '',
-      wrong: char !== expected[i],
+    return [...expected].map((exp, i) => ({
+      char: guess[i] ?? ' ',
+      expected: exp,
+      wrong: guess[i] !== exp,
     }));
   });
 
