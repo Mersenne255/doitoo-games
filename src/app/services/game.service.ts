@@ -15,6 +15,7 @@ export class GameService {
   readonly config: WritableSignal<Config>;
 
   private sequence: string[] = [];
+  private showingResolve: (() => void) | null = null;
 
   constructor() {
     this.mode = signal<GameMode>(this.storageService.loadMode());
@@ -22,6 +23,9 @@ export class GameService {
   }
 
   async startGame(): Promise<void> {
+    // If a previous showing phase is still running, cancel it
+    this.cancelShowing();
+
     this.inputValue.set('');
     this.result.set(null);
     await new Promise(res => setTimeout(res, 100));
@@ -33,20 +37,44 @@ export class GameService {
       this.stage.set('showing');
       for (const num of this.sequence) {
         this.displayValue.set(num);
-        await new Promise(res => setTimeout(res, this.config().interval));
+        const skipped = await this.cancellableWait(this.config().interval);
+        if (skipped) return;
         this.displayValue.set('');
-        await new Promise(res => setTimeout(res, 100));
+        const skipped2 = await this.cancellableWait(100);
+        if (skipped2) return;
       }
     } else {
       const num = digits.join('');
       this.sequence = [num];
       this.displayValue.set(num);
       this.stage.set('showing');
-      await new Promise(res => setTimeout(res, this.config().duration));
+      const skipped = await this.cancellableWait(this.config().duration);
+      if (skipped) return;
     }
 
     this.displayValue.set('');
     this.stage.set('input');
+  }
+
+  /** Returns a promise that resolves after `ms`, or resolves early with `true` if cancelled. */
+  private cancellableWait(ms: number): Promise<boolean> {
+    return new Promise(resolve => {
+      const timer = setTimeout(() => {
+        this.showingResolve = null;
+        resolve(false);
+      }, ms);
+      this.showingResolve = () => {
+        clearTimeout(timer);
+        this.showingResolve = null;
+        resolve(true);
+      };
+    });
+  }
+
+  private cancelShowing(): void {
+    if (this.showingResolve) {
+      this.showingResolve();
+    }
   }
 
 
@@ -65,6 +93,14 @@ export class GameService {
   }
 
   confirm(): void {
+    if (this.stage() === 'showing') {
+      // Cancel the showing phase and immediately evaluate with current (empty) input
+      this.cancelShowing();
+      this.displayValue.set('');
+      this.stage.set('input');
+      this.evaluate();
+      return;
+    }
     if (this.stage() !== 'input') return;
     this.evaluate();
   }

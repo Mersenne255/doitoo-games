@@ -19,7 +19,11 @@ export class AppComponent {
   onKeydown(event: KeyboardEvent): void {
     const stage = this.game.stage();
 
-    if (stage === 'input') {
+    if (stage === 'showing') {
+      if (event.key === 'Enter') {
+        this.game.confirm();
+      }
+    } else if (stage === 'input') {
       if (/^[0-9]$/.test(event.key)) {
         this.game.appendDigit(event.key);
       } else if (event.key === 'Enter') {
@@ -36,10 +40,14 @@ export class AppComponent {
 
   onVirtualKey(key: string): void {
     const stage = this.game.stage();
-    if (stage === 'input') {
+    if (stage === 'showing') {
+      if (key === 'ok') {
+        this.game.confirm();
+      }
+    } else if (stage === 'input') {
       if (key === 'del') {
         this.game.deleteLast();
-      } else if (key === 'ok') {
+      } else if (key === '?') {
         this.game.confirm();
       } else if (/^[0-9]$/.test(key)) {
         this.game.appendDigit(key);

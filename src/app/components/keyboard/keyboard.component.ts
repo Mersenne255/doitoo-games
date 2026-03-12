@@ -8,7 +8,7 @@ import { Component, ChangeDetectionStrategy, input, output } from '@angular/core
   styleUrl: './keyboard.component.scss',
 })
 export class KeyboardComponent {
-  readonly keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok'];
+  readonly keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', '?'];
 
   disabled = input<boolean>(false);
   keyPress = output<string>();
