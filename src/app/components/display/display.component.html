@@ -1,6 +1,6 @@
-<div class="display-container">
+<div class="display-container" #container>
   @if (showSequenceOverlay()) {
-    <div class="sequence-overlay">{{ displayValue() }}</div>
+    <div class="sequence-overlay" [style.font-size]="overlayFontSize()">{{ displayValue() }}</div>
   }
   <div class="number-line" [style.font-size]="fontSize()" [style.visibility]="showSequenceOverlay() ? 'hidden' : 'visible'">
     @if (stage() === 'result' && result() && !result()!.correct) {
