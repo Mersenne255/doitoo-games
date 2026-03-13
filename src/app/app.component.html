@@ -18,6 +18,7 @@
     (abort)="game.confirm()" />
 
   <app-config
+    [disabled]="game.stage() === 'showing' || game.stage() === 'input'"
     [mode]="game.mode()"
     [config]="game.config()"
     (modeChange)="game.setMode($event)"
