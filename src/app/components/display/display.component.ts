@@ -65,7 +65,7 @@ export class DisplayComponent implements AfterViewInit, OnDestroy {
 
 
   showSequenceOverlay = computed(() =>
-    this.mode() === 'sequence' && this.stage() === 'showing' && this.displayValue() !== ''
+    (this.mode() === 'sequence' || this.mode() === 'reverse') && this.stage() === 'showing' && this.displayValue() !== ''
   );
 
   showCompleteOverlay = computed(() =>

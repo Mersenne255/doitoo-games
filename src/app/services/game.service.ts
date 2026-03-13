@@ -1,5 +1,5 @@
-import { Injectable, signal, inject, WritableSignal } from '@angular/core';
-import { GameStage, GameMode, Config, GameResult } from '../models/game.models';
+import { Injectable, signal, computed, inject, WritableSignal } from '@angular/core';
+import { GameStage, GameMode, ModeConfig, AllConfigs, GameResult } from '../models/game.models';
 import { StorageService } from './storage.service';
 import { generateRandomDigits } from '../utils/random.util';
 
@@ -12,32 +12,34 @@ export class GameService {
   readonly displayValue: WritableSignal<string> = signal<string>('');
   readonly inputValue: WritableSignal<string> = signal<string>('');
   readonly result: WritableSignal<GameResult | null> = signal<GameResult | null>(null);
-  readonly config: WritableSignal<Config>;
+  readonly configs: WritableSignal<AllConfigs>;
+
+  /** The active mode's config, derived from mode + configs */
+  readonly config = computed<ModeConfig>(() => this.configs()[this.mode()]);
 
   private sequence: string[] = [];
   private showingResolve: (() => void) | null = null;
 
   constructor() {
     this.mode = signal<GameMode>(this.storageService.loadMode());
-    this.config = signal<Config>(this.storageService.loadConfig());
+    this.configs = signal<AllConfigs>(this.storageService.loadConfigs());
   }
 
   async startGame(): Promise<void> {
-    // If a previous showing phase is still running, cancel it
     this.cancelShowing();
-
     this.inputValue.set('');
     this.result.set(null);
     await new Promise(res => setTimeout(res, 100));
 
-    const digits = generateRandomDigits(this.config().numberLength);
+    const cfg = this.config();
+    const digits = generateRandomDigits(cfg.numberLength);
 
-    if (this.mode() === 'sequence') {
+    if (this.mode() === 'sequence' || this.mode() === 'reverse') {
       this.sequence = digits;
       this.stage.set('showing');
       for (const num of this.sequence) {
         this.displayValue.set(num);
-        const skipped = await this.cancellableWait(this.config().interval);
+        const skipped = await this.cancellableWait(cfg.timing);
         if (skipped) return;
         this.displayValue.set('');
         const skipped2 = await this.cancellableWait(100);
@@ -48,7 +50,7 @@ export class GameService {
       this.sequence = [num];
       this.displayValue.set(num);
       this.stage.set('showing');
-      const skipped = await this.cancellableWait(this.config().duration);
+      const skipped = await this.cancellableWait(cfg.timing);
       if (skipped) return;
     }
 
@@ -56,7 +58,6 @@ export class GameService {
     this.stage.set('input');
   }
 
-  /** Returns a promise that resolves after `ms`, or resolves early with `true` if cancelled. */
   private cancellableWait(ms: number): Promise<boolean> {
     return new Promise(resolve => {
       const timer = setTimeout(() => {
@@ -77,7 +78,6 @@ export class GameService {
     }
   }
 
-
   appendDigit(digit: string): void {
     if (this.stage() !== 'input') return;
     if (this.inputValue().length >= this.config().numberLength) return;
@@ -94,7 +94,6 @@ export class GameService {
 
   confirm(): void {
     if (this.stage() === 'showing') {
-      // Cancel the showing phase and immediately evaluate with current (empty) input
       this.cancelShowing();
       this.displayValue.set('');
       this.stage.set('input');
@@ -106,7 +105,8 @@ export class GameService {
   }
 
   private evaluate(): void {
-    const correct = this.sequence.join('');
+    const raw = this.sequence.join('');
+    const correct = this.mode() === 'reverse' ? [...raw].reverse().join('') : raw;
     const guess = this.inputValue().trim();
     const isCorrect = guess === correct;
     this.result.set({ correct: isCorrect, expected: correct, guess });
@@ -118,10 +118,11 @@ export class GameService {
     this.storageService.saveMode(mode);
   }
 
-  updateConfig(partial: Partial<Config>): void {
-    this.config.update(c => ({ ...c, ...partial }));
-    this.storageService.saveConfig(this.config());
+  updateConfig(partial: Partial<ModeConfig>): void {
+    this.configs.update(all => ({
+      ...all,
+      [this.mode()]: { ...all[this.mode()], ...partial },
+    }));
+    this.storageService.saveConfigs(this.configs());
   }
-
-
 }
