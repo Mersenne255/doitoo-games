@@ -11,8 +11,14 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 1rem;
-  padding: 1.25rem;
+  padding: 1rem;
   backdrop-filter: blur(10px);
+  transition: opacity 0.2s ease;
+
+  &.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
 }
 
 label {

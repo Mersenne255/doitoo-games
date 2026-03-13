@@ -23,7 +23,7 @@ const FONT_WEIGHT = '600';
 const LETTER_SPACING_EM = 0.12;
 const REFERENCE_PX = 100; // measure at 100px for precision
 const MAX_FONT_PX = 72;
-const MIN_FONT_PX = 14;
+const MIN_FONT_PX = 10;
 const OVERLAY_MAX_PX = 96;
 
 @Component({

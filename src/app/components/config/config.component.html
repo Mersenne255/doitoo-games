@@ -1,17 +1,17 @@
-<div class="config">
-  <label class="center flex-column">
+<div class="config" [class.disabled]="disabled()" [attr.inert]="disabled() || null">
+  <div class="center flex-column">
     Mode
     <div class="mode-buttons">
       <button [class.active]="mode() === 'sequence'" (click)="modeChange.emit('sequence')">Sequence</button>
       <button [class.active]="mode() === 'complete'" (click)="modeChange.emit('complete')">Complete</button>
     </div>
-  </label>
+  </div>
   <label class="center flex-column">
     Numbers count
-    <input type="number" [value]="config().numberLength" (input)="onNumberLength($event)" />
+    <input type="number" min="1" max="30" [value]="config().numberLength" (change)="onNumberLength($event)" />
   </label>
   <label class="center flex-column">
     @if (mode() === 'sequence') { Interval (ms) } @else { Duration (ms) }
-    <input type="number" [value]="mode() === 'sequence' ? config().interval : config().duration" (input)="onTiming($event)" />
+    <input type="number" min="1" max="100000" [value]="mode() === 'sequence' ? config().interval : config().duration" (change)="onTiming($event)" />
   </label>
 </div>
