@@ -11,11 +11,11 @@
 
   <app-keyboard
     [disabled]="game.stage() !== 'input'"
-    (keyPress)="onVirtualKey($event)" />
-
-  <div class="start-button">
-    <button class="active" [disabled]="game.stage() === 'showing'" (click)="game.startGame()">Start Game</button>
-  </div>
+    [showStart]="game.stage() !== 'input'"
+    [stage]="game.stage()"
+    (keyPress)="onVirtualKey($event)"
+    (startGame)="game.startGame()"
+    (abort)="game.confirm()" />
 
   <app-config
     [mode]="game.mode()"
