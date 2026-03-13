@@ -16,6 +16,7 @@ interface FeedbackDigit {
   char: string;
   expected: string;
   wrong: boolean;
+  missing: boolean;
 }
 
 const FONT_FAMILY = "'JetBrains Mono', 'Fira Code', monospace";
@@ -55,9 +56,10 @@ export class DisplayComponent implements AfterViewInit, OnDestroy {
     const expected = r.expected;
     const guess = r.guess;
     return [...expected].map((exp, i) => ({
-      char: guess[i] ?? ' ',
+      char: guess[i] ?? '',
       expected: exp,
       wrong: guess[i] !== exp,
+      missing: i >= guess.length,
     }));
   });
 
@@ -74,6 +76,21 @@ export class DisplayComponent implements AfterViewInit, OnDestroy {
     const stage = this.stage();
     if (stage === 'showing') return this.displayValue();
     return this.inputValue();
+  });
+
+  /** Input digits padded with invisible placeholder digits to fill numberLength */
+  paddedInputDigits = computed(() => {
+    const val = this.inputValue();
+    const len = this.numberLength();
+    const digits: { char: string; placeholder: boolean }[] = [];
+    for (let i = 0; i < len; i++) {
+      if (i < val.length) {
+        digits.push({ char: val[i], placeholder: false });
+      } else {
+        digits.push({ char: '0', placeholder: true });
+      }
+    }
+    return digits;
   });
 
   /** Measured font size for the number lines */
