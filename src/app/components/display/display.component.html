@@ -23,10 +23,12 @@
          [class.guessing]="stage() === 'input'">
         @if (stage() === 'result' && result() && !result()!.correct) {
             <span class="feedback-digits">@for (d of feedbackDigits(); track $index) {
-                <span [class.wrong-digit]="d.wrong">{{ d.char }}</span>
+                <span [class.wrong-digit]="d.wrong" [class.placeholder-digit]="d.missing">{{ d.missing ? '0' : d.char }}</span>
             }</span>
         } @else if (stage() === 'input') {
-            <span class="guess-wrapper" [style.width]="guessSlotWidth()">{{ currentValue() || '&nbsp;' }}</span>
+            <span class="feedback-digits">@for (d of paddedInputDigits(); track $index) {
+                <span [class.placeholder-digit]="d.placeholder">{{ d.placeholder ? '0' : d.char }}</span>
+            }</span>
         } @else {
             {{ currentValue() || '&nbsp;' }}
         }
