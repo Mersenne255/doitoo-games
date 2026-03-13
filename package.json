@@ -1,6 +1,6 @@
 {
   "name": "number-memory-game",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

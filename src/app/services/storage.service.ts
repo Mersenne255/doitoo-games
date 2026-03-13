@@ -1,45 +1,45 @@
 import { Injectable } from '@angular/core';
-import { Config, GameMode } from '../models/game.models';
+import { AllConfigs, GameMode } from '../models/game.models';
 
-const CONFIG_KEY = 'config';
+const CONFIGS_KEY = 'configs';
 const MODE_KEY = 'mode';
 
-const DEFAULT_CONFIG: Config = {
-  numberLength: 8,
-  interval: 1000,
-  duration: 2000,
+const DEFAULT_CONFIGS: AllConfigs = {
+  sequence: { numberLength: 8, timing: 1000 },
+  reverse:  { numberLength: 8, timing: 1000 },
+  complete: { numberLength: 8, timing: 2000 },
 };
 
 const DEFAULT_MODE: GameMode = 'sequence';
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
-  loadConfig(): Config {
+  loadConfigs(): AllConfigs {
     try {
-      const raw = localStorage.getItem(CONFIG_KEY);
-      if (raw === null) {
-        return { ...DEFAULT_CONFIG };
-      }
-      return JSON.parse(raw) as Config;
+      const raw = localStorage.getItem(CONFIGS_KEY);
+      if (raw === null) return structuredClone(DEFAULT_CONFIGS);
+      const parsed = JSON.parse(raw) as Partial<AllConfigs>;
+      // merge with defaults so new modes always have values
+      return {
+        sequence: { ...DEFAULT_CONFIGS.sequence, ...parsed.sequence },
+        reverse:  { ...DEFAULT_CONFIGS.reverse,  ...parsed.reverse },
+        complete: { ...DEFAULT_CONFIGS.complete, ...parsed.complete },
+      };
     } catch {
-      return { ...DEFAULT_CONFIG };
+      return structuredClone(DEFAULT_CONFIGS);
     }
   }
 
-  saveConfig(config: Config): void {
+  saveConfigs(configs: AllConfigs): void {
     try {
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-    } catch {
-      // silently ignore save errors (e.g. quota exceeded)
-    }
+      localStorage.setItem(CONFIGS_KEY, JSON.stringify(configs));
+    } catch { /* quota exceeded */ }
   }
 
   loadMode(): GameMode {
     try {
       const raw = localStorage.getItem(MODE_KEY);
-      if (raw === null) {
-        return DEFAULT_MODE;
-      }
+      if (raw === null) return DEFAULT_MODE;
       return JSON.parse(raw) as GameMode;
     } catch {
       return DEFAULT_MODE;
@@ -49,8 +49,6 @@ export class StorageService {
   saveMode(mode: GameMode): void {
     try {
       localStorage.setItem(MODE_KEY, JSON.stringify(mode));
-    } catch {
-      // silently ignore save errors
-    }
+    } catch { /* ignore */ }
   }
 }

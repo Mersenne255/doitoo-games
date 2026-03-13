@@ -1,12 +1,13 @@
 export type GameStage = 'idle' | 'showing' | 'input' | 'result';
 
-export type GameMode = 'sequence' | 'complete';
+export type GameMode = 'sequence' | 'complete' | 'reverse';
 
-export interface Config {
+export interface ModeConfig {
   numberLength: number;
-  interval: number;   // ms, used in sequence mode
-  duration: number;    // ms, used in complete mode
+  timing: number;  // interval (ms) for sequence/reverse, duration (ms) for complete
 }
+
+export type AllConfigs = Record<GameMode, ModeConfig>;
 
 export interface GameResult {
   correct: boolean;
