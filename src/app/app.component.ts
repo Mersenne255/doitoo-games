@@ -47,7 +47,7 @@ export class AppComponent {
     } else if (stage === 'input') {
       if (key === 'del') {
         this.game.deleteLast();
-      } else if (key === '?') {
+      } else if (key === '⨯') {
         this.game.confirm();
       } else if (/^[0-9]$/.test(key)) {
         this.game.appendDigit(key);

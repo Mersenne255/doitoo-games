@@ -1,5 +1,10 @@
-<div class="keyboard" [class.disabled]="disabled()">
-  @for (key of keys; track key) {
-    <button (click)="onKey(key)">{{ key }}</button>
+<div class="keyboard-wrapper">
+  @if (showStart()) {
+    <button class="start-btn" [class.abort]="stage() === 'showing'" (click)="onStartOrAbort()">{{ stage() === 'showing' ? 'Abort' : 'Start Game' }}</button>
   }
+  <div class="keyboard" [class.disabled]="disabled()">
+    @for (key of keys; track key) {
+      <button (click)="onKey(key)">{{ key }}</button>
+    }
+  </div>
 </div>
