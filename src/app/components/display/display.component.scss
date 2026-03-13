@@ -58,18 +58,20 @@
   animation: fadeIn 0.3s ease;
 
   span {
-    color: #f1f5f9;
+    display: inline-block;
+    min-width: 0.6em;
+    text-align: center;
   }
 
   .wrong-digit {
     color: #f87171;
     text-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
   }
-}
 
-.expected {
-  color: #f1f5f9;
-  animation: fadeIn 0.3s ease;
+  .correction-digit {
+    color: #34d399;
+    text-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+  }
 }
 
 @keyframes fadeIn {
