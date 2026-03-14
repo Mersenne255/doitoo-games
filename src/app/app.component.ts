@@ -3,6 +3,7 @@ import { GameService } from './services/game.service';
 import { DisplayComponent } from './components/display/display.component';
 import { KeyboardComponent } from './components/keyboard/keyboard.component';
 import { ConfigComponent } from './components/config/config.component';
+import packageJson from '../../package.json';
 
 @Component({
   selector: 'app-game',
@@ -14,6 +15,7 @@ import { ConfigComponent } from './components/config/config.component';
 })
 export class AppComponent {
   readonly game = inject(GameService);
+  readonly version = packageJson.version;
 
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
