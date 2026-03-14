@@ -1,6 +1,7 @@
 <div class="config" [class.disabled]="disabled()" [attr.inert]="disabled() || null">
   <div class="mode-buttons">
     <button [class.active]="mode() === 'sequence'" (click)="modeChange.emit('sequence')">Sequence</button>
+    <button [class.active]="mode() === 'reverse'" (click)="modeChange.emit('reverse')">Reverse</button>
     <button [class.active]="mode() === 'complete'" (click)="modeChange.emit('complete')">Complete</button>
   </div>
   <div class="fields">
@@ -9,8 +10,8 @@
       <input type="number" min="1" max="30" [value]="config().numberLength" (change)="onNumberLength($event)" />
     </label>
     <label>
-      @if (mode() === 'sequence') { Interval } @else { Duration }
-      <input type="number" min="1" max="100000" [value]="mode() === 'sequence' ? config().interval : config().duration" (change)="onTiming($event)" />
+      @if (mode() === 'complete') { Duration } @else { Interval }
+      <input type="number" min="1" max="100000" [value]="config().timing" (change)="onTiming($event)" />
     </label>
   </div>
 </div>

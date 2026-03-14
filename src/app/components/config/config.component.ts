@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { GameMode, Config } from '../../models/game.models';
+import { GameMode, ModeConfig } from '../../models/game.models';
 
 @Component({
   selector: 'app-config',
@@ -10,12 +10,12 @@ import { GameMode, Config } from '../../models/game.models';
 })
 export class ConfigComponent {
   mode = input<GameMode>('sequence');
-  config = input<Config>({ numberLength: 8, interval: 1000, duration: 2000 });
+  config = input<ModeConfig>({ numberLength: 8, timing: 1000 });
 
   disabled = input<boolean>(false);
 
   modeChange = output<GameMode>();
-  configChange = output<Partial<Config>>();
+  configChange = output<Partial<ModeConfig>>();
 
   onNumberLength(event: Event): void {
     const el = event.target as HTMLInputElement;
@@ -30,10 +30,6 @@ export class ConfigComponent {
     if (el.value === '') return;
     const num = Math.max(1, Math.min(+el.value, 100000));
     el.value = String(num);
-    if (this.mode() === 'sequence') {
-      this.configChange.emit({ interval: num });
-    } else {
-      this.configChange.emit({ duration: num });
-    }
+    this.configChange.emit({ timing: num });
   }
 }
