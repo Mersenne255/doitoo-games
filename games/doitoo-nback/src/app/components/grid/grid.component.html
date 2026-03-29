@@ -1,4 +1,4 @@
-<div class="grid-container" [style.--grid-size]="gridSize()">
+<div class="grid-container" [style.grid-template-columns]="gridColumns()">
   @for (cell of cells(); track cell) {
     <div class="cell" [class.active]="cell === activeCell()">
       @if (cell === activeCell() && cellShape()) {
