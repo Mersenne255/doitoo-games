@@ -1,0 +1,59 @@
+<div class="config" [class.disabled]="disabled()" [attr.inert]="disabled() || null">
+  <!-- Grid Size -->
+  <label class="section-label">Grid Size</label>
+  <div class="button-group">
+    @for (size of [2, 3, 4, 5]; track size) {
+      <button [class.active]="config().gridSize === size" (click)="onGridSize(size)">{{ size }}×{{ size }}</button>
+    }
+  </div>
+
+  <!-- N-Level & Step Duration -->
+  <div class="fields">
+    <label>
+      N-Level
+      <input type="number" min="1" max="20" [value]="config().nLevel" (change)="onNLevel($event)" />
+    </label>
+    <label>
+      Duration (s)
+      <input type="number" min="1" max="6" step="0.5" [value]="config().stepDuration" (change)="onStepDuration($event)" />
+    </label>
+    <label>
+      Steps
+      <input type="number" min="20" max="50" [value]="config().stepCount" (change)="onStepCount($event)" />
+    </label>
+  </div>
+
+  <!-- Stimulus Intensity -->
+  <label class="section-label">Intensity</label>
+  <div class="button-group">
+    <button [class.active]="config().intensity === 'low'" (click)="onIntensity('low')">Low</button>
+    <button [class.active]="config().intensity === 'medium'" (click)="onIntensity('medium')">Medium</button>
+    <button [class.active]="config().intensity === 'high'" (click)="onIntensity('high')">High</button>
+  </div>
+
+  <!-- Active Modalities -->
+  <label class="section-label">Modalities</label>
+  <div class="modality-toggles">
+    @for (mod of ['spatial', 'auditory', 'color', 'shape']; track mod) {
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [checked]="isModalityActive($any(mod))"
+          [disabled]="!canUncheck() && isModalityActive($any(mod))"
+          (change)="onModalityToggle($any(mod), $event)"
+        />
+        <span>{{ mod | titlecase }}</span>
+      </label>
+    }
+  </div>
+
+  <!-- Color Count (only when color modality is active) -->
+  @if (isColorActive()) {
+    <div class="fields">
+      <label>
+        Colors
+        <input type="number" min="2" max="10" [value]="config().colorCount" (change)="onColorCount($event)" />
+      </label>
+    </div>
+  }
+</div>

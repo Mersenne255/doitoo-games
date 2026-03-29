@@ -6,6 +6,13 @@
       "description": "Test your number memory with sequences, complete recall, and reverse challenges.",
       "icon": "games/doitoo-numbers/dist/browser/icon.png",
       "path": "games/doitoo-numbers/dist/browser/index.html"
+    },
+    {
+      "id": "doitoo-nback",
+      "name": "N-Back",
+      "description": "Train your working memory with the Dual N-Back cognitive exercise.",
+      "icon": "games/doitoo-nback/dist/browser/icon.png",
+      "path": "games/doitoo-nback/dist/browser/index.html"
     }
   ]
 }

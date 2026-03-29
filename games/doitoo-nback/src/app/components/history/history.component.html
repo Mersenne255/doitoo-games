@@ -1,0 +1,27 @@
+@if (sortedHistory().length === 0) {
+  <div class="empty">No sessions yet</div>
+} @else {
+  <div class="history">
+    <!-- Average Score -->
+    @if (averageScore(); as avg) {
+      <div class="average">
+        Avg (last 10): <span class="avg-value">{{ avg | number:'1.0-0' }}%</span>
+      </div>
+    }
+
+    <!-- Session List -->
+    <div class="session-list">
+      @for (record of sortedHistory(); track record.timestamp) {
+        <div class="session-row">
+          <span class="date">{{ record.timestamp | date:'short' }}</span>
+          <span class="n-level">N={{ record.nLevel }}</span>
+          <span class="score">{{ record.overallPercentage | number:'1.0-0' }}%</span>
+          <span class="modalities">{{ getModalityLabels(record.activeModalities) }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Clear Button -->
+    <button class="btn-clear" (click)="clearHistory.emit()">Clear History</button>
+  </div>
+}
