@@ -39,7 +39,7 @@ export class GameService {
       this.stage.set('showing');
       for (const num of this.sequence) {
         this.displayValue.set(num);
-        const skipped = await this.cancellableWait(cfg.timing);
+        const skipped = await this.cancellableWait(cfg.timing * 1000);
         if (skipped) return;
         this.displayValue.set('');
         const skipped2 = await this.cancellableWait(100);
@@ -50,7 +50,7 @@ export class GameService {
       this.sequence = [num];
       this.displayValue.set(num);
       this.stage.set('showing');
-      const skipped = await this.cancellableWait(cfg.timing);
+      const skipped = await this.cancellableWait(cfg.timing * 1000);
       if (skipped) return;
     }
 

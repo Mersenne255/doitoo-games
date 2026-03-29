@@ -4,7 +4,7 @@ export type GameMode = 'sequence' | 'complete' | 'reverse';
 
 export interface ModeConfig {
   numberLength: number;
-  timing: number;  // interval (ms) for sequence/reverse, duration (ms) for complete
+  timing: number;  // interval (s) for sequence/reverse, duration (s) for complete
 }
 
 export type AllConfigs = Record<GameMode, ModeConfig>;

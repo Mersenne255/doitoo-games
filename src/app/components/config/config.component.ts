@@ -10,7 +10,7 @@ import { GameMode, ModeConfig } from '../../models/game.models';
 })
 export class ConfigComponent {
   mode = input<GameMode>('sequence');
-  config = input<ModeConfig>({ numberLength: 8, timing: 1000 });
+  config = input<ModeConfig>({ numberLength: 8, timing: 1 });
 
   disabled = input<boolean>(false);
 
@@ -28,7 +28,7 @@ export class ConfigComponent {
   onTiming(event: Event): void {
     const el = event.target as HTMLInputElement;
     if (el.value === '') return;
-    const num = Math.max(1, Math.min(+el.value, 100000));
+    const num = Math.max(0.1, Math.min(+el.value, 100));
     el.value = String(num);
     this.configChange.emit({ timing: num });
   }
