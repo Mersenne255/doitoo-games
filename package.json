@@ -6,9 +6,9 @@
   "scripts": {
     "serve": "npx http-server . -p 8080 -c-1",
     "serve:dist": "npx http-server dist -p 8080 -c-1",
-    "serve:doitoo-numbers": "cd games/doitoo-numbers && npm start",
-    "build:doitoo-numbers": "cd games/doitoo-numbers && npm run build",
-    "build:games": "npm run build:doitoo-numbers",
+    "serve:numbers": "cd games/doitoo-numbers && npm start",
+    "build:numbers": "cd games/doitoo-numbers && npm run build",
+    "build:games": "npm run build:numbers",
     "build:platform": "node scripts/build.js",
     "build": "npm run build:games && npm run build:platform"
   },
