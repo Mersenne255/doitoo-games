@@ -14,11 +14,12 @@ const Platform = (function () {
   const REGISTRY_URL = 'games/registry.json';
   const LOAD_TIMEOUT_MS = 10000;
   const REQUIRED_FIELDS = ['id', 'name', 'description', 'icon', 'path'];
+  const ACTIVE_GAME_KEY = 'platform:activeGame';
 
   // ── Cached DOM references (populated on DOMContentLoaded) ──
   let backButton = null;
-  let navTitle = null;
-  let navTitleSvg = null;
+  let navBar = null;
+  let navSubtitle = null;
   let gameSelector = null;
   let emptyState = null;
   let errorOverlay = null;
@@ -170,17 +171,12 @@ const Platform = (function () {
     gameFrame.classList.remove('hidden');
     backButton.classList.remove('hidden');
 
-    // Show game title in nav (SVG if available, otherwise text name)
-    if (game.titleSvg) {
-      navTitle.classList.add('hidden');
-      navTitleSvg.src = game.titleSvg;
-      navTitleSvg.alt = game.name;
-      navTitleSvg.classList.remove('hidden');
-    } else {
-      navTitleSvg.classList.add('hidden');
-      navTitle.textContent = game.name;
-      navTitle.classList.remove('hidden');
-    }
+    // Show game name as subtitle next to the logo
+    navSubtitle.textContent = game.name;
+    navSubtitle.classList.remove('hidden');
+
+    // Sync nav height for iframe positioning
+    syncNavHeight();
 
     // Clear any previous timeout
     clearLoadTimeout();
@@ -209,6 +205,9 @@ const Platform = (function () {
 
     // Trigger load
     gameFrame.src = game.path;
+
+    // Persist active game for session restore
+    try { localStorage.setItem(ACTIVE_GAME_KEY, game.id); } catch {}
   }
 
   // ────────────────────────────────────────────────────────────
@@ -232,14 +231,18 @@ const Platform = (function () {
     // Hide back button
     backButton.classList.add('hidden');
 
-    // Restore default nav title
-    navTitleSvg.classList.add('hidden');
-    navTitleSvg.src = '';
-    navTitle.textContent = 'Doitoo Games';
-    navTitle.classList.remove('hidden');
+    // Restore default nav (hide subtitle)
+    navSubtitle.textContent = '';
+    navSubtitle.classList.add('hidden');
+
+    // Sync nav height
+    syncNavHeight();
 
     // Show selector
     gameSelector.classList.remove('hidden');
+
+    // Clear persisted active game
+    try { localStorage.removeItem(ACTIVE_GAME_KEY); } catch {}
   }
 
   // ────────────────────────────────────────────────────────────
@@ -263,8 +266,8 @@ const Platform = (function () {
   function init() {
     // Cache DOM references
     backButton = document.getElementById('back-button');
-    navTitle = document.getElementById('nav-title');
-    navTitleSvg = document.getElementById('nav-title-svg');
+    navBar = document.querySelector('.nav-bar');
+    navSubtitle = document.getElementById('nav-subtitle');
     gameSelector = document.getElementById('game-selector');
     emptyState = document.getElementById('empty-state');
     errorOverlay = document.getElementById('error-overlay');
@@ -276,10 +279,24 @@ const Platform = (function () {
     backButton.addEventListener('click', returnToSelector);
     errorBackButton.addEventListener('click', returnToSelector);
 
-    // Load registry → validate → render
+    // Load registry → validate → render (and restore active game if any)
+    syncNavHeight();
     loadRegistry()
       .then(validateRegistry)
-      .then(renderGameCards);
+      .then(function (games) {
+        renderGameCards(games);
+
+        // Restore previously active game after refresh
+        try {
+          const activeId = localStorage.getItem(ACTIVE_GAME_KEY);
+          if (activeId) {
+            const game = games.find(function (g) { return g.id === activeId; });
+            if (game) {
+              launchGame(game);
+            }
+          }
+        } catch {}
+      });
   }
 
   // ── Helpers ──
@@ -288,6 +305,15 @@ const Platform = (function () {
     if (loadTimeoutId !== null) {
       clearTimeout(loadTimeoutId);
       loadTimeoutId = null;
+    }
+  }
+
+  function syncNavHeight() {
+    if (navBar) {
+      document.documentElement.style.setProperty(
+        '--nav-height',
+        navBar.offsetHeight + 'px'
+      );
     }
   }
 

@@ -2,11 +2,10 @@
   "games": [
     {
       "id": "doitoo-numbers",
-      "name": "Doitoo Numbers",
+      "name": "Numbers",
       "description": "Test your number memory with sequences, complete recall, and reverse challenges.",
       "icon": "games/doitoo-numbers/dist/browser/icon.png",
-      "path": "games/doitoo-numbers/dist/browser/index.html",
-      "titleSvg": "games/doitoo-numbers/dist/browser/title.svg"
+      "path": "games/doitoo-numbers/dist/browser/index.html"
     }
   ]
 }

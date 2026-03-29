@@ -20,6 +20,7 @@ html, body {
     radial-gradient(ellipse at 50% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
   color: #e2e8f0;
   -webkit-font-smoothing: antialiased;
+  --nav-height: 48px;
 }
 
 /* ── Navigation Bar ── */
@@ -30,21 +31,34 @@ html, body {
   z-index: 100;
   display: flex;
   align-items: center;
-  height: 52px;
-  padding: 0 1.25rem;
+  padding: 0.4rem 1rem;
   background: rgba(15, 15, 26, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(99, 102, 241, 0.15);
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
-.nav-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #818cf8, #60a5fa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.nav-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.nav-logo {
+  height: 22px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.nav-subtitle {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
 }
 
 .back-button {
@@ -71,15 +85,6 @@ html, body {
 .back-button svg {
   width: 18px;
   height: 18px;
-}
-
-/* ── Nav Title (text + SVG variants) ── */
-
-.nav-title-svg {
-  height: 28px;
-  width: auto;
-  max-width: 260px;
-  object-fit: contain;
 }
 
 /* ── Game Selector Grid ── */
@@ -144,10 +149,10 @@ html, body {
 
 .game-frame {
   position: fixed;
-  top: 52px;
+  top: var(--nav-height);
   left: 0;
   width: 100%;
-  height: calc(100vh - 52px);
+  height: calc(100vh - var(--nav-height));
   border: none;
 }
 
@@ -157,7 +162,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 52px);
+  min-height: calc(100vh - var(--nav-height));
   color: #64748b;
   font-size: 1rem;
 }
