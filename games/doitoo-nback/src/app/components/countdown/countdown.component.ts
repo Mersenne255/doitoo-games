@@ -32,7 +32,7 @@ import {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.85);
+      background: transparent;
     }
     @keyframes zoom-in {
       from { transform: scale(0.7); opacity: 0; }
