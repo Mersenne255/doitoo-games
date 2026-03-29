@@ -1,12 +1,13 @@
 :host {
   display: block;
+  width: 100%;
 }
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(var(--grid-size), 1fr);
-  gap: 4px;
-  width: min(100%, 320px);
+  gap: 6px;
+  width: 100%;
+  max-width: 400px;
   aspect-ratio: 1;
   margin: 0 auto;
 }

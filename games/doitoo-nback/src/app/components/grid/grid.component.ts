@@ -24,4 +24,6 @@ export class GridComponent {
     const size = this.gridSize();
     return Array.from({ length: size * size }, (_, i) => i);
   });
+
+  gridColumns = computed(() => `repeat(${this.gridSize()}, 1fr)`);
 }
