@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
-import { NBackConfig, DEFAULT_CONFIG, ModalityType, StimulusIntensity, MODALITY_LABELS } from '../../models/game.models';
+import { NBackConfig, DEFAULT_CONFIG, ModalityType, StimulusIntensity, MODALITY_LABELS, INTENSITY_OPTIONS } from '../../models/game.models';
 
 @Component({
   selector: 'app-config',
@@ -33,7 +33,7 @@ export class ConfigComponent {
   onStepDuration(event: Event): void {
     const el = event.target as HTMLInputElement;
     if (el.value === '') return;
-    const num = Math.max(1, Math.min(+el.value, 6));
+    const num = Math.max(1, Math.min(+el.value, 10));
     el.value = String(num);
     this.configChange.emit({ stepDuration: num });
   }
@@ -41,10 +41,12 @@ export class ConfigComponent {
   onStepCount(event: Event): void {
     const el = event.target as HTMLInputElement;
     if (el.value === '') return;
-    const num = Math.max(5, Math.min(+el.value, 50));
+    const num = Math.max(5, Math.min(+el.value, 1000));
     el.value = String(num);
     this.configChange.emit({ stepCount: num });
   }
+
+  readonly intensityOptions = INTENSITY_OPTIONS;
 
   onIntensity(intensity: StimulusIntensity): void {
     this.configChange.emit({ intensity });
@@ -52,21 +54,19 @@ export class ConfigComponent {
 
   private static readonly CANONICAL_ORDER: ModalityType[] = ['spatial', 'shape', 'color', 'auditory'];
 
-  onModalityToggle(modality: ModalityType, event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
+  toggleModality(modality: ModalityType): void {
     const current = this.config().activeModalities;
+    const isActive = current.includes(modality);
 
-    if (checked) {
+    if (isActive) {
+      if (current.length <= 1) return; // keep at least one
+      this.configChange.emit({ activeModalities: current.filter(m => m !== modality) });
+    } else {
       const updated = [...current, modality];
-      // Sort by canonical order
       updated.sort((a, b) =>
         ConfigComponent.CANONICAL_ORDER.indexOf(a) - ConfigComponent.CANONICAL_ORDER.indexOf(b)
       );
       this.configChange.emit({ activeModalities: updated });
-    } else if (current.length > 1) {
-      this.configChange.emit({ activeModalities: current.filter(m => m !== modality) });
-    } else {
-      (event.target as HTMLInputElement).checked = true;
     }
   }
 

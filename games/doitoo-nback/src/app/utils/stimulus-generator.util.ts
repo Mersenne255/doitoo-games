@@ -5,7 +5,6 @@ import {
   MatchFlags,
   COLOR_PALETTE,
   SHAPES,
-  INTENSITY_RATES,
   ShapeType,
 } from '../models/game.models';
 
@@ -19,7 +18,7 @@ export function generateSequence(
 ): GeneratedSequence {
   const { stepCount, nLevel, gridSize, colorCount, intensity } = config;
 
-  const targetMatchCount = Math.round(stepCount * INTENSITY_RATES[intensity]);
+  const targetMatchCount = Math.round(stepCount * (intensity / 100));
 
   // Pool definitions per modality
   const spatialPoolSize = gridSize * gridSize;
