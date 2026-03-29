@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { AllConfigs, GameMode } from '../models/game.models';
 
-const CONFIGS_KEY = 'configs';
-const MODE_KEY = 'mode';
+const GAME_ID = 'doitoo-numbers';
+const PREFIX = GAME_ID + ':';
+const CONFIGS_KEY = PREFIX + 'configs';
+const MODE_KEY = PREFIX + 'mode';
 
 const DEFAULT_CONFIGS: AllConfigs = {
   sequence: { numberLength: 8, timing: 1 },
@@ -14,6 +16,24 @@ const DEFAULT_MODE: GameMode = 'sequence';
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
+
+  constructor() {
+    // Migrate old unprefixed keys to namespaced keys
+    this.migrateKeys();
+  }
+
+  private migrateKeys(): void {
+    try {
+      for (const oldKey of ['configs', 'mode']) {
+        const raw = localStorage.getItem(oldKey);
+        if (raw !== null && localStorage.getItem(PREFIX + oldKey) === null) {
+          localStorage.setItem(PREFIX + oldKey, raw);
+          localStorage.removeItem(oldKey);
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
   loadConfigs(): AllConfigs {
     try {
       const raw = localStorage.getItem(CONFIGS_KEY);
