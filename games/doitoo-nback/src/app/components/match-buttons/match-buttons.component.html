@@ -1,0 +1,13 @@
+<div class="buttons-container">
+  @for (modality of modalities(); track modality; let i = $index) {
+    <button
+      class="match-btn"
+      [class.pressed]="pressedThisStep().has(modality)"
+      [disabled]="disabled() || pressedThisStep().has(modality)"
+      (click)="matchPress.emit(modality)"
+    >
+      <span class="label">{{ labels[modality] }}</span>
+      <span class="key-hint">{{ keys[i] }}</span>
+    </button>
+  }
+</div>

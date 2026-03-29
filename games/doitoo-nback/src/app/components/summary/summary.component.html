@@ -1,0 +1,63 @@
+@if (sessionResult(); as result) {
+  <div class="summary">
+    <!-- Headline -->
+    <div class="headline">
+      <span class="percentage">{{ result.overallPercentage | number:'1.0-0' }}%</span>
+      <span class="badge" [class.pass]="result.passed" [class.fail]="!result.passed">
+        {{ result.passed ? 'PASS' : 'FAIL' }}
+      </span>
+    </div>
+
+    <!-- N-Level Suggestion -->
+    @if (result.nLevelSuggestion !== null) {
+      <div class="suggestion">
+        <span class="suggestion-text">Suggested N-Level: {{ result.nLevelSuggestion }}</span>
+        <div class="suggestion-actions">
+          <button class="btn-accept" (click)="acceptSuggestion.emit()">Accept</button>
+          <button class="btn-dismiss-suggestion" (click)="dismissSuggestion.emit()">Dismiss</button>
+        </div>
+      </div>
+    }
+
+    <!-- Expandable Details Toggle -->
+    <button class="details-toggle" (click)="toggleDetails()">
+      {{ showDetails() ? 'Hide Details ▲' : 'Show Details ▼' }}
+    </button>
+
+    <!-- Details Section -->
+    @if (showDetails()) {
+      <div class="details">
+        <table>
+          <thead>
+            <tr>
+              <th>Modality</th>
+              <th>Score</th>
+              <th class="col-hit">Hits</th>
+              <th class="col-miss">Miss</th>
+              <th class="col-fa">FA</th>
+              <th class="col-cr">CR</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (score of result.modalityScores; track score.modality) {
+              <tr>
+                <td>{{ getModalityLabel(score.modality) }}</td>
+                <td>{{ score.percentage | number:'1.0-0' }}%</td>
+                <td class="col-hit">{{ score.hits }}</td>
+                <td class="col-miss">{{ score.misses }}</td>
+                <td class="col-fa">{{ score.falseAlarms }}</td>
+                <td class="col-cr">{{ score.correctRejections }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button class="btn-primary" (click)="playAgain.emit()">Play Again</button>
+      <button class="btn-secondary" (click)="dismiss.emit()">Back</button>
+    </div>
+  </div>
+}

@@ -1,0 +1,49 @@
+<div class="container">
+  <!-- Grid is always visible -->
+  <app-grid
+    [gridSize]="game.config().gridSize"
+    [activeCell]="game.stage() === 'playing' ? game.currentStimulus()?.position ?? null : null"
+    [cellColor]="game.stage() === 'playing' && game.config().activeModalities.includes('color') ? game.currentStimulus()?.color ?? null : null"
+    [cellShape]="game.stage() === 'playing' && game.config().activeModalities.includes('shape') ? game.currentStimulus()?.shape ?? null : null"
+    [fallbackLetter]="game.stage() === 'playing' && game.showAudioFallback() ? game.currentStimulus()?.letter ?? null : null" />
+
+  <!-- Countdown overlay -->
+  @if (game.stage() === 'countdown') {
+    <app-countdown (done)="game.beginPlaying()" />
+  }
+
+  <!-- Playing state: match buttons + progress + abort -->
+  @if (game.stage() === 'playing') {
+    <div class="progress">{{ game.progress() }}</div>
+    <app-match-buttons
+      [modalities]="game.config().activeModalities"
+      [disabled]="false"
+      [pressedThisStep]="game.pressedThisStep()"
+      (matchPress)="game.pressMatch($event)" />
+    <button class="abort-btn" (click)="game.abortSession()">Abort</button>
+  }
+
+  <!-- Summary state -->
+  @if (game.stage() === 'summary') {
+    <app-summary
+      [sessionResult]="game.sessionResult()"
+      (playAgain)="game.startSession()"
+      (dismiss)="onDismissSummary()"
+      (acceptSuggestion)="game.acceptSuggestion()"
+      (dismissSuggestion)="game.dismissSuggestion()" />
+  }
+
+  <!-- Idle state: start button + config + history -->
+  @if (game.stage() === 'idle') {
+    <button class="start-btn" (click)="game.startSession()">Start Game</button>
+    <app-config
+      [config]="game.config()"
+      [disabled]="false"
+      (configChange)="game.updateConfig($event)" />
+    <app-history
+      [history]="game.history()"
+      (clearHistory)="game.clearHistory()" />
+  }
+
+  <div class="build-number">v{{ version }}</div>
+</div>
