@@ -53,7 +53,7 @@ export class HistoryComponent {
   };
 
   displayRows = computed<DisplayRow[]>(() => {
-    const sorted = this.sortedHistory();
+    const sorted = this.sortedHistory().slice(0, 20);
     return sorted.map((record, i) => {
       const prev = i > 0 ? sorted[i - 1] : null;
       const d = new Date(record.timestamp);

@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doitoo Games</title>
+  <meta name="theme-color" content="#0f0f1a">
+  <meta name="description" content="Doitoo Games — a multi-game launcher platform for cognitive training games.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="stylesheet" href="platform.css">
 </head>
 <body>
@@ -56,5 +61,71 @@
   </main>
 
   <script src="platform.js"></script>
+  <script>
+    // Register service worker and trigger full asset caching
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        console.log('[PWA] Service worker registered');
+
+        function cacheAllAssets(worker) {
+          fetch('games/registry.json')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              var games = data.games || [];
+              var urlSet = new Set();
+
+              // Collect icon URLs
+              games.forEach(function (g) {
+                urlSet.add(g.icon);
+                urlSet.add(g.path);
+              });
+
+              // For each game, fetch its index.html and extract asset references
+              var fetches = games.map(function (game) {
+                return fetch(game.path)
+                  .then(function (r) { return r.text(); })
+                  .then(function (html) {
+                    var base = game.path.substring(0, game.path.lastIndexOf('/') + 1);
+                    // Extract src and href attributes
+                    var re = /(?:src|href)=["']([^"']+)["']/g;
+                    var m;
+                    while ((m = re.exec(html)) !== null) {
+                      var ref = m[1];
+                      if (ref.startsWith('http') || ref.startsWith('data:') || ref.startsWith('#')) continue;
+                      urlSet.add(ref.startsWith('/') ? ref : base + ref);
+                    }
+                  })
+                  .catch(function () {});
+              });
+
+              Promise.all(fetches).then(function () {
+                worker.postMessage({ type: 'CACHE_ALL', urls: Array.from(urlSet) });
+              });
+            })
+            .catch(function () {});
+        }
+
+        var sw = reg.active || reg.installing || reg.waiting;
+        if (sw && sw.state === 'activated') {
+          cacheAllAssets(sw);
+        } else if (sw) {
+          sw.addEventListener('statechange', function handler() {
+            if (sw.state === 'activated') {
+              sw.removeEventListener('statechange', handler);
+              cacheAllAssets(sw);
+            }
+          });
+        }
+
+        navigator.serviceWorker.addEventListener('message', function (event) {
+          if (event.data && event.data.type === 'CACHE_COMPLETE') {
+            console.log('[PWA] All assets cached for offline use');
+          }
+        });
+      }).catch(function (err) {
+        console.warn('[PWA] Service worker registration failed:', err);
+      });
+    }
+  </script>
 </body>
 </html>
