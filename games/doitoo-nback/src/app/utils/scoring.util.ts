@@ -23,11 +23,11 @@ export function classifyResponse(
 /**
  * Calculate the score breakdown for a single modality.
  *
- * Scoring: hit = +1, correct_rejection = 0 (baseline), miss = −1, false_alarm = −1.
- * percentage = (hits − misses − falseAlarms) / totalMatches × 100
- * where totalMatches = hits + misses (total steps that were actual matches).
- * If there are no matches, score is 100% minus false alarm penalty.
- * Score can go negative.
+ * percentage = (hits − falseAlarms) / (hits + misses) × 100
+ * - Perfect play (all matches caught, no false presses) → 100%
+ * - Doing nothing (no presses at all) → 0%
+ * - False alarms penalize the score, can go negative
+ * - If no matches exist in the sequence, score is 100% minus false alarm penalty
  */
 export function calculateModalityScore(
   modality: ModalityType,
@@ -56,10 +56,14 @@ export function calculateModalityScore(
     }
   }
 
-  // Score: hits earn points, misses and false alarms lose points
-  // Denominator is totalSteps so doing nothing on all steps = 0%
-  const points = hits - misses - falseAlarms;
-  const percentage = totalSteps > 0 ? (points / totalSteps) * 100 : 0;
+  const totalMatches = hits + misses;
+  let percentage: number;
+  if (totalMatches > 0) {
+    percentage = ((hits - falseAlarms) / totalMatches) * 100;
+  } else {
+    // No matches in sequence — penalize only for false alarms
+    percentage = falseAlarms > 0 ? -((falseAlarms / totalSteps) * 100) : 100;
+  }
 
   return {
     modality,
