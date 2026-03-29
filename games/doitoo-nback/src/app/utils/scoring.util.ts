@@ -22,7 +22,12 @@ export function classifyResponse(
 
 /**
  * Calculate the score breakdown for a single modality.
- * percentage = (hits + correctRejections) / totalSteps * 100
+ *
+ * Scoring: hit = +1, correct_rejection = 0 (baseline), miss = −1, false_alarm = −1.
+ * percentage = (hits − misses − falseAlarms) / totalMatches × 100
+ * where totalMatches = hits + misses (total steps that were actual matches).
+ * If there are no matches, score is 100% minus false alarm penalty.
+ * Score can go negative.
  */
 export function calculateModalityScore(
   modality: ModalityType,
@@ -51,8 +56,10 @@ export function calculateModalityScore(
     }
   }
 
-  const percentage =
-    totalSteps > 0 ? ((hits + correctRejections) / totalSteps) * 100 : 0;
+  // Score: hits earn points, misses and false alarms lose points
+  // Denominator is totalSteps so doing nothing on all steps = 0%
+  const points = hits - misses - falseAlarms;
+  const percentage = totalSteps > 0 ? (points / totalSteps) * 100 : 0;
 
   return {
     modality,
