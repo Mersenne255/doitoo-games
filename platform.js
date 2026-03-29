@@ -167,6 +167,7 @@ const Platform = (function () {
     // Switch views
     gameSelector.classList.add('hidden');
     document.getElementById('tagline').classList.add('hidden');
+    document.getElementById('build-info').classList.add('hidden');
     emptyState.classList.add('hidden');
     errorOverlay.classList.add('hidden');
     gameFrame.classList.remove('hidden');
@@ -245,6 +246,7 @@ const Platform = (function () {
     // Show selector
     gameSelector.classList.remove('hidden');
     document.getElementById('tagline').classList.remove('hidden');
+    document.getElementById('build-info').classList.remove('hidden');
 
     // Clear persisted active game
     try { localStorage.removeItem(ACTIVE_GAME_KEY); } catch {}

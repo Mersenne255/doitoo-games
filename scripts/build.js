@@ -15,6 +15,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -96,3 +97,21 @@ for (const game of registry.games) {
 }
 
 console.log(`\n✅ Platform assembled in dist/`);
+
+// 6. Inject build metadata into index.html
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
+const version = pkg.version || '0.0.0';
+const buildTime = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+let gitHash = 'unknown';
+try {
+  gitHash = execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
+} catch {}
+
+const indexPath = path.join(DIST, 'index.html');
+let html = fs.readFileSync(indexPath, 'utf-8');
+html = html.replace(
+  '<footer id="build-info" class="build-info"></footer>',
+  `<footer id="build-info" class="build-info">v${version} · ${buildTime} · ${gitHash}</footer>`
+);
+fs.writeFileSync(indexPath, html);
+console.log(`  ✓ build info injected (v${version}, ${gitHash})`);
