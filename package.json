@@ -1,25 +1,19 @@
 {
-  "name": "number-memory-game",
-  "version": "1.0.3",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "test": "ng test",
-    "watch": "ng build --watch --configuration development"
-  },
+  "name": "doitoo-games",
+  "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@angular/common": "^21.2.0",
-    "@angular/compiler": "^21.2.0",
-    "@angular/core": "^21.2.0",
-    "@angular/platform-browser": "^21.2.0",
-    "tslib": "^2.3.0"
+  "description": "Doitoo Games — a multi-game launcher platform",
+  "scripts": {
+    "serve": "npx http-server . -p 8080 -c-1",
+    "serve:dist": "npx http-server dist -p 8080 -c-1",
+    "serve:doitoo-numbers": "cd games/doitoo-numbers && npm start",
+    "build:doitoo-numbers": "cd games/doitoo-numbers && npm run build",
+    "build:games": "npm run build:doitoo-numbers",
+    "build:platform": "node scripts/build.js",
+    "build": "npm run build:games && npm run build:platform"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^21.2.0",
-    "@angular/cli": "^21.2.0",
-    "@angular/compiler-cli": "^21.2.0",
-    "typescript": "~5.9.0"
+    "fast-check": "^3.22.0",
+    "http-server": "^14.1.1"
   }
 }

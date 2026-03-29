@@ -1,24 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="icon.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#000000" />
-    <title>Doitoo Memory Game</title>
-  </head>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-                .then((reg) => console.log('✅ Service Worker registered:', reg.scope))
-                .catch((err) => console.error('❌ Service Worker registration failed:', err));
-      });
-    }
-  </script>
-  <body>
-    <app-game></app-game>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doitoo Games</title>
+  <link rel="stylesheet" href="platform.css">
+</head>
+<body>
+  <!-- Navigation bar -->
+  <nav class="nav-bar" role="navigation" aria-label="Platform navigation">
+    <button
+      id="back-button"
+      class="back-button hidden"
+      type="button"
+      aria-label="Back to game selector"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    </button>
+    <span id="nav-title" class="nav-title">Doitoo Games</span>
+    <img id="nav-title-svg" class="nav-title-svg hidden" alt="Game title" />
+  </nav>
+
+  <!-- Main content area -->
+  <main>
+    <!-- Game selector grid -->
+    <section id="game-selector" class="game-selector" aria-label="Available games">
+    </section>
+
+    <!-- Empty state message (hidden by default) -->
+    <div id="empty-state" class="empty-state hidden" role="status">
+      <p>No games available</p>
+    </div>
+
+    <!-- Error overlay (hidden by default) -->
+    <div id="error-overlay" class="error-overlay hidden" role="alert">
+      <div class="error-content">
+        <p id="error-message">Failed to load game.</p>
+        <button id="error-back-button" type="button" class="error-back-button">
+          Back to Games
+        </button>
+      </div>
+    </div>
+
+    <!-- Game iframe (hidden by default) -->
+    <iframe
+      id="game-frame"
+      class="game-frame hidden"
+      sandbox="allow-scripts allow-same-origin"
+      title="Game frame"
+    ></iframe>
+  </main>
+
+  <script src="platform.js"></script>
+</body>
 </html>
