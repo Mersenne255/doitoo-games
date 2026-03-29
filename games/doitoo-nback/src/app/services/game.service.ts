@@ -35,6 +35,7 @@ export class GameService {
   readonly currentStimulus: WritableSignal<Stimulus | null> = signal(null);
   readonly currentMatchFlags: WritableSignal<MatchFlags | null> = signal(null);
   readonly pressedThisStep: WritableSignal<Set<ModalityType>> = signal(new Set());
+  readonly stepFeedback: WritableSignal<Map<ModalityType, ResponseClass>> = signal(new Map());
   readonly sessionResult: WritableSignal<SessionResult | null> = signal(null);
   readonly history: WritableSignal<SessionRecord[]> = signal(this.storage.loadHistory());
 
@@ -76,6 +77,7 @@ export class GameService {
         this.currentStimulus.set(stimulus);
         this.currentMatchFlags.set(matchFlags);
         this.pressedThisStep.set(new Set());
+        this.stepFeedback.set(new Map());
       },
 
       onStepEnd: (index) => {
@@ -91,6 +93,7 @@ export class GameService {
         }
 
         this.stepClassifications.set(index, classifications);
+        this.stepFeedback.set(new Map(classifications));
       },
 
       onSessionEnd: () => {
@@ -199,6 +202,7 @@ export class GameService {
     this.currentStimulus.set(null);
     this.currentMatchFlags.set(null);
     this.pressedThisStep.set(new Set());
+    this.stepFeedback.set(new Map());
     this.sequence = null;
     this.stepClassifications = new Map();
   }

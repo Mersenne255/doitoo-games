@@ -12,7 +12,7 @@ export const SHAPES: ShapeType[] = ['circle', 'square', 'star', 'triangle', 'dia
 
 export const MODALITY_LABELS: Record<ModalityType, string> = {
   spatial: 'Position',
-  auditory: 'Sound',
+  auditory: 'Auditory',
   color: 'Color',
   shape: 'Shape',
 };

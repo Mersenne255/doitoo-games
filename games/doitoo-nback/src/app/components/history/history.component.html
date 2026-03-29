@@ -2,26 +2,44 @@
   <div class="empty">No sessions yet</div>
 } @else {
   <div class="history">
-    <!-- Average Score -->
     @if (averageScore(); as avg) {
       <div class="average">
         Avg (last 10): <span class="avg-value">{{ avg | number:'1.0-0' }}%</span>
       </div>
     }
 
-    <!-- Session List -->
-    <div class="session-list">
-      @for (record of sortedHistory(); track record.timestamp) {
-        <div class="session-row">
-          <span class="date">{{ record.timestamp | date:'short' }}</span>
-          <span class="n-level">N={{ record.nLevel }}</span>
-          <span class="score">{{ record.overallPercentage | number:'1.0-0' }}%</span>
-          <span class="modalities">{{ getModalityLabels(record.activeModalities) }}</span>
-        </div>
-      }
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Score</th>
+            <th>N</th>
+            <th>Grid</th>
+            <th>Steps</th>
+            <th>Int</th>
+            <th>Mod</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of displayRows(); track row.record.timestamp) {
+            <tr>
+              <td class="col-date">
+                <span class="date-line">{{ row.date }}</span>
+                <span class="time-line">{{ row.time }}</span>
+              </td>
+              <td class="col-score">{{ row.score }}</td>
+              <td class="col-cfg">{{ row.nLevel }}</td>
+              <td class="col-cfg">{{ row.grid }}</td>
+              <td class="col-cfg">{{ row.steps }}</td>
+              <td class="col-cfg">{{ row.intensity }}</td>
+              <td class="col-cfg">{{ row.modalities }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
 
-    <!-- Clear Button -->
     <button class="btn-clear" (click)="clearHistory.emit()">Clear History</button>
   </div>
 }

@@ -1,15 +1,17 @@
-<div class="container">
-  <!-- Grid is always visible -->
-  <app-grid
-    [gridSize]="game.config().gridSize"
-    [activeCell]="game.stage() === 'playing' ? game.currentStimulus()?.position ?? null : null"
-    [cellColor]="game.stage() === 'playing' && game.config().activeModalities.includes('color') ? game.currentStimulus()?.color ?? null : null"
-    [cellShape]="game.stage() === 'playing' && game.config().activeModalities.includes('shape') ? game.currentStimulus()?.shape ?? null : null"
-    [fallbackLetter]="game.stage() === 'playing' && game.showAudioFallback() ? game.currentStimulus()?.letter ?? null : null" />
+<!-- Countdown overlay — outside container so position:fixed works -->
+@if (game.stage() === 'countdown') {
+  <app-countdown (done)="game.beginPlaying()" />
+}
 
-  <!-- Countdown overlay -->
-  @if (game.stage() === 'countdown') {
-    <app-countdown (done)="game.beginPlaying()" />
+<div class="container">
+  <!-- Grid only visible during playing and countdown -->
+  @if (game.stage() === 'playing' || game.stage() === 'countdown') {
+    <app-grid
+      [gridSize]="game.config().gridSize"
+      [activeCell]="game.stage() === 'playing' ? game.currentStimulus()?.position ?? null : null"
+      [cellColor]="game.stage() === 'playing' && game.config().activeModalities.includes('color') ? game.currentStimulus()?.color ?? null : null"
+      [cellShape]="game.stage() === 'playing' && game.config().activeModalities.includes('shape') ? game.currentStimulus()?.shape ?? null : null"
+      [fallbackLetter]="game.stage() === 'playing' && game.showAudioFallback() ? game.currentStimulus()?.letter ?? null : null" />
   }
 
   <!-- Playing state: match buttons + progress + abort -->
@@ -19,6 +21,7 @@
       [modalities]="game.config().activeModalities"
       [disabled]="false"
       [pressedThisStep]="game.pressedThisStep()"
+      [feedback]="game.stepFeedback()"
       (matchPress)="game.pressMatch($event)" />
     <button class="abort-btn" (click)="game.abortSession()">Abort</button>
   }
@@ -33,13 +36,13 @@
       (dismissSuggestion)="game.dismissSuggestion()" />
   }
 
-  <!-- Idle state: start button + config + history -->
+  <!-- Idle state: config + start button + history -->
   @if (game.stage() === 'idle') {
-    <button class="start-btn" (click)="game.startSession()">Start Game</button>
     <app-config
       [config]="game.config()"
       [disabled]="false"
       (configChange)="game.updateConfig($event)" />
+    <button class="start-btn" (click)="game.startSession()">Start Game</button>
     <app-history
       [history]="game.history()"
       (clearHistory)="game.clearHistory()" />
