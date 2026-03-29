@@ -31,18 +31,18 @@
   margin: 0;
 }
 
+// Grid ensures all columns are equal width.
+// auto-fill + minmax wraps when items can't fit at their min size.
 .button-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
   gap: 0.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 button {
-  flex: 1;
   background: rgba(255, 255, 255, 0.06);
   color: #94a3b8;
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.5rem;
   cursor: pointer;
@@ -102,10 +102,9 @@ input[type='number'] {
 }
 
 .modality-toggles {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
   gap: 0.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 .modality-btn {
@@ -113,8 +112,7 @@ input[type='number'] {
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.5rem 0.75rem;
-  min-width: 70px;
+  padding: 0.5rem 0.25rem;
   background: rgba(255, 255, 255, 0.06);
   color: #64748b;
   border: 1px solid rgba(255, 255, 255, 0.08);
