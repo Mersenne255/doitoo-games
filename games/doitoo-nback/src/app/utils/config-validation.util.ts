@@ -29,7 +29,7 @@ export function validateConfig(partial: Partial<NBackConfig>): NBackConfig {
   const nLevel = Math.round(clamp(merged.nLevel, 1, 20));
   const stepDuration = roundToHalf(clamp(merged.stepDuration, 1, 6));
   const colorCount = Math.round(clamp(merged.colorCount, 2, 10));
-  const stepCount = Math.round(clamp(merged.stepCount, 20, 50));
+  const stepCount = Math.round(clamp(merged.stepCount, 5, 50));
 
   const intensity: StimulusIntensity = VALID_INTENSITIES.includes(merged.intensity as StimulusIntensity)
     ? (merged.intensity as StimulusIntensity)
@@ -52,7 +52,7 @@ export function validateConfig(partial: Partial<NBackConfig>): NBackConfig {
     colorCount,
     stepCount,
     intensity,
-    activeModalities: activeModalities.length >= 2
+    activeModalities: activeModalities.length >= 1
       ? activeModalities
       : [...DEFAULT_CONFIG.activeModalities],
   };
