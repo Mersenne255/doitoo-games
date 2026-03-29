@@ -5,9 +5,9 @@ const CONFIGS_KEY = 'configs';
 const MODE_KEY = 'mode';
 
 const DEFAULT_CONFIGS: AllConfigs = {
-  sequence: { numberLength: 8, timing: 1000 },
-  reverse:  { numberLength: 8, timing: 1000 },
-  complete: { numberLength: 8, timing: 2000 },
+  sequence: { numberLength: 8, timing: 1 },
+  reverse:  { numberLength: 8, timing: 1 },
+  complete: { numberLength: 8, timing: 2 },
 };
 
 const DEFAULT_MODE: GameMode = 'sequence';
@@ -20,11 +20,18 @@ export class StorageService {
       if (raw === null) return structuredClone(DEFAULT_CONFIGS);
       const parsed = JSON.parse(raw) as Partial<AllConfigs>;
       // merge with defaults so new modes always have values
-      return {
+      const configs: AllConfigs = {
         sequence: { ...DEFAULT_CONFIGS.sequence, ...parsed.sequence },
         reverse:  { ...DEFAULT_CONFIGS.reverse,  ...parsed.reverse },
         complete: { ...DEFAULT_CONFIGS.complete, ...parsed.complete },
       };
+      // migrate old ms values to seconds (any timing >= 50 is likely ms)
+      for (const key of Object.keys(configs) as GameMode[]) {
+        if (configs[key].timing >= 50) {
+          configs[key].timing = configs[key].timing / 1000;
+        }
+      }
+      return configs;
     } catch {
       return structuredClone(DEFAULT_CONFIGS);
     }
