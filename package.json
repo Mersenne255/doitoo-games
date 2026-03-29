@@ -4,15 +4,21 @@
   "private": true,
   "description": "Doitoo Games — a multi-game launcher platform",
   "scripts": {
+    "dev": "concurrently -k -n platform,numbers,nback -c blue,green,magenta \"npm run serve\" \"npm run watch:numbers\" \"npm run watch:nback\"",
     "serve": "npx http-server . -p 8080 -c-1",
     "serve:dist": "npx http-server dist -p 8080 -c-1",
     "serve:numbers": "cd games/doitoo-numbers && npm start",
+    "serve:nback": "cd games/doitoo-nback && npm start",
+    "watch:numbers": "cd games/doitoo-numbers && npm run watch",
+    "watch:nback": "cd games/doitoo-nback && npm run watch",
     "build:numbers": "cd games/doitoo-numbers && npm run build",
-    "build:games": "npm run build:numbers",
+    "build:nback": "cd games/doitoo-nback && npm run build",
+    "build:games": "npm run build:numbers && npm run build:nback",
     "build:platform": "node scripts/build.js",
     "build": "npm run build:games && npm run build:platform"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "fast-check": "^3.22.0",
     "http-server": "^14.1.1"
   }
