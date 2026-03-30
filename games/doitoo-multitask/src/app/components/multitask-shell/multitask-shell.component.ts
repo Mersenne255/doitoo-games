@@ -24,35 +24,45 @@ import { CountdownComponent } from '../countdown/countdown.component';
     }
 
     @if (game.stage() === 'playing' || game.stage() === 'summary') {
-      @if (game.stage() === 'playing') {
-        <div class="difficulty-indicator">Lv {{ game.currentDifficulty() }}</div>
-        <button class="abort-fab" (click)="game.abortSession()" title="Abort (Esc)">
-          ✕
-        </button>
-      }
-      <div class="slot-grid playing" [class.frozen]="game.stage() === 'summary'">
-        @for (slot of game.activeSlots(); track slot.index) {
-          <app-slot [slotIndex]="slot.index" />
+      <div class="playing-container">
+        @if (game.stage() === 'playing') {
+          <div class="difficulty-indicator">Lv {{ game.currentDifficulty() }}</div>
+          <button class="abort-fab" (click)="game.abortSession()" title="Abort (Esc)">
+            ✕
+          </button>
+        }
+        <div class="slot-grid" [class.frozen]="game.stage() === 'summary'">
+          @for (slot of game.activeSlots(); track slot.index) {
+            <app-slot [slotIndex]="slot.index" />
+          }
+        </div>
+        @if (game.stage() === 'summary') {
+          <div class="summary-bar" [class.collapsed]="summaryCollapsed">
+            @if (!summaryCollapsed) {
+              <div class="summary-content">
+                <div class="summary-stats">
+                  <div class="stat">
+                    <span class="stat-label">Time</span>
+                    <span class="stat-value">{{ game.sessionElapsedSec() }}s</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Level</span>
+                    <span class="stat-value">{{ game.maxDifficultyReached() }}</span>
+                  </div>
+                </div>
+                <div class="summary-actions">
+                  <button class="back-btn" (click)="game.dismissSummary()">Back</button>
+                  <button class="again-btn" (click)="game.playAgain()">Again</button>
+                </div>
+              </div>
+            }
+            <button class="summary-toggle" (click)="summaryCollapsed = !summaryCollapsed"
+              [attr.title]="summaryCollapsed ? 'Show results' : 'Hide results'">
+              <span class="toggle-icon" [class.flipped]="summaryCollapsed">‹</span>
+            </button>
+          </div>
         }
       </div>
-      @if (game.stage() === 'summary') {
-        <div class="summary-bar">
-          <div class="summary-stats">
-            <div class="stat">
-              <span class="stat-label">Time</span>
-              <span class="stat-value">{{ game.sessionElapsedSec() }}s</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Level</span>
-              <span class="stat-value">{{ game.maxDifficultyReached() }}</span>
-            </div>
-          </div>
-          <div class="summary-actions">
-            <button class="back-btn" (click)="game.dismissSummary()">Back</button>
-            <button class="again-btn" (click)="game.playAgain()">Again</button>
-          </div>
-        </div>
-      }
     }
   `,
   styles: [`
@@ -70,20 +80,24 @@ import { CountdownComponent } from '../countdown/countdown.component';
       margin: 0 auto;
     }
 
+    .playing-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
     .slot-grid {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
       flex: 1;
-    }
-
-    .slot-grid.playing {
-      position: fixed;
-      inset: 0;
+      min-height: 0;
       padding: 0.5rem;
-      z-index: 1;
       justify-content: center;
       align-items: stretch;
+      overflow: hidden;
     }
 
     @media (min-aspect-ratio: 1/1) {
@@ -142,13 +156,58 @@ import { CountdownComponent } from '../countdown/countdown.component';
       bottom: 0; left: 0; right: 0;
       z-index: 10;
       display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      background: rgba(15, 15, 26, 0.94);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      transition: transform 0.25s ease;
+    }
+
+    .summary-bar.collapsed {
+      transform: translateY(100%);
+    }
+
+    .summary-content {
+      flex: 1;
+      display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0.4rem;
       padding: 0.5rem;
+    }
+
+    .summary-toggle {
       background: rgba(15, 15, 26, 0.94);
+      border: none;
+      border-left: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      color: #64748b;
+      font-size: 1rem;
+      padding: 0 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .summary-bar.collapsed .summary-toggle {
+      position: fixed;
+      bottom: 0; right: 0;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.4rem 0 0 0;
+      padding: 0.3rem 0.5rem;
       backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .summary-toggle:hover { color: #94a3b8; }
+
+    .toggle-icon {
+      display: inline-block;
+      transition: transform 0.25s;
+    }
+    .toggle-icon.flipped {
+      transform: rotate(180deg);
     }
 
     .summary-stats {
@@ -199,4 +258,5 @@ import { CountdownComponent } from '../countdown/countdown.component';
 })
 export class MultitaskShellComponent {
   readonly game = inject(GameService);
+  summaryCollapsed = false;
 }
