@@ -14,16 +14,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: 400px;
-  margin: 0 auto;
+  width: 100%;
   padding: 0.75rem;
   background: rgba(30, 30, 60, 0.6);
   border: 1px solid rgba(99, 102, 241, 0.12);
   border-radius: 0.75rem;
   backdrop-filter: blur(10px);
 }
-
-/* ── Average Score ── */
 
 .average {
   text-align: center;
@@ -39,22 +36,38 @@
   color: #c7d2fe;
 }
 
-/* ── Session List ── */
-
-.session-list {
-  display: flex;
-  flex-direction: column;
-  max-height: 200px;
+.table-wrap {
+  overflow-x: auto;
+  max-height: 220px;
   overflow-y: auto;
 }
 
-.session-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(30, 30, 60, 0.95);
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.6rem;
   padding: 0.3rem 0.25rem;
-  font-size: 0.72rem;
-  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+
+  &:first-child {
+    text-align: left;
+  }
+}
+
+tbody tr {
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 
   &:last-child {
@@ -62,35 +75,39 @@
   }
 }
 
-.date {
+tbody td {
+  padding: 0.25rem 0.25rem;
+  text-align: center;
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.col-date {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
+}
+
+.date-line {
   color: #94a3b8;
-  min-width: 5.5rem;
-}
-
-.n-level {
   font-weight: 600;
-  color: #c7d2fe;
-  min-width: 2.5rem;
 }
 
-.score {
-  font-weight: 700;
-  min-width: 2.5rem;
-  text-align: right;
-}
-
-.modalities {
+.time-line {
   color: #64748b;
-  font-size: 0.65rem;
-  margin-left: auto;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 8rem;
+  font-size: 0.6rem;
 }
 
-/* ── Clear Button ── */
+.col-score {
+  font-weight: 700;
+  color: #c7d2fe;
+}
+
+.col-cfg {
+  color: #94a3b8;
+}
 
 .btn-clear {
   align-self: center;

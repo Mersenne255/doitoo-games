@@ -1,11 +1,9 @@
 import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
-import { TitleCasePipe } from '@angular/common';
-import { NBackConfig, DEFAULT_CONFIG, ModalityType, StimulusIntensity } from '../../models/game.models';
+import { NBackConfig, DEFAULT_CONFIG, ModalityType, StimulusIntensity, MODALITY_LABELS } from '../../models/game.models';
 
 @Component({
   selector: 'app-config',
   standalone: true,
-  imports: [TitleCasePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './config.component.html',
   styleUrl: './config.component.scss',
@@ -76,5 +74,9 @@ export class ConfigComponent {
 
   isModalityActive(modality: ModalityType): boolean {
     return this.config().activeModalities.includes(modality);
+  }
+
+  modalityLabel(modality: ModalityType): string {
+    return MODALITY_LABELS[modality];
   }
 }

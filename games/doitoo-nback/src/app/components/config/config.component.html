@@ -42,7 +42,7 @@
           [disabled]="!canUncheck() && isModalityActive($any(mod))"
           (change)="onModalityToggle($any(mod), $event)"
         />
-        <span>{{ mod | titlecase }}</span>
+        <span>{{ modalityLabel($any(mod)) }}</span>
       </label>
     }
   </div>
