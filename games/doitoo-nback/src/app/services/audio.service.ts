@@ -16,9 +16,17 @@ export class AudioService {
     try {
       speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(letter);
-      utterance.rate = 1.2;
-      utterance.pitch = 1;
+      utterance.rate = 0.8;
+      utterance.pitch = 1.1;
       utterance.volume = 1;
+
+      // Prefer a clear English voice if available
+      const voices = speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.lang.startsWith('en') && v.localService) ?? voices.find(v => v.lang.startsWith('en'));
+      if (preferred) {
+        utterance.voice = preferred;
+      }
+
       speechSynthesis.speak(utterance);
     } catch {
       // Switch to visual fallback for remainder of session
