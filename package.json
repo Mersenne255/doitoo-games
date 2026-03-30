@@ -13,7 +13,8 @@
     "watch:nback": "cd games/doitoo-nback && npm run watch",
     "build:numbers": "cd games/doitoo-numbers && npm run build",
     "build:nback": "cd games/doitoo-nback && npm run build",
-    "build:games": "npm run build:numbers && npm run build:nback",
+    "build:mtask": "cd games/doitoo-multitask && npm run build",
+    "build:games": "npm run build:numbers && npm run build:nback && npm run build:mtask",
     "build:platform": "node scripts/build.js",
     "build": "npm run build:games && npm run build:platform"
   },
