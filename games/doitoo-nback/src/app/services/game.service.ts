@@ -94,6 +94,10 @@ export class GameService {
 
         this.stepClassifications.set(index, classifications);
         this.stepFeedback.set(new Map(classifications));
+
+        // Clear stimulus during the gap so there's a visible blink between steps
+        this.currentStimulus.set(null);
+        this.currentMatchFlags.set(null);
       },
 
       onSessionEnd: () => {

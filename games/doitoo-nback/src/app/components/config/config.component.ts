@@ -16,7 +16,7 @@ export class ConfigComponent {
 
   isColorActive = computed(() => this.config().activeModalities.includes('color'));
 
-  canUncheck = computed(() => this.config().activeModalities.length > 2);
+  canUncheck = computed(() => this.config().activeModalities.length > 1);
 
   onGridSize(size: number): void {
     this.configChange.emit({ gridSize: size });
@@ -41,7 +41,7 @@ export class ConfigComponent {
   onStepCount(event: Event): void {
     const el = event.target as HTMLInputElement;
     if (el.value === '') return;
-    const num = Math.max(20, Math.min(+el.value, 50));
+    const num = Math.max(5, Math.min(+el.value, 50));
     el.value = String(num);
     this.configChange.emit({ stepCount: num });
   }
@@ -63,7 +63,7 @@ export class ConfigComponent {
         ConfigComponent.CANONICAL_ORDER.indexOf(a) - ConfigComponent.CANONICAL_ORDER.indexOf(b)
       );
       this.configChange.emit({ activeModalities: updated });
-    } else if (current.length > 2) {
+    } else if (current.length > 1) {
       this.configChange.emit({ activeModalities: current.filter(m => m !== modality) });
     } else {
       (event.target as HTMLInputElement).checked = true;

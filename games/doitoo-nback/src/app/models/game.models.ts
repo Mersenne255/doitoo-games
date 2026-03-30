@@ -30,7 +30,7 @@ export interface NBackConfig {
   stepDuration: number;                // 1–6 seconds (0.5 increments)
   activeModalities: ModalityType[];    // minimum 2
   colorCount: number;                  // 2–10
-  stepCount: number;                   // 20–50
+  stepCount: number;                   // 5–50
   intensity: StimulusIntensity;
 }
 
