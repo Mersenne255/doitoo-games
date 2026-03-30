@@ -7,6 +7,7 @@ import { ConfigComponent } from './components/config/config.component';
 import { SummaryComponent } from './components/summary/summary.component';
 import { HistoryComponent } from './components/history/history.component';
 import { CountdownComponent } from './components/countdown/countdown.component';
+import { ModalityType, MODALITY_KEYS } from './models/game.models';
 import packageJson from '../../package.json';
 
 @Component({
@@ -34,12 +35,13 @@ export class AppComponent {
     const stage = this.game.stage();
 
     if (stage === 'playing') {
-      const keyMap: Record<string, number> = { a: 0, s: 1, d: 2, f: 3 };
-      const index = keyMap[event.key.toLowerCase()];
-      if (index !== undefined) {
-        const modalities = this.game.config().activeModalities;
-        if (index < modalities.length) {
-          this.game.pressMatch(modalities[index]);
+      // Fixed key-to-modality mapping (doesn't change with selection)
+      const key = event.key.toLowerCase();
+      const keyToModality = Object.entries(MODALITY_KEYS).find(([, k]) => k === key);
+      if (keyToModality) {
+        const modality = keyToModality[0] as ModalityType;
+        if (this.game.config().activeModalities.includes(modality)) {
+          this.game.pressMatch(modality);
         }
       }
       if (event.key === 'Escape') {

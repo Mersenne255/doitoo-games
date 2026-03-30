@@ -130,6 +130,12 @@ input[type='number'] {
     }
   }
 
+  .mod-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
   span {
     user-select: none;
   }

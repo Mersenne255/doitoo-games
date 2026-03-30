@@ -50,16 +50,22 @@ export class ConfigComponent {
     this.configChange.emit({ intensity });
   }
 
+  private static readonly CANONICAL_ORDER: ModalityType[] = ['spatial', 'shape', 'color', 'auditory'];
+
   onModalityToggle(modality: ModalityType, event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
     const current = this.config().activeModalities;
 
     if (checked) {
-      this.configChange.emit({ activeModalities: [...current, modality] });
+      const updated = [...current, modality];
+      // Sort by canonical order
+      updated.sort((a, b) =>
+        ConfigComponent.CANONICAL_ORDER.indexOf(a) - ConfigComponent.CANONICAL_ORDER.indexOf(b)
+      );
+      this.configChange.emit({ activeModalities: updated });
     } else if (current.length > 2) {
       this.configChange.emit({ activeModalities: current.filter(m => m !== modality) });
     } else {
-      // Prevent unchecking — re-check the box
       (event.target as HTMLInputElement).checked = true;
     }
   }
@@ -72,8 +78,19 @@ export class ConfigComponent {
     this.configChange.emit({ colorCount: num });
   }
 
+  readonly modalityIcons: Record<ModalityType, string> = {
+    spatial: 'assets/icons/position.svg',
+    auditory: 'assets/icons/auditory.svg',
+    color: 'assets/icons/color.svg',
+    shape: 'assets/icons/shape.svg',
+  };
+
   isModalityActive(modality: ModalityType): boolean {
     return this.config().activeModalities.includes(modality);
+  }
+
+  modalityIcon(modality: ModalityType): string {
+    return this.modalityIcons[modality];
   }
 
   modalityLabel(modality: ModalityType): string {

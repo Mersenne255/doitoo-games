@@ -34,7 +34,7 @@
   <!-- Active Modalities -->
   <label class="section-label">Modalities</label>
   <div class="modality-toggles">
-    @for (mod of ['spatial', 'auditory', 'color', 'shape']; track mod) {
+    @for (mod of ['spatial', 'shape', 'color', 'auditory']; track mod) {
       <label class="checkbox-label">
         <input
           type="checkbox"
@@ -42,18 +42,9 @@
           [disabled]="!canUncheck() && isModalityActive($any(mod))"
           (change)="onModalityToggle($any(mod), $event)"
         />
+        <img class="mod-icon" [src]="modalityIcon($any(mod))" [alt]="modalityLabel($any(mod))" />
         <span>{{ modalityLabel($any(mod)) }}</span>
       </label>
     }
   </div>
-
-  <!-- Color Count (only when color modality is active) -->
-  @if (isColorActive()) {
-    <div class="fields">
-      <label>
-        Colors
-        <input type="number" min="2" max="10" [value]="config().colorCount" (change)="onColorCount($event)" />
-      </label>
-    </div>
-  }
 </div>

@@ -9,8 +9,9 @@
       [disabled]="disabled() || pressedThisStep().has(modality)"
       (click)="matchPress.emit(modality)"
     >
+      <img class="btn-icon" [src]="icons[modality]" [alt]="labels[modality]" />
       <span class="label">{{ labels[modality] }}</span>
-      <span class="key-hint">{{ keys[i] }}</span>
+      <span class="key-hint">{{ keys[modality] }}</span>
     </button>
   }
 </div>

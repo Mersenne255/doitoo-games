@@ -17,11 +17,11 @@ export const MODALITY_LABELS: Record<ModalityType, string> = {
   shape: 'Shape',
 };
 
-export const MODALITY_KEYS: Record<number, string> = {
-  0: 'a',
-  1: 's',
-  2: 'd',
-  3: 'f',
+export const MODALITY_KEYS: Record<ModalityType, string> = {
+  spatial: 'a',
+  shape: 's',
+  color: 'd',
+  auditory: 'f',
 };
 
 export interface NBackConfig {
@@ -39,7 +39,7 @@ export const DEFAULT_CONFIG: NBackConfig = {
   nLevel: 2,
   stepDuration: 3,
   activeModalities: ['spatial', 'auditory'],
-  colorCount: 4,
+  colorCount: 6,
   stepCount: 20,
   intensity: 'medium',
 };

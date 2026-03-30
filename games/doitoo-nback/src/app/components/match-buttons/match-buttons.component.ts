@@ -23,6 +23,12 @@ export class MatchButtonsComponent {
 
   readonly labels = MODALITY_LABELS;
   readonly keys = MODALITY_KEYS;
+  readonly icons: Record<ModalityType, string> = {
+    spatial: 'assets/icons/position.svg',
+    auditory: 'assets/icons/auditory.svg',
+    color: 'assets/icons/color.svg',
+    shape: 'assets/icons/shape.svg',
+  };
 
   getFeedbackClass(modality: ModalityType): string {
     const fb = this.feedback().get(modality);

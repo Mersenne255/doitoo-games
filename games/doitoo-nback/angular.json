@@ -22,7 +22,11 @@
               { "glob": "favicon.svg", "input": "icons", "output": "/" },
               { "glob": "icon.png", "input": "icons", "output": "/" },
               { "glob": "icon-192.png", "input": "icons", "output": "/" },
-              { "glob": "icon-512.png", "input": "icons", "output": "/" }
+              { "glob": "icon-512.png", "input": "icons", "output": "/" },
+              { "glob": "position.svg", "input": "icons", "output": "/assets/icons" },
+              { "glob": "auditory.svg", "input": "icons", "output": "/assets/icons" },
+              { "glob": "color.svg", "input": "icons", "output": "/assets/icons" },
+              { "glob": "shape.svg", "input": "icons", "output": "/assets/icons" }
             ],
             "styles": ["src/styles.css"],
             "scripts": [],
