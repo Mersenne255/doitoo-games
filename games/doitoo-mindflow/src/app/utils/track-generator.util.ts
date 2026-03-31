@@ -170,7 +170,7 @@ function straightWalk(
 }
 
 
-// ── Core generation algorithm ──
+// ── Core generation algorithm (iterative growth) ──
 
 function attemptGeneration(
   stationCount: number,
@@ -179,6 +179,7 @@ function attemptGeneration(
   rng: () => number,
 ): GridNode | null {
   const occupied = new Set<string>();
+  const { trunkLenMin, trunkLenMax, branchLenMin, branchLenMax, threeWayProbability } = TRACK_GENERATION_DEFAULTS;
 
   // 1. Place spawn point at top-center of grid edge
   const spawnCol = Math.floor(gridSize.cols / 2);
@@ -192,198 +193,167 @@ function attemptGeneration(
     children: [],
   };
 
-  // 2. Grow trunk: random walk from spawn to first junction
-  const { trunkLenMin, trunkLenMax } = TRACK_GENERATION_DEFAULTS;
+  // 2. Grow trunk downward from spawn
   const trunkLen = trunkLenMin + Math.floor(rng() * (trunkLenMax - trunkLenMin + 1));
   const trunkCells = straightWalk(spawnCell, 'down', trunkLen, gridSize, occupied);
   if (!trunkCells || trunkCells.length < 2) return null;
 
-  const trunkEndCell = trunkCells[trunkCells.length - 1];
+  let junctionCounter = 0;
+  let stationCounter = 0;
 
   // 3. Place first junction at end of trunk
-  let junctionCounter = 0;
-  let stationsPlaced = 0;
-
   const firstJunction: GridNode = {
-    cell: trunkEndCell,
+    cell: trunkCells[trunkCells.length - 1],
     type: 'junction',
     id: `junction-${junctionCounter++}`,
     children: [],
   };
+  spawnNode.children.push({ cells: trunkCells, child: firstJunction });
 
-  spawnNode.children.push({
-    cells: trunkCells,
-    child: firstJunction,
-  });
-
-  // 4. Recursive branching
-  const stationsNeeded = stationCount;
-
-  function growBranches(
-    junctionNode: GridNode,
-    remainingStations: number,
-    depth: number,
-  ): number {
-    if (remainingStations <= 0) return 0;
-
-    const neighbors = getUnoccupiedNeighbors(junctionNode.cell, gridSize, occupied);
-    if (neighbors.length === 0) return 0;
-
-    // Determine number of branches
-    let numBranches: number;
-    if (allowThreeWay && neighbors.length >= 3 && remainingStations >= 3 && rng() < TRACK_GENERATION_DEFAULTS.threeWayProbability) {
-      numBranches = 3;
-    } else {
-      numBranches = Math.min(2, neighbors.length, remainingStations);
+  // Helper: try to walk from a cell, trying progressively shorter lengths
+  function tryWalk(from: GridCell, dir: Direction, preferredLen: number): GridCell[] | null {
+    for (let len = preferredLen; len >= 2; len--) {
+      const cells = straightWalk(from, dir, len, gridSize, occupied);
+      if (cells && cells.length >= 2) return cells;
     }
+    return null;
+  }
 
-    if (numBranches < 1) return 0;
-
-    // Pick directions with quadrant-aware weighting
+  // Helper: pick a direction with quadrant bias from available neighbors
+  function pickDirection(from: GridCell): { dir: Direction; cell: GridCell } | null {
+    const neighbors = getUnoccupiedNeighbors(from, gridSize, occupied);
+    if (neighbors.length === 0) return null;
     const quadrantCounts = computeQuadrantCounts(occupied, gridSize);
-    const candidateDirs = neighbors.map(n => n.dir);
-    const candidateWeights = candidateDirs.map(dir =>
-      directionQuadrantBias(junctionNode.cell, dir, gridSize, quadrantCounts),
-    );
+    const dirs = neighbors.map(n => n.dir);
+    const weights = dirs.map(d => directionQuadrantBias(from, d, gridSize, quadrantCounts));
+    const dir = weightedRandomPick(dirs, weights, rng);
+    return neighbors.find(n => n.dir === dir) ?? null;
+  }
 
-    const chosenDirs: Direction[] = [];
-    const availableDirs = [...candidateDirs];
-    const availableWeights = [...candidateWeights];
+  // Helper: add a branch from a junction, returning the leaf node
+  function addBranch(junction: GridNode): GridNode | null {
+    const neighbor = pickDirection(junction.cell);
+    if (!neighbor) return null;
 
-    for (let b = 0; b < numBranches && availableDirs.length > 0; b++) {
-      const dir = weightedRandomPick(availableDirs, availableWeights, rng);
-      chosenDirs.push(dir);
-      const idx = availableDirs.indexOf(dir);
-      availableDirs.splice(idx, 1);
-      availableWeights.splice(idx, 1);
-    }
-
-    // Distribute stations among branches
-    const stationsPerBranch: number[] = [];
-    let leftover = remainingStations;
-    for (let b = 0; b < chosenDirs.length; b++) {
-      if (b === chosenDirs.length - 1) {
-        stationsPerBranch.push(leftover);
-      } else {
-        const share = Math.max(1, Math.floor(leftover / (chosenDirs.length - b)));
-        stationsPerBranch.push(share);
-        leftover -= share;
+    const walkLen = branchLenMin + Math.floor(rng() * (branchLenMax - branchLenMin + 1));
+    const cells = tryWalk(junction.cell, neighbor.dir, walkLen);
+    if (!cells) {
+      // Last resort: single cell neighbor
+      if (!occupied.has(cellKey(neighbor.cell))) {
+        occupied.add(cellKey(neighbor.cell));
+        const station: GridNode = {
+          cell: neighbor.cell,
+          type: 'station',
+          id: `station-${stationCounter++}`,
+          children: [],
+        };
+        junction.children.push({ cells: [junction.cell, neighbor.cell], child: station });
+        return station;
       }
+      return null;
     }
 
-    let totalPlaced = 0;
+    const endCell = cells[cells.length - 1];
+    const station: GridNode = {
+      cell: endCell,
+      type: 'station',
+      id: `station-${stationCounter++}`,
+      children: [],
+    };
+    junction.children.push({ cells, child: station });
+    return station;
+  }
 
-    for (let b = 0; b < chosenDirs.length; b++) {
-      const dir = chosenDirs[b];
-      const branchStations = stationsPerBranch[b];
-      const { branchLenMin, branchLenMax } = TRACK_GENERATION_DEFAULTS;
-      const walkLen = branchLenMin + Math.floor(rng() * (branchLenMax - branchLenMin + 1));
+  // 4. Seed the tree: add 2 initial branches from the first junction
+  const branch1 = addBranch(firstJunction);
+  const branch2 = addBranch(firstJunction);
+  if (!branch1 || !branch2) return null;
+  if (firstJunction.children.length < 2) return null;
 
-      const walkCells = straightWalk(junctionNode.cell, dir, walkLen, gridSize, occupied);
-      if (!walkCells || walkCells.length < 2) {
-        // Walk failed — try to place a station at the junction's neighbor if possible
-        const fallbackNeighbors = getUnoccupiedNeighbors(junctionNode.cell, gridSize, occupied);
-        if (fallbackNeighbors.length > 0) {
-          const fb = fallbackNeighbors[Math.floor(rng() * fallbackNeighbors.length)];
-          occupied.add(cellKey(fb.cell));
-          const stationNode: GridNode = {
-            cell: fb.cell,
-            type: 'station',
-            id: `station-${stationsPlaced++}`,
-            children: [],
-          };
-          junctionNode.children.push({
-            cells: [junctionNode.cell, fb.cell],
-            child: stationNode,
-          });
-          totalPlaced++;
+  // 5. Iteratively grow: convert leaf stations into junctions and add more branches
+  //    until we reach the target station count.
+  //    We collect all station leaf nodes and pick one to "promote" to a junction.
+  function collectStationLeaves(node: GridNode): GridNode[] {
+    const leaves: GridNode[] = [];
+    if (node.type === 'station') {
+      leaves.push(node);
+    }
+    for (const edge of node.children) {
+      leaves.push(...collectStationLeaves(edge.child));
+    }
+    return leaves;
+  }
+
+  let safetyCounter = 0;
+  const maxIterations = stationCount * 10; // prevent infinite loops
+
+  while (stationCounter < stationCount && safetyCounter++ < maxIterations) {
+    const leaves = collectStationLeaves(spawnNode);
+    if (leaves.length === 0) break;
+
+    // Shuffle leaves and try to promote one that has available neighbors
+    const shuffled = [...leaves].sort(() => rng() - 0.5);
+    let promoted = false;
+
+    for (const leaf of shuffled) {
+      const neighbors = getUnoccupiedNeighbors(leaf.cell, gridSize, occupied);
+      if (neighbors.length < 2) continue; // Need at least 2 directions for a junction
+
+      // Promote this station to a junction
+      leaf.type = 'junction';
+      leaf.id = `junction-${junctionCounter++}`;
+      stationCounter--; // We lost a station by converting it
+
+      // Add 2 branches (or 3 if allowed)
+      let branchCount = 2;
+      if (allowThreeWay && neighbors.length >= 3 && (stationCount - stationCounter) >= 3 && rng() < threeWayProbability) {
+        branchCount = 3;
+      }
+
+      let added = 0;
+      for (let i = 0; i < branchCount; i++) {
+        const result = addBranch(leaf);
+        if (result) added++;
+      }
+
+      if (added >= 2) {
+        promoted = true;
+        break;
+      } else if (added === 1) {
+        // Need at least 2 children for a valid junction — try one more
+        const extra = addBranch(leaf);
+        if (extra) {
+          promoted = true;
+          break;
+        } else {
+          // Can't make a valid junction — revert to station
+          leaf.type = 'station';
+          leaf.id = `station-${stationCounter++}`;
+          junctionCounter--;
+          // Remove the single child we added
+          if (leaf.children.length > 0) {
+            leaf.children.pop();
+            stationCounter--;
+          }
+          continue;
         }
+      } else {
+        // No branches added — revert
+        leaf.type = 'station';
+        leaf.id = `station-${stationCounter++}`;
+        junctionCounter--;
         continue;
       }
-
-      const walkEndCell = walkCells[walkCells.length - 1];
-
-      if (branchStations <= 1 || depth > TRACK_GENERATION_DEFAULTS.maxBranchDepth) {
-        // Place station at end of walk
-        const stationNode: GridNode = {
-          cell: walkEndCell,
-          type: 'station',
-          id: `station-${stationsPlaced++}`,
-          children: [],
-        };
-        junctionNode.children.push({
-          cells: walkCells,
-          child: stationNode,
-        });
-        totalPlaced++;
-      } else {
-        // Place junction at end of walk and recurse
-        const newJunction: GridNode = {
-          cell: walkEndCell,
-          type: 'junction',
-          id: `junction-${junctionCounter++}`,
-          children: [],
-        };
-        junctionNode.children.push({
-          cells: walkCells,
-          child: newJunction,
-        });
-
-        const placed = growBranches(newJunction, branchStations, depth + 1);
-        totalPlaced += placed;
-
-        // If junction ended up with fewer than 2 children, fix it
-        if (newJunction.children.length < 2) {
-          if (newJunction.children.length === 0) {
-            // No children at all — convert junction to station
-            newJunction.type = 'station';
-            newJunction.id = `station-${stationsPlaced++}`;
-            totalPlaced++;
-          } else {
-            // Only 1 child — need to add another branch or collapse
-            const extraNeighbors = getUnoccupiedNeighbors(newJunction.cell, gridSize, occupied);
-            if (extraNeighbors.length > 0) {
-              const en = extraNeighbors[Math.floor(rng() * extraNeighbors.length)];
-              occupied.add(cellKey(en.cell));
-              const extraStation: GridNode = {
-                cell: en.cell,
-                type: 'station',
-                id: `station-${stationsPlaced++}`,
-                children: [],
-              };
-              newJunction.children.push({
-                cells: [newJunction.cell, en.cell],
-                child: extraStation,
-              });
-              totalPlaced++;
-            } else {
-              // Can't add second branch — fail this junction placement
-              // Convert junction to station and lose the subtree
-              // (the retry logic will handle generating a new layout)
-              newJunction.type = 'station';
-              newJunction.id = `station-${stationsPlaced++}`;
-              // Remove the single child edge (its cells are already occupied but that's OK for this attempt)
-              newJunction.children = [];
-              totalPlaced++;
-            }
-          }
-        }
-      }
     }
 
-    return totalPlaced;
+    if (!promoted) break; // No leaf could be promoted — we're stuck
   }
 
-  const placed = growBranches(firstJunction, stationsNeeded, 0);
+  // Ensure first junction still has at least 2 children
+  if (firstJunction.children.length < 2) return null;
 
-  // Ensure first junction has at least 2 children
-  if (firstJunction.children.length < 2) {
-    return null; // Failed attempt
-  }
-
-  if (placed < stationsNeeded) {
-    return null; // Couldn't place all stations
-  }
+  // Reject if we didn't place the exact requested number of stations
+  if (stationCounter < stationCount) return null;
 
   return spawnNode;
 }
@@ -403,7 +373,8 @@ function convertTreeToBoardLayout(
   const paths: PathSegment[] = [];
   let pathCounter = 0;
 
-  // Collect all station nodes to assign identities
+  // Collect all station nodes and reassign clean sequential IDs
+  // to avoid gaps/duplicates from the promote/revert cycle
   const stationNodes: GridNode[] = [];
   function collectStations(node: GridNode): void {
     if (node.type === 'station') {
@@ -414,6 +385,11 @@ function convertTreeToBoardLayout(
     }
   }
   collectStations(root);
+
+  // Reassign station IDs sequentially so identity mapping is clean
+  stationNodes.forEach((sn, i) => {
+    sn.id = `station-${i}`;
+  });
 
   const identities = generateStationIdentities(stationNodes.length);
   const identityMap = new Map<string, StationIdentity>();
@@ -547,40 +523,52 @@ export function generateTrackLayout(config: TrackGeneratorConfig): TrackGenerato
     ? Math.min(minCoverage, TRACK_GENERATION_DEFAULTS.spatialCoverageSmall)
     : minCoverage;
 
-  // Retry loop
-  const MAX_RETRIES = TRACK_GENERATION_DEFAULTS.maxRetries;
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const tree = attemptGeneration(trainCount, config.gridSize, allowThreeWay, rng);
-    if (!tree) continue;
+  // Time-based retry: try for retryTimeBudgetMs at current station count,
+  // then reduce by 1 and try again, until we reach 2.
+  const timeBudget = TRACK_GENERATION_DEFAULTS.retryTimeBudgetMs;
+  let currentTarget = trainCount;
 
-    // Collect node cells (spawn, junctions, stations) for spatial distribution check
-    const nodeCells: GridCell[] = [];
-    function collectNodeCells(node: GridNode): void {
-      nodeCells.push(node.cell);
-      for (const edge of node.children) {
-        collectNodeCells(edge.child);
+  while (currentTarget >= 2) {
+    const deadline = performance.now() + timeBudget;
+
+    while (performance.now() < deadline) {
+      const tree = attemptGeneration(currentTarget, config.gridSize, allowThreeWay, rng);
+      if (!tree) continue;
+
+      // Collect node cells for spatial distribution check
+      const nodeCells: GridCell[] = [];
+      function collectNodeCells(node: GridNode): void {
+        nodeCells.push(node.cell);
+        for (const edge of node.children) {
+          collectNodeCells(edge.child);
+        }
       }
+      collectNodeCells(tree);
+
+      if (!checkSpatialDistribution(nodeCells, config.gridSize, effectiveCoverage)) {
+        continue;
+      }
+
+      const layout = convertTreeToBoardLayout(
+        tree,
+        config.gridSize,
+        config.screenWidth,
+        config.screenHeight,
+      );
+
+      return {
+        layout,
+        actualStationCount: layout.stations.length,
+        capped: capped || currentTarget < trainCount,
+      };
     }
-    collectNodeCells(tree);
 
-    if (!checkSpatialDistribution(nodeCells, config.gridSize, effectiveCoverage)) {
-      continue; // Poor distribution, retry
+    // Time expired for this target — reduce by 1
+    currentTarget--;
+    if (currentTarget < trainCount) {
+      console.warn(`Could not generate ${currentTarget + 1} stations in ${timeBudget}ms, trying ${currentTarget}`);
     }
-
-    // Convert to BoardLayout
-    const layout = convertTreeToBoardLayout(
-      tree,
-      config.gridSize,
-      config.screenWidth,
-      config.screenHeight,
-    );
-
-    return {
-      layout,
-      actualStationCount: layout.stations.length,
-      capped,
-    };
   }
 
-  throw new Error('Failed to generate layout after 10 retries');
+  throw new Error('Failed to generate layout: could not fit even 2 stations');
 }

@@ -5,6 +5,10 @@
   "description": "Doitoo Games — a multi-game launcher platform",
   "scripts": {
     "dev": "node scripts/dev.js",
+    "dev:mindflow": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-mindflow\"",
+    "dev:multitask": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-multitask\"",
+    "dev:nback": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-nback\"",
+    "dev:numbers": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-numbers\"",
     "serve": "npx http-server . -p 8080 -c-1",
     "serve:dist": "npx http-server dist -p 8080 -c-1",
     "build:games": "node scripts/build-games.js",
