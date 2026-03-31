@@ -516,44 +516,32 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
     ctx.font = '16px Inter, sans-serif';
     ctx.textBaseline = 'top';
-
-    // Helper: draw text with a dark pill background behind it
-    const drawBadge = (text: string, x: number, y: number, color: string): number => {
-      const metrics = ctx.measureText(text);
-      const padX = 6;
-      const padY = 3;
-      const w = metrics.width + padX * 2;
-      const h = 20 + padY * 2;
-      // Dark background pill
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      ctx.beginPath();
-      ctx.roundRect(x - padX, y - padY, w, h, 6);
-      ctx.fill();
-      // Text
-      ctx.fillStyle = color;
-      ctx.fillText(text, x, y);
-      return w;
-    };
-
     ctx.textAlign = 'left';
-    let curX = 16;
-    const y = 16;
 
-    curX += drawBadge(`${scoring.correctDeliveries}`, curX, y, '#86efac');
-    curX += 4; // gap
+    const x = 12;
+    const y1 = 10;
 
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillText('/', curX, y);
-    curX += ctx.measureText('/').width + 4;
+    // Line 1: green (correct)  red (incorrect)
+    ctx.fillStyle = '#86efac';
+    const correctText = `${scoring.correctDeliveries}`;
+    ctx.fillText(correctText, x, y1);
+    const correctWidth = ctx.measureText(correctText).width;
 
-    curX += drawBadge(`${scoring.misdeliveries}`, curX, y, '#fca5a5');
-    curX += 4;
+    const gap = 12;
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillText(`${scoring.misdeliveries}`, x + correctWidth + gap, y1);
+    const incorrectWidth = ctx.measureText(`${scoring.misdeliveries}`).width;
 
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillText('/', curX, y);
-    curX += ctx.measureText('/').width + 4;
+    // Line 2: remaining count, centered under the two numbers above
+    const totalTopWidth = correctWidth + gap + incorrectWidth;
+    const centerX = x + totalTopWidth / 2;
+    ctx.font = '13px Inter, sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${remaining}`, centerX, y1 + 20);
 
-    drawBadge(`${remaining}`, curX, y, '#94a3b8');
+    // Reset
+    ctx.textAlign = 'left';
   }
 
   // ── Path interpolation ──

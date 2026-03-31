@@ -179,7 +179,21 @@ function attemptGeneration(
   rng: () => number,
 ): GridNode | null {
   const occupied = new Set<string>();
-  const { trunkLenMin, trunkLenMax, branchLenMin, branchLenMax, threeWayProbability } = TRACK_GENERATION_DEFAULTS;
+  const { trunkLenMin, trunkLenMax, branchLenMin, branchLenMax, threeWayProbability,
+    reservedTopLeftCols, reservedTopLeftRows, reservedTopRightCols, reservedTopRightRows,
+  } = TRACK_GENERATION_DEFAULTS;
+
+  // Pre-mark reserved corner zones as occupied (HUD + cancel button)
+  for (let r = 0; r < reservedTopLeftRows; r++) {
+    for (let c = 0; c < reservedTopLeftCols; c++) {
+      occupied.add(cellKey({ col: c, row: r }));
+    }
+  }
+  for (let r = 0; r < reservedTopRightRows; r++) {
+    for (let c = gridSize.cols - reservedTopRightCols; c < gridSize.cols; c++) {
+      occupied.add(cellKey({ col: c, row: r }));
+    }
+  }
 
   // 1. Place spawn point at top-center of grid edge
   const spawnCol = Math.floor(gridSize.cols / 2);

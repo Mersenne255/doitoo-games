@@ -32,6 +32,13 @@ export const TRACK_GENERATION_DEFAULTS = {
   spatialCoverageDefault: 0.6,
   /** Relaxed spatial coverage ratio for layouts with ≤3 stations (0–1). */
   spatialCoverageSmall: 0.5,
+
+  /** Number of grid cells to reserve in the top-left corner (for HUD numbers). */
+  reservedTopLeftCols: 1,
+  reservedTopLeftRows: 1,
+  /** Number of grid cells to reserve in the top-right corner (for cancel button). */
+  reservedTopRightCols: 1,
+  reservedTopRightRows: 1,
 };
 
 export type TrackGenerationDefaults = typeof TRACK_GENERATION_DEFAULTS;
