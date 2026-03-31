@@ -52,8 +52,8 @@ function copyDirSync(src, dest) {
 console.log('🔨 Assembling platform dist...');
 cleanDir(DIST);
 
-// 1. Platform root files
-for (const file of ['index.html', 'platform.js', 'platform.css']) {
+// 1. Platform root files (including PWA files)
+for (const file of ['index.html', 'platform.js', 'platform.css', 'manifest.json', 'sw.js']) {
   const src = path.join(ROOT, file);
   if (fs.existsSync(src)) {
     copyFileSync(src, path.join(DIST, file));
@@ -68,14 +68,21 @@ if (fs.existsSync(sharedSrc)) {
   console.log('  ✓ shared/');
 }
 
-// 3. Game registry
+// 3. PWA icons
+const iconsSrc = path.join(ROOT, 'icons');
+if (fs.existsSync(iconsSrc)) {
+  copyDirSync(iconsSrc, path.join(DIST, 'icons'));
+  console.log('  ✓ icons/');
+}
+
+// 4. Game registry
 const registrySrc = path.join(ROOT, 'games', 'registry.json');
 if (fs.existsSync(registrySrc)) {
   copyFileSync(registrySrc, path.join(DIST, 'games', 'registry.json'));
   console.log('  ✓ games/registry.json');
 }
 
-// 4. Each game's built output
+// 5. Each game's built output
 const registry = JSON.parse(fs.readFileSync(registrySrc, 'utf-8'));
 for (const game of registry.games) {
   const gameDistSrc = path.join(ROOT, 'games', game.id, 'dist');

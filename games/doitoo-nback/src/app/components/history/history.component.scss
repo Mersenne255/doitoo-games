@@ -38,8 +38,6 @@
 
 .table-wrap {
   overflow-x: auto;
-  max-height: 220px;
-  overflow-y: auto;
 }
 
 table {
@@ -50,8 +48,6 @@ table {
 }
 
 thead th {
-  position: sticky;
-  top: 0;
   background: rgba(30, 30, 60, 0.95);
   color: #64748b;
   font-weight: 600;
