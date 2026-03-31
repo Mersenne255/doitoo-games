@@ -195,9 +195,39 @@ function attemptGeneration(
     }
   }
 
-  // 1. Place spawn point at top-center of grid edge
-  const spawnCol = Math.floor(gridSize.cols / 2);
-  const spawnCell: GridCell = { col: spawnCol, row: 0 };
+  // 1. Pick a random edge cell for the spawn point
+  type EdgeInfo = { cell: GridCell; inwardDir: Direction };
+  const edgeCandidates: EdgeInfo[] = [];
+
+  // Top edge → grows down
+  for (let c = 0; c < gridSize.cols; c++) {
+    if (!occupied.has(cellKey({ col: c, row: 0 }))) {
+      edgeCandidates.push({ cell: { col: c, row: 0 }, inwardDir: 'down' });
+    }
+  }
+  // Bottom edge → grows up
+  for (let c = 0; c < gridSize.cols; c++) {
+    if (!occupied.has(cellKey({ col: c, row: gridSize.rows - 1 }))) {
+      edgeCandidates.push({ cell: { col: c, row: gridSize.rows - 1 }, inwardDir: 'up' });
+    }
+  }
+  // Left edge → grows right
+  for (let r = 0; r < gridSize.rows; r++) {
+    if (!occupied.has(cellKey({ col: 0, row: r }))) {
+      edgeCandidates.push({ cell: { col: 0, row: r }, inwardDir: 'right' });
+    }
+  }
+  // Right edge → grows left
+  for (let r = 0; r < gridSize.rows; r++) {
+    if (!occupied.has(cellKey({ col: gridSize.cols - 1, row: r }))) {
+      edgeCandidates.push({ cell: { col: gridSize.cols - 1, row: r }, inwardDir: 'left' });
+    }
+  }
+
+  if (edgeCandidates.length === 0) return null;
+  const chosen = edgeCandidates[Math.floor(rng() * edgeCandidates.length)];
+  const spawnCell = chosen.cell;
+  const trunkDir = chosen.inwardDir;
   occupied.add(cellKey(spawnCell));
 
   const spawnNode: GridNode = {
@@ -207,9 +237,9 @@ function attemptGeneration(
     children: [],
   };
 
-  // 2. Grow trunk downward from spawn
+  // 2. Grow trunk inward from spawn
   const trunkLen = trunkLenMin + Math.floor(rng() * (trunkLenMax - trunkLenMin + 1));
-  const trunkCells = straightWalk(spawnCell, 'down', trunkLen, gridSize, occupied);
+  const trunkCells = straightWalk(spawnCell, trunkDir, trunkLen, gridSize, occupied);
   if (!trunkCells || trunkCells.length < 2) return null;
 
   let junctionCounter = 0;
