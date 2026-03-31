@@ -9,8 +9,6 @@ import { BaseSpeed } from '../../models/game.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="panel">
-      <h1 class="title">MindFlow</h1>
-
       <div class="config-card">
         <label class="section-label">Train Count</label>
         <div class="slider-row">
@@ -54,10 +52,11 @@ import { BaseSpeed } from '../../models/game.models';
   styles: [`
     :host {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
       min-height: 100dvh;
+      padding-top: 1.5rem;
     }
 
     .panel {
@@ -67,18 +66,7 @@ import { BaseSpeed } from '../../models/game.models';
       gap: 1.25rem;
       width: 100%;
       max-width: 400px;
-      padding: 1.5rem;
-    }
-
-    .title {
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      background: linear-gradient(135deg, #a5b4fc, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      padding: 0 1.5rem 1.5rem;
     }
 
     .config-card {

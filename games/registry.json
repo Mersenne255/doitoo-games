@@ -20,6 +20,13 @@
       "description": "Multilateral cognition boosting by stimulating all neurological sectors simultaneously.",
       "icon": "shared/mtask-icon.png",
       "path": "games/doitoo-multitask/dist/browser/index.html"
+    },
+    {
+      "id": "doitoo-mindflow",
+      "name": "MindFlow",
+      "description": "Route shapes to matching stations by switching junctions — tests divided attention and rapid decision-making.",
+      "icon": "shared/mindflow-icon.png",
+      "path": "games/doitoo-mindflow/dist/browser/index.html"
     }
   ]
 }
