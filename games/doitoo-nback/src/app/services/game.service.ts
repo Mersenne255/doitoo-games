@@ -60,6 +60,7 @@ export class GameService {
     this.sequence = generateSequence(this.config());
     this.stepClassifications = new Map();
     this.sessionResult.set(null);
+    window.parent?.postMessage({ type: 'HIDE_NAV' }, '*');
   }
 
   /** Called by CountdownComponent when the 3-2-1 countdown finishes. */
@@ -143,6 +144,7 @@ export class GameService {
     this.stimulusService.abort();
     this.resetPlayingState();
     this.stage.set('idle');
+    window.parent?.postMessage({ type: 'SHOW_NAV' }, '*');
   }
 
   /** Accept the N-level suggestion from the session result. */
@@ -219,6 +221,7 @@ export class GameService {
 
     this.resetPlayingState();
     this.stage.set('summary');
+    window.parent?.postMessage({ type: 'SHOW_NAV' }, '*');
   }
 
   private resetPlayingState(): void {

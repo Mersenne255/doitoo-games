@@ -232,6 +232,9 @@ const Platform = (function () {
     // Hide back button
     backButton.classList.add('hidden');
 
+    // Restore nav bar visibility
+    navBar.classList.remove('nav-hidden');
+
     // Restore default nav (hide subtitle)
     navSubtitle.textContent = '';
     navSubtitle.classList.add('hidden');
@@ -281,6 +284,17 @@ const Platform = (function () {
     backButton.addEventListener('click', returnToSelector);
     errorBackButton.addEventListener('click', returnToSelector);
 
+    // Listen for HIDE_NAV / SHOW_NAV from game iframes
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'HIDE_NAV') {
+        navBar.classList.add('nav-hidden');
+        syncNavHeight();
+      } else if (event.data?.type === 'SHOW_NAV') {
+        navBar.classList.remove('nav-hidden');
+        syncNavHeight();
+      }
+    });
+
     // Load registry → validate → render (and restore active game if any)
     syncNavHeight();
     loadRegistry()
@@ -312,10 +326,8 @@ const Platform = (function () {
 
   function syncNavHeight() {
     if (navBar) {
-      document.documentElement.style.setProperty(
-        '--nav-height',
-        navBar.offsetHeight + 'px'
-      );
+      const h = navBar.classList.contains('nav-hidden') ? 0 : navBar.offsetHeight;
+      document.documentElement.style.setProperty('--nav-height', h + 'px');
     }
   }
 
