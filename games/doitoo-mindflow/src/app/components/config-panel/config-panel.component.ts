@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal, HostListener } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
 import { BaseSpeed } from '../../models/game.models';
@@ -161,16 +161,32 @@ import { TRACK_GENERATION_DEFAULTS } from '../../models/track-generation.config'
 export class ConfigPanelComponent {
   readonly game = inject(GameService);
   private readonly storage = inject(StorageService);
+  private readonly cdr = inject(ChangeDetectorRef);
   readonly speeds: BaseSpeed[] = ['slow', 'medium', 'fast'];
 
-  /** Compute max destinations based on current screen size and cell size. */
-  readonly maxDestinations = computed(() => {
+  /** Max destinations based on current screen size. */
+  readonly maxDestinations = signal(this.calcMaxDestinations());
+
+  @HostListener('window:resize')
+  onResize(): void {
+    const newMax = this.calcMaxDestinations();
+    this.maxDestinations.set(newMax);
+    // Clamp current destinations to new max
+    const current = this.game.config().destinations;
+    if (current > newMax) {
+      this.game.updateConfig({ destinations: newMax });
+      this.storage.saveConfig(this.game.config());
+    }
+    this.cdr.markForCheck();
+  }
+
+  private calcMaxDestinations(): number {
     const cellSize = TRACK_GENERATION_DEFAULTS.cellSizePx;
     const cols = Math.max(3, Math.floor(window.innerWidth / cellSize));
     const rows = Math.max(3, Math.floor(window.innerHeight / cellSize));
     const max = computeMaxStationCount({ cols, rows });
-    return Math.min(max, 20); // cap at 20
-  });
+    return Math.min(max, 20);
+  }
 
   formatInterval(value: number): string {
     return Number(value.toFixed(1)).toString();
