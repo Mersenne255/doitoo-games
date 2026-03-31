@@ -2,11 +2,10 @@ import {
   DEFAULT_CONFIG,
   ModalityType,
   NBackConfig,
-  StimulusIntensity,
+  INTENSITY_OPTIONS,
 } from '../models/game.models';
 
 const VALID_MODALITIES: ModalityType[] = ['spatial', 'auditory', 'color', 'shape'];
-const VALID_INTENSITIES: StimulusIntensity[] = ['low', 'medium', 'high'];
 
 /** Clamp a number to [min, max]. */
 function clamp(value: number, min: number, max: number): number {
@@ -26,14 +25,14 @@ export function validateConfig(partial: Partial<NBackConfig>): NBackConfig {
   const merged = { ...DEFAULT_CONFIG, ...partial };
 
   const gridSize = Math.round(clamp(merged.gridSize, 2, 5));
-  const nLevel = Math.round(clamp(merged.nLevel, 1, 20));
-  const stepDuration = roundToHalf(clamp(merged.stepDuration, 1, 6));
+  const stepCount = Math.round(clamp(merged.stepCount, 5, 1000));
+  const nLevel = Math.round(clamp(merged.nLevel, 1, Math.min(20, stepCount)));
+  const stepDuration = roundToHalf(clamp(merged.stepDuration, 1, 10));
   const colorCount = Math.round(clamp(merged.colorCount, 2, 10));
-  const stepCount = Math.round(clamp(merged.stepCount, 5, 50));
 
-  const intensity: StimulusIntensity = VALID_INTENSITIES.includes(merged.intensity as StimulusIntensity)
-    ? (merged.intensity as StimulusIntensity)
-    : 'medium';
+  const intensity = INTENSITY_OPTIONS.includes(merged.intensity as number)
+    ? (merged.intensity as number)
+    : 30;
 
   // Filter to valid modalities and remove duplicates
   const seen = new Set<ModalityType>();

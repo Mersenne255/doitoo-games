@@ -9,7 +9,7 @@
  *     so the full platform works offline after the first load.
  */
 
-const CACHE_VERSION = 'doitoo-v1';
+const CACHE_VERSION = 'doitoo-v2';
 
 // Platform shell files to precache on install
 const PRECACHE_URLS = [
@@ -69,20 +69,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // All other same-origin GETs: cache-first, fallback to network (and cache the response)
+  // All other same-origin GETs: network-first, fallback to cache
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(event.request).then((response) => {
-        // Only cache valid responses
-        if (!response || response.status !== 200) return response;
-
-        const clone = response.clone();
-        caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
+        }
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

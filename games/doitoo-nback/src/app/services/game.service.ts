@@ -93,7 +93,18 @@ export class GameService {
         }
 
         this.stepClassifications.set(index, classifications);
-        this.stepFeedback.set(new Map(classifications));
+
+        // Merge: keep existing immediate feedback, add miss (yellow) for unpressed matches
+        const fb = new Map(this.stepFeedback());
+        for (const modality of cfg.activeModalities) {
+          if (!fb.has(modality)) {
+            const cls = classifications.get(modality)!;
+            if (cls === 'miss') {
+              fb.set(modality, cls);
+            }
+          }
+        }
+        this.stepFeedback.set(fb);
 
         // Clear stimulus during the gap so there's a visible blink between steps
         this.currentStimulus.set(null);
@@ -116,6 +127,15 @@ export class GameService {
     const next = new Set(current);
     next.add(modality);
     this.pressedThisStep.set(next);
+
+    // Immediate feedback: green (hit) or red (false_alarm)
+    const flags = this.currentMatchFlags();
+    if (flags) {
+      const result = classifyResponse(flags[modality], true);
+      const fb = new Map(this.stepFeedback());
+      fb.set(modality, result);
+      this.stepFeedback.set(fb);
+    }
   }
 
   /** Abort the current session and return to idle without recording. */

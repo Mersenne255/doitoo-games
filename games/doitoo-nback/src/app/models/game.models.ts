@@ -4,7 +4,10 @@ export type GameStage = 'idle' | 'countdown' | 'playing' | 'summary';
 
 export type ModalityType = 'spatial' | 'auditory' | 'color' | 'shape';
 
-export type StimulusIntensity = 'low' | 'medium' | 'high';
+/** Match intensity as a percentage (10–50). */
+export type StimulusIntensity = number;
+
+export const INTENSITY_OPTIONS: StimulusIntensity[] = [10, 20, 30, 40, 50];
 
 export type ShapeType = 'circle' | 'square' | 'star' | 'triangle' | 'diamond' | 'hexagon' | 'cross';
 
@@ -27,10 +30,10 @@ export const MODALITY_KEYS: Record<ModalityType, string> = {
 export interface NBackConfig {
   gridSize: number;                    // 2–5
   nLevel: number;                      // 1–20
-  stepDuration: number;                // 1–6 seconds (0.5 increments)
+  stepDuration: number;                // 1–10 seconds (0.5 increments)
   activeModalities: ModalityType[];    // minimum 2
   colorCount: number;                  // 2–10
-  stepCount: number;                   // 5–50
+  stepCount: number;                   // 5–1000
   intensity: StimulusIntensity;
 }
 
@@ -41,7 +44,7 @@ export const DEFAULT_CONFIG: NBackConfig = {
   activeModalities: ['spatial', 'auditory'],
   colorCount: 6,
   stepCount: 20,
-  intensity: 'medium',
+  intensity: 30,
 };
 
 /** A single stimulus presented during one step */
@@ -117,8 +120,4 @@ export const COLOR_PALETTE: string[] = [
   '#f5f5f5', // white
 ];
 
-export const INTENSITY_RATES: Record<StimulusIntensity, number> = {
-  low: 0.20,
-  medium: 0.30,
-  high: 0.40,
-};
+

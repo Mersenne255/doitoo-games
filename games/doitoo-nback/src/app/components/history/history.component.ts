@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { SessionRecord, MODALITY_LABELS, ModalityType, StimulusIntensity } from '../../models/game.models';
+import { SessionRecord, MODALITY_LABELS, ModalityType } from '../../models/game.models';
 
 interface DisplayRow {
   record: SessionRecord;
@@ -46,11 +46,13 @@ export class HistoryComponent {
     shape: 'S',
   };
 
-  private static readonly INTENSITY_SHORT: Record<StimulusIntensity, string> = {
-    low: 'Low',
-    medium: 'Med',
-    high: 'High',
-  };
+  private static formatIntensity(val: number | string): string {
+    // Handle legacy string values from old history records
+    if (typeof val === 'string') {
+      return val === 'low' ? '20%' : val === 'high' ? '40%' : '30%';
+    }
+    return `${val}%`;
+  }
 
   displayRows = computed<DisplayRow[]>(() => {
     const sorted = this.sortedHistory().slice(0, 20);
@@ -60,7 +62,7 @@ export class HistoryComponent {
       const nStr = `N${record.nLevel}`;
       const gridStr = `${record.gridSize}×${record.gridSize}`;
       const stepsStr = `${record.stepCount}`;
-      const intStr = HistoryComponent.INTENSITY_SHORT[record.intensity];
+      const intStr = HistoryComponent.formatIntensity(record.intensity);
       const modStr = record.activeModalities.map(m => HistoryComponent.MOD_ABBREV[m]).join('');
 
       return {
