@@ -8,7 +8,7 @@ import {
 } from '../models/game.models';
 
 export const SHAPES: Shape[] = ['circle', 'square', 'triangle', 'diamond', 'hexagon', 'star'];
-export const SHAPE_COLORS: ShapeColor[] = ['red', 'blue', 'green', 'amber', 'purple', 'orange'];
+export const SHAPE_COLORS: ShapeColor[] = ['red', 'blue', 'green', 'charcoal'];
 export const BORDER_COLORS: BorderColor[] = ['white', 'gold', 'cyan', 'magenta'];
 export const INNER_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -38,7 +38,7 @@ function setCardProperty(card: ShapeCard, key: keyof ShapeCard, value: string): 
   (card as any)[key] = value;
 }
 
-const PROPERTY_KEYS: (keyof ShapeCard)[] = ['shape', 'shapeColor', 'borderColor', 'innerLetter'];
+const ALL_KEYS: (keyof ShapeCard)[] = ['shape', 'shapeColor', 'borderColor', 'innerLetter'];
 
 const DOMAINS: Record<keyof ShapeCard, readonly string[]> = {
   shape: SHAPES,
@@ -47,53 +47,77 @@ const DOMAINS: Record<keyof ShapeCard, readonly string[]> = {
   innerLetter: INNER_LETTERS.split(''),
 };
 
-export function sharesPropertyWith(a: ShapeCard, b: ShapeCard): boolean {
-  return a.shape === b.shape
-    || a.shapeColor === b.shapeColor
-    || a.borderColor === b.borderColor
-    || a.innerLetter === b.innerLetter;
+// ── Verification (active-keys aware) ────────────────────────────────
+
+export function sharesPropertyWith(a: ShapeCard, b: ShapeCard, keys?: (keyof ShapeCard)[]): boolean {
+  const k = keys ?? ALL_KEYS;
+  return k.some(key => a[key] === b[key]);
 }
 
-export function isAnswerCard(card: ShapeCard, allCards: ShapeCard[]): boolean {
-  return allCards.filter(c => c !== card).every(other => sharesPropertyWith(card, other));
+export function isAnswerCard(card: ShapeCard, allCards: ShapeCard[], keys?: (keyof ShapeCard)[]): boolean {
+  return allCards.filter(c => c !== card).every(other => sharesPropertyWith(card, other, keys));
 }
 
-export function findAnswerCard(cards: ShapeCard[]): number {
-  return cards.findIndex(card => isAnswerCard(card, cards));
+export function findAnswerCard(cards: ShapeCard[], keys?: (keyof ShapeCard)[]): number {
+  return cards.findIndex(card => isAnswerCard(card, cards, keys));
 }
 
-function getTierBounds(difficulty: number): { tierStart: number; tierEnd: number } {
+// ── Progressive property count ──────────────────────────────────────
+
+/**
+ * How many properties are active at a given difficulty:
+ * - 3 cards (diff 1-33):  1-11 → 2 props, 12-22 → 3 props, 23-33 → 4 props
+ * - 4 cards (diff 34-66): 34-50 → 3 props, 51-66 → 4 props
+ * - 5 cards (diff 67-100): always 4 props
+ */
+export function activePropertyCount(difficulty: number): number {
   const d = Math.max(1, Math.min(100, difficulty));
-  if (d <= 33) return { tierStart: 1, tierEnd: 33 };
-  if (d <= 66) return { tierStart: 34, tierEnd: 66 };
-  return { tierStart: 67, tierEnd: 100 };
+  if (d <= 33) {
+    if (d <= 11) return 2;
+    if (d <= 22) return 3;
+    return 4;
+  }
+  if (d <= 66) {
+    if (d <= 50) return 3;
+    return 4;
+  }
+  return 4;
 }
+
+function selectActiveKeys(count: number, rng: () => number): (keyof ShapeCard)[] {
+  // Fixed order: shape, shapeColor, borderColor, innerLetter
+  const ordered: (keyof ShapeCard)[] = ['shape', 'shapeColor', 'borderColor', 'innerLetter'];
+  return ordered.slice(0, count);
+}
+
+// ── Main generator ──────────────────────────────────────────────────
 
 const MAX_ATTEMPTS = 50;
 
-/**
- * Generate a puzzle. After building the base (each distractor shares one
- * property with the answer), we add cross-distractor sharing: randomly copy
- * property values between pairs of distractors. This creates "noise" where
- * multiple cards share properties, but only the answer shares with ALL others.
- */
 export function generatePuzzle(
   difficulty: number,
   rng: () => number = Math.random,
 ): Puzzle {
   const d = Math.max(1, Math.min(100, difficulty));
   const cardCount = cardCountForDifficulty(d);
+  const numActive = activePropertyCount(d);
+  const activeKeys = selectActiveKeys(numActive, rng);
+
+  // Cross-sharing scales with difficulty
+  const crossShareChance = (d - 1) / 99;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const answer = randomCard(rng);
+
+    // Fix inactive properties to the answer's values on all cards
     const cards: ShapeCard[] = [answer];
 
-    // Step 1: Build base distractors — each shares one property with answer
     for (let i = 1; i < cardCount; i++) {
-      const sharedKey = PROPERTY_KEYS[(i - 1) % PROPERTY_KEYS.length];
-      const distractor: ShapeCard = { ...answer };
+      const sharedKey = activeKeys[(i - 1) % activeKeys.length];
+      const distractor: ShapeCard = { ...answer }; // starts with all props = answer
 
-      for (const key of PROPERTY_KEYS) {
+      // Vary active properties (except the shared one)
+      for (const key of activeKeys) {
         if (key === sharedKey) continue;
         const domain = DOMAINS[key];
         const others = domain.filter(v => v !== answer[key]);
@@ -103,37 +127,34 @@ export function generatePuzzle(
       cards.push(distractor);
     }
 
-    // Step 2: Add cross-distractor sharing scaled by difficulty.
-    // At level 1: 0 cross-shares. At level 100: many cross-shares.
+    // Cross-distractor sharing (difficulty scaling)
     const distractors = cards.slice(1);
-    const crossShareChance = (d - 1) / 99; // 0 at lvl 1, 1 at lvl 100
     const maxPairs = distractors.length * (distractors.length - 1) / 2;
     const numPairs = Math.round(crossShareChance * maxPairs);
-
     for (let p = 0; p < numPairs; p++) {
       const iA = Math.floor(rng() * distractors.length);
       let iB = Math.floor(rng() * distractors.length);
       if (iB === iA) iB = (iA + 1) % distractors.length;
-      const key = PROPERTY_KEYS[Math.floor(rng() * PROPERTY_KEYS.length)];
+      // Only share active properties
+      const key = activeKeys[Math.floor(rng() * activeKeys.length)];
       setCardProperty(distractors[iB], key, distractors[iA][key]);
     }
 
-    // Step 3: Verify — must still have exactly one answer card.
-    // The cross-sharing might accidentally make a distractor into an answer.
-    const answerCards = cards.filter(c => isAnswerCard(c, cards));
+    // Verify using only active keys
+    const answerCards = cards.filter(c => isAnswerCard(c, cards, activeKeys));
     if (answerCards.length === 1 && answerCards[0] === answer) {
       const shuffled = shuffle(cards, rng);
-      return { cards: shuffled, answerIndex: shuffled.indexOf(answer) };
+      return { cards: shuffled, answerIndex: shuffled.indexOf(answer), activeKeys };
     }
   }
 
-  // Fallback — simple but valid
+  // Fallback
   const answer = randomCard(rng);
   const cards: ShapeCard[] = [answer];
   for (let i = 1; i < cardCount; i++) {
-    const sk = PROPERTY_KEYS[(i - 1) % PROPERTY_KEYS.length];
+    const sk = activeKeys[(i - 1) % activeKeys.length];
     const d2: ShapeCard = { ...answer };
-    for (const key of PROPERTY_KEYS) {
+    for (const key of activeKeys) {
       if (key === sk) continue;
       const domain = DOMAINS[key];
       const filtered = domain.filter(v => v !== answer[key]);
@@ -142,5 +163,5 @@ export function generatePuzzle(
     cards.push(d2);
   }
   const shuffled = shuffle(cards, rng);
-  return { cards: shuffled, answerIndex: shuffled.indexOf(answer) };
+  return { cards: shuffled, answerIndex: shuffled.indexOf(answer), activeKeys };
 }

@@ -45,11 +45,11 @@ import { GameService } from '../../../services/game.service';
           <!-- Number pad -->
           <div class="numpad" [class.disabled]="solved()">
             @for (n of [1,2,3,4,5,6,7,8,9]; track n) {
-              <button class="num-btn" (click)="pressDigit(n)">{{ n }}</button>
+              <button class="num-btn" (touchstart)="onNumTouch($event,'digit',n)" (click)="pressDigit(n)">{{ n }}</button>
             }
-            <button class="num-btn fn" (click)="pressMinus()">±</button>
-            <button class="num-btn" (click)="pressDigit(0)">0</button>
-            <button class="num-btn fn" (click)="pressDelete()">⌫</button>
+            <button class="num-btn fn" (touchstart)="onNumTouch($event,'minus')" (click)="pressMinus()">±</button>
+            <button class="num-btn" (touchstart)="onNumTouch($event,'digit',0)" (click)="pressDigit(0)">0</button>
+            <button class="num-btn fn" (touchstart)="onNumTouch($event,'delete')" (click)="pressDelete()">⌫</button>
           </div>
         }
       </div>
@@ -120,13 +120,16 @@ import { GameService } from '../../../services/game.service';
       border-radius: 0.4rem;
       background: rgba(255,255,255,0.06); color: #e2e8f0;
       border: 1px solid rgba(255,255,255,0.08);
-      font-size: clamp(0.8rem, 2.5vmin, 1.3rem); font-weight: 600;
+      font-size: clamp(1.4rem, 6vmin, 2.8rem); font-weight: 600;
       cursor: pointer; transition: all 0.12s; outline: none;
       font-family: 'Inter', system-ui, sans-serif;
       display: flex; align-items: center; justify-content: center;
-      min-height: 0; padding: 0;
+      min-height: 0; padding: 0; touch-action: manipulation;
       &:hover { background: rgba(255,255,255,0.12); }
-      &:active { transform: scale(0.95); background: rgba(255,255,255,0.08); }
+      &:active { transform: scale(0.92); background: rgba(99,102,241,0.25); }
+    }
+    .num-btn.tapped {
+      transform: scale(0.92); background: rgba(99,102,241,0.25);
     }
     .num-btn.fn {
       color: #94a3b8;
@@ -234,6 +237,16 @@ export class MathEquationsComponent implements OnInit, OnDestroy {
   }
 
   // ── Input handling ──
+
+  onNumTouch(e: TouchEvent, type: 'digit' | 'minus' | 'delete', n?: number): void {
+    e.preventDefault();
+    const btn = e.currentTarget as HTMLElement;
+    btn.classList.add('tapped');
+    setTimeout(() => btn.classList.remove('tapped'), 120);
+    if (type === 'digit') this.pressDigit(n!);
+    else if (type === 'minus') this.pressMinus();
+    else this.pressDelete();
+  }
 
   pressDigit(n: number): void {
     if (this.finished || this.solved()) return;

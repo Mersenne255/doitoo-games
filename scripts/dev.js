@@ -23,7 +23,7 @@ const names = [];
 const colors = ['blue', 'green', 'magenta', 'cyan', 'yellow', 'red'];
 
 // Platform server
-commands.push('npx http-server . -p 8080 -c-1');
+commands.push('npx http-server . -p 8080 -c-1 --host 0.0.0.0');
 names.push('platform');
 
 // Each game

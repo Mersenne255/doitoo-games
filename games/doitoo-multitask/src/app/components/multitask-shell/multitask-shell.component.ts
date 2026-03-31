@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnDestroy, viewChild, ElementRef, effect } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { SlotComponent } from '../slot/slot.component';
 import { ConfigPanelComponent } from '../config-panel/config-panel.component';
@@ -31,9 +31,9 @@ import { CountdownComponent } from '../countdown/countdown.component';
             ✕
           </button>
         }
-        <div class="slot-grid" [class.frozen]="game.stage() === 'summary'">
+        <div class="slot-grid" #slotGrid [class.frozen]="game.stage() === 'summary'">
           @for (slot of game.activeSlots(); track slot.index) {
-            <app-slot [slotIndex]="slot.index" />
+            <app-slot class="slot" [slotIndex]="slot.index" />
           }
         </div>
         @if (game.stage() === 'summary') {
@@ -86,6 +86,7 @@ import { CountdownComponent } from '../countdown/countdown.component';
       z-index: 1;
       display: flex;
       flex-direction: column;
+      touch-action: none;
     }
 
     .slot-grid {
@@ -95,14 +96,26 @@ import { CountdownComponent } from '../countdown/countdown.component';
       flex: 1;
       min-height: 0;
       padding: 0.5rem;
-      justify-content: center;
-      align-items: stretch;
+      justify-content: center;      
+      height: 100%;
       overflow: hidden;
+      touch-action: none;
+      align-items: center;
+    }
+
+    .slot{
+      height: 100%;
+      width: 100%;
     }
 
     @media (min-aspect-ratio: 1/1) {
       .slot-grid {
         flex-direction: row;
+        align-items: stretch;
+        margin: auto 0;
+        .slot{
+          margin: auto 0;          
+        }
       }
     }
 
@@ -256,7 +269,36 @@ import { CountdownComponent } from '../countdown/countdown.component';
     }
   `],
 })
-export class MultitaskShellComponent {
+export class MultitaskShellComponent implements OnDestroy {
   readonly game = inject(GameService);
   summaryCollapsed = false;
+
+  private readonly slotGrid = viewChild<ElementRef<HTMLElement>>('slotGrid');
+  private preventTouch = (e: TouchEvent) => e.preventDefault();
+  private boundEl: HTMLElement | null = null;
+
+  private touchEffect = effect(() => {
+    const ref = this.slotGrid();
+    const el = ref?.nativeElement ?? null;
+    if (el === this.boundEl) return;
+    // Unbind old
+    if (this.boundEl) {
+      this.boundEl.removeEventListener('touchstart', this.preventTouch);
+      this.boundEl.removeEventListener('touchmove', this.preventTouch);
+    }
+    // Bind new
+    this.boundEl = el;
+    if (el) {
+      el.addEventListener('touchstart', this.preventTouch, { passive: false });
+      el.addEventListener('touchmove', this.preventTouch, { passive: false });
+    }
+  });
+
+  ngOnDestroy(): void {
+    if (this.boundEl) {
+      this.boundEl.removeEventListener('touchstart', this.preventTouch);
+      this.boundEl.removeEventListener('touchmove', this.preventTouch);
+      this.boundEl = null;
+    }
+  }
 }

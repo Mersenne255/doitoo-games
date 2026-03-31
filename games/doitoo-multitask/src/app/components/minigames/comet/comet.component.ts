@@ -56,12 +56,10 @@ const OBS_RADIUS = 8; // border radius for obstacle caps
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <canvas #gameCanvas
-      (mousedown)="onPress($event)"
-      (mouseup)="onRelease()"
-      (mouseleave)="onRelease()"
-      (touchstart)="onPress($event)"
-      (touchend)="onRelease()"
-      (touchcancel)="onRelease()">
+      (pointerdown)="onPress($event)"
+      (pointerup)="onRelease($event)"
+      (pointerleave)="onRelease($event)"
+      (pointercancel)="onRelease($event)">
     </canvas>
   `,
   styles: [`
@@ -110,6 +108,7 @@ export class CometComponent implements OnInit, OnDestroy {
   private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
   private keyupHandler: ((e: KeyboardEvent) => void) | null = null;
   private pressing = false;
+  private activePointerId: number | null = null;
   private particles: Particle[] = [];
   private stars: Star[] = [];
 
@@ -185,14 +184,17 @@ export class CometComponent implements OnInit, OnDestroy {
     }
   }
 
-  onPress(event: Event): void {
-    event.preventDefault();
+  onPress(event: PointerEvent): void {
     if (this.finished) return;
     this.pressing = true;
+    this.activePointerId = event.pointerId;
   }
 
-  onRelease(): void {
-    this.pressing = false;
+  onRelease(event: PointerEvent): void {
+    if (event.pointerId === this.activePointerId) {
+      this.pressing = false;
+      this.activePointerId = null;
+    }
   }
 
   // ── Canvas setup ──

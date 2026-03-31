@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests (e.g. Google Fonts CDN — let browser handle)
   if (url.origin !== location.origin) return;
 
-  // Navigation requests: network-first, fallback to cached shell
+  // Navigation requests: network-first, fallback to cached version
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -64,7 +64,12 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => {
+          // Try the exact cached URL first (works for game iframes),
+          // then fall back to the platform shell only for the root page.
+          return caches.match(event.request)
+            .then((cached) => cached || caches.match('/index.html'));
+        })
     );
     return;
   }
