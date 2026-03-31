@@ -352,15 +352,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
       if (path.waypoints.length < 2) continue;
       ctx.beginPath();
       ctx.moveTo(path.waypoints[0].x, path.waypoints[0].y);
-      if (path.waypoints.length === 3) {
-        ctx.quadraticCurveTo(
-          path.waypoints[1].x, path.waypoints[1].y,
-          path.waypoints[2].x, path.waypoints[2].y,
-        );
-      } else {
-        for (let i = 1; i < path.waypoints.length; i++) {
-          ctx.lineTo(path.waypoints[i].x, path.waypoints[i].y);
-        }
+      for (let i = 1; i < path.waypoints.length; i++) {
+        ctx.lineTo(path.waypoints[i].x, path.waypoints[i].y);
       }
       ctx.stroke();
     }
@@ -526,25 +519,17 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const clamped = Math.max(0, Math.min(1, t));
     const wp = path.waypoints;
 
+    if (wp.length < 2) return wp[0] ?? { x: 0, y: 0 };
+
+    // All paths now have exactly 2 waypoints (straight lines) — linear interpolation
     if (wp.length === 2) {
-      // Linear interpolation
       return {
         x: wp[0].x + (wp[1].x - wp[0].x) * clamped,
         y: wp[0].y + (wp[1].y - wp[0].y) * clamped,
       };
     }
 
-    if (wp.length === 3) {
-      // Quadratic bezier interpolation
-      const u = 1 - clamped;
-      return {
-        x: u * u * wp[0].x + 2 * u * clamped * wp[1].x + clamped * clamped * wp[2].x,
-        y: u * u * wp[0].y + 2 * u * clamped * wp[1].y + clamped * clamped * wp[2].y,
-      };
-    }
-
-    // Fallback: linear through segments
-    if (wp.length < 2) return wp[0] ?? { x: 0, y: 0 };
+    // Fallback: linear through multiple segments
     const totalSegments = wp.length - 1;
     const segFloat = clamped * totalSegments;
     const segIndex = Math.min(Math.floor(segFloat), totalSegments - 1);
