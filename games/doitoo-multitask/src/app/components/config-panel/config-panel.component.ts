@@ -22,9 +22,10 @@ import { MINIGAME_REGISTRY, ProgressionSpeed } from '../../models/game.models';
           </select>
         </label>
         @for (i of [1, 2]; track i) {
-          <label class="slot-field">
+          <label class="slot-field" [class.disabled]="i === 2 && !slot2Enabled()">
             <span class="field-label">#{{ i + 1 }}</span>
             <select (change)="onSlotAssign(i, $event)"
+              [disabled]="i === 2 && !slot2Enabled()"
               aria-label="Assign minigame to slot {{ i + 1 }}">
               <option value="" class="none-option"
                 [selected]="game.slotConfigs()[i].minigameId === null">-</option>
@@ -103,6 +104,11 @@ import { MINIGAME_REGISTRY, ProgressionSpeed } from '../../models/game.models';
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+
+      &.disabled {
+        opacity: 0.35;
+        pointer-events: none;
+      }
     }
 
     .field-label {
@@ -227,6 +233,8 @@ export class ConfigPanelComponent {
   readonly registry = MINIGAME_REGISTRY;
   readonly speeds: ProgressionSpeed[] = ['slow', 'medium', 'fast'];
 
+  readonly slot2Enabled = computed(() => this.game.slotConfigs()[1].minigameId !== null);
+
   readonly allAssigned = computed(() => {
     const configs = this.game.slotConfigs();
     return configs[0].minigameId !== null;
@@ -240,5 +248,9 @@ export class ConfigPanelComponent {
   onSlotAssign(slotIndex: number, event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.game.assignMinigame(slotIndex, value || null);
+    // When slot 2 is cleared, also clear slot 3
+    if (slotIndex === 1 && !value) {
+      this.game.assignMinigame(2, null);
+    }
   }
 }

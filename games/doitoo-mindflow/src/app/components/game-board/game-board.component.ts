@@ -407,14 +407,11 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   private renderJunctions(ctx: CanvasRenderingContext2D): void {
     for (const junction of this.layout.junctions) {
-      // Draw junction circle — bigger and brighter
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.lineWidth = 2.5;
+      // Outer circle — pure white filled
+      ctx.fillStyle = '#ffffffc2';
       ctx.beginPath();
-      ctx.arc(junction.position.x, junction.position.y, 20, 0, Math.PI * 2);
+      ctx.arc(junction.position.x, junction.position.y, 24, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
 
       // Draw directional arrow
       this.drawJunctionArrow(ctx, junction);
@@ -435,18 +432,21 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
     const nx = dx / dist;
     const ny = dy / dist;
-    const arrowLen = 10;
-    const tipX = junction.position.x + nx * 14;
-    const tipY = junction.position.y + ny * 14;
 
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.5;
+    // Thick bright arrow — filled triangle pointing in the active direction
+    const tipX = junction.position.x + nx * 18;
+    const tipY = junction.position.y + ny * 18;
+    const baseX = junction.position.x - nx * 6;
+    const baseY = junction.position.y - ny * 6;
+    const wingSpread = 8;
+
+    ctx.fillStyle = '#000000'; // black triangle on white circle
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
-    ctx.lineTo(tipX - nx * arrowLen + ny * 5, tipY - ny * arrowLen - nx * 5);
-    ctx.moveTo(tipX, tipY);
-    ctx.lineTo(tipX - nx * arrowLen - ny * 5, tipY - ny * arrowLen + nx * 5);
-    ctx.stroke();
+    ctx.lineTo(baseX + ny * wingSpread, baseY - nx * wingSpread);
+    ctx.lineTo(baseX - ny * wingSpread, baseY + nx * wingSpread);
+    ctx.closePath();
+    ctx.fill();
   }
 
   private renderActiveShapes(ctx: CanvasRenderingContext2D): void {
