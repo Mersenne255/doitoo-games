@@ -1,7 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
 import { BaseSpeed } from '../../models/game.models';
+import { computeMaxStationCount } from '../../models/grid.models';
+import { TRACK_GENERATION_DEFAULTS } from '../../models/track-generation.config';
 
 @Component({
   selector: 'app-config-panel',
@@ -10,34 +12,34 @@ import { BaseSpeed } from '../../models/game.models';
   template: `
     <div class="panel">
       <div class="config-card">
-        <label class="section-label">Train Count</label>
+        <label class="section-label">Destinations</label>
         <div class="slider-row">
-          <input type="range" min="2" max="20" step="1"
-            [value]="game.config().trainCount"
-            (input)="onTrainCount($event)"
-            aria-label="Train count" />
-          <span class="range-value">{{ game.config().trainCount }}</span>
+          <input type="range" min="2" [max]="maxDestinations()" step="1"
+            [value]="game.config().destinations"
+            (input)="onDestinations($event)"
+            aria-label="Destinations" />
+          <span class="range-value">{{ game.config().destinations }}</span>
         </div>
 
-        <label class="section-label">Shape Count</label>
+        <label class="section-label">Runners</label>
         <div class="slider-row">
           <input type="range" min="5" max="100" step="5"
-            [value]="game.config().shapeCount"
-            (input)="onShapeCount($event)"
-            aria-label="Shape count" />
-          <span class="range-value">{{ game.config().shapeCount }}</span>
+            [value]="game.config().runners"
+            (input)="onRunners($event)"
+            aria-label="Runners" />
+          <span class="range-value">{{ game.config().runners }}</span>
         </div>
 
         <label class="section-label">Spawn Interval (s)</label>
         <div class="slider-row">
-          <input type="range" min="1" max="10" step="0.5"
+          <input type="range" min="1" max="5" step="0.5"
             [value]="game.config().spawnInterval"
             (input)="onSpawnInterval($event)"
             aria-label="Spawn interval" />
-          <span class="range-value">{{ game.config().spawnInterval }}s</span>
+          <span class="range-value">{{ formatInterval(game.config().spawnInterval) }}s</span>
         </div>
 
-        <label class="section-label">Base Speed</label>
+        <label class="section-label">Speed</label>
         <div class="button-group">
           @for (s of speeds; track s) {
             <button [class.active]="game.config().baseSpeed === s"
@@ -161,15 +163,28 @@ export class ConfigPanelComponent {
   private readonly storage = inject(StorageService);
   readonly speeds: BaseSpeed[] = ['slow', 'medium', 'fast'];
 
-  onTrainCount(event: Event): void {
+  /** Compute max destinations based on current screen size and cell size. */
+  readonly maxDestinations = computed(() => {
+    const cellSize = TRACK_GENERATION_DEFAULTS.cellSizePx;
+    const cols = Math.max(3, Math.floor(window.innerWidth / cellSize));
+    const rows = Math.max(3, Math.floor(window.innerHeight / cellSize));
+    const max = computeMaxStationCount({ cols, rows });
+    return Math.min(max, 20); // cap at 20
+  });
+
+  formatInterval(value: number): string {
+    return Number(value.toFixed(1)).toString();
+  }
+
+  onDestinations(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
-    this.game.updateConfig({ trainCount: value });
+    this.game.updateConfig({ destinations: value });
     this.storage.saveConfig(this.game.config());
   }
 
-  onShapeCount(event: Event): void {
+  onRunners(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
-    this.game.updateConfig({ shapeCount: value });
+    this.game.updateConfig({ runners: value });
     this.storage.saveConfig(this.game.config());
   }
 

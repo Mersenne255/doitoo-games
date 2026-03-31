@@ -39,6 +39,22 @@ export const TRACK_GENERATION_DEFAULTS = {
   /** Number of grid cells to reserve in the top-right corner (for cancel button). */
   reservedTopRightCols: 1,
   reservedTopRightRows: 1,
+
+  /** Available shape types for stations. */
+  shapeTypes: ['circle', 'square', 'triangle', 'diamond', 'hexagon'] as const,
+
+  /** Color palette for stations. */
+  colorPalette: [
+    '#ff0000', '#008e0d', '#000cff', '#ffcc00',
+    '#f000ff',
+  ] as const,
+
+  /** Runner (shape) speed in pixels per second for each difficulty level. */
+  speed: {
+    slow: 30,
+    medium: 60,
+    fast: 100,
+  } as const,
 };
 
 export type TrackGenerationDefaults = typeof TRACK_GENERATION_DEFAULTS;

@@ -144,7 +144,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     const config = this.gameService.config();
     this.isGenerating = true;
-    generateLayoutAsync(config.trainCount, canvas.width, canvas.height).then(layout => {
+    generateLayoutAsync(config.destinations, canvas.width, canvas.height).then(layout => {
       this.layout = layout;
       this.isGenerating = false;
     });
@@ -187,7 +187,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   private updateSpawning(timestamp: number): void {
     const config = this.gameService.config();
-    if (this.spawnedCount >= config.shapeCount) return;
+    if (this.spawnedCount >= config.runners) return;
     if (timestamp < this.nextSpawnTime) return;
 
     const spawnPoints = this.layout.spawnPoints;
@@ -265,7 +265,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   private checkRoundEnd(): void {
     const config = this.gameService.config();
-    if (this.spawnedCount === config.shapeCount && this.activeShapes.length === 0) {
+    if (this.spawnedCount === config.runners && this.activeShapes.length === 0) {
       this.gameService.onRoundEnd();
     }
   }
@@ -456,13 +456,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
       const pos = this.interpolatePath(path, shape.progressAlongPath);
 
-      // Glow effect
-      ctx.shadowColor = shape.identity.color;
-      ctx.shadowBlur = 12;
       ctx.fillStyle = shape.identity.color;
       this.drawShape(ctx, pos.x, pos.y, shape.identity.shapeType, 14, true);
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
     }
   }
 
@@ -512,7 +507,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const scoring = this.gameService.scoringState();
     const config = this.gameService.config();
     const delivered = scoring.correctDeliveries + scoring.misdeliveries;
-    const remaining = config.shapeCount - delivered;
+    const remaining = config.runners - delivered;
 
     ctx.font = '16px Inter, sans-serif';
     ctx.textBaseline = 'top';
