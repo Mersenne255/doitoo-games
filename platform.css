@@ -260,6 +260,16 @@ html, body {
   opacity: 0.85;
 }
 
+/* ── Build Info ── */
+
+.build-info {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 0.65rem;
+  padding: 1rem 0;
+  letter-spacing: 0.02em;
+}
+
 /* ── Utility ── */
 
 .hidden {
