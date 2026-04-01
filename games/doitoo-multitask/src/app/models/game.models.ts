@@ -34,7 +34,7 @@ export const DEFAULT_COMET_CONFIG: CometConfig = {
 
 /** Configuration for the Alike minigame */
 export type Shape = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon' | 'star';
-export type ShapeColor = 'red' | 'blue' | 'green' | 'amber' | 'purple' | 'orange';
+export type ShapeColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'charcoal';
 export type BorderColor = 'white' | 'gold' | 'cyan' | 'magenta';
 export type InnerLetter = string; // A–Z
 
@@ -48,6 +48,7 @@ export interface ShapeCard {
 export interface Puzzle {
   cards: ShapeCard[];
   answerIndex: number;
+  activeKeys: (keyof ShapeCard)[];
 }
 
 export interface AlikeConfig {
@@ -56,8 +57,15 @@ export interface AlikeConfig {
 
 export const DEFAULT_ALIKE_CONFIG: AlikeConfig = {};
 
+/** Configuration for the Matcher minigame */
+export interface MatcherConfig {
+  // Reserved for future configuration
+}
+
+export const DEFAULT_MATCHER_CONFIG: MatcherConfig = {};
+
 /** Config is now a union */
-export type MinigameConfig = MathEquationsConfig | CometConfig | AlikeConfig;
+export type MinigameConfig = MathEquationsConfig | CometConfig | AlikeConfig | MatcherConfig;
 
 export type EquationOutcome = 'correct' | 'incorrect' | 'timed_out';
 
@@ -88,6 +96,7 @@ export const MINIGAME_REGISTRY: MinigameRegistryEntry[] = [
   { id: 'math-equations', name: 'Equations', defaultConfig: DEFAULT_MATH_CONFIG },
   { id: 'comet', name: 'Comet', defaultConfig: DEFAULT_COMET_CONFIG },
   { id: 'alike', name: 'Alike', defaultConfig: DEFAULT_ALIKE_CONFIG },
+  { id: 'matcher', name: 'Matcher', defaultConfig: DEFAULT_MATCHER_CONFIG },
 ];
 
 /**
@@ -139,4 +148,13 @@ export function cardCountForDifficulty(difficulty: number): number {
   if (d <= 33) return 3;
   if (d <= 66) return 4;
   return 5;
+}
+
+/**
+ * Matcher: derive time limit from difficulty.
+ * Scales linearly from 20s at difficulty 1 to 10s at difficulty 100.
+ */
+export function matcherTimeLimitForDifficulty(difficulty: number): number {
+  const d = Math.max(1, Math.min(100, difficulty));
+  return Math.round(20 - (d - 1) * 10 / 99);
 }

@@ -67,7 +67,7 @@ html, body {
 }
 
 .back-button:not(.hidden) ~ .nav-brand {
-  padding: 0 36px;
+  padding: 0 45px;
 }
 
 .nav-logo {
