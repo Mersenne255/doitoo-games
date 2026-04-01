@@ -84,10 +84,21 @@ export function activePropertyCount(difficulty: number): number {
   return 4;
 }
 
-function selectActiveKeys(count: number, rng: () => number): (keyof ShapeCard)[] {
-  // Fixed order: shape, shapeColor, borderColor, innerLetter
-  const ordered: (keyof ShapeCard)[] = ['shape', 'shapeColor', 'borderColor', 'innerLetter'];
-  return ordered.slice(0, count);
+function selectActiveKeys(count: number, difficulty: number, rng: () => number): (keyof ShapeCard)[] {
+  if (count >= 4) return shuffle([...ALL_KEYS], rng);
+
+  const d = Math.max(1, Math.min(100, difficulty));
+
+  if (d <= 11) {
+    // 2 props: always shape + shapeColor
+    return ['shape', 'shapeColor'];
+  }
+  if (d <= 22) {
+    // 3 props: shape, shapeColor, borderColor — randomly ordered
+    return shuffle(['shape', 'shapeColor', 'borderColor'] as (keyof ShapeCard)[], rng);
+  }
+  // d 34–50: 3 props: shape, shapeColor, borderColor
+  return shuffle(['shape', 'shapeColor', 'borderColor'] as (keyof ShapeCard)[], rng);
 }
 
 // ── Main generator ──────────────────────────────────────────────────
@@ -101,7 +112,7 @@ export function generatePuzzle(
   const d = Math.max(1, Math.min(100, difficulty));
   const cardCount = cardCountForDifficulty(d);
   const numActive = activePropertyCount(d);
-  const activeKeys = selectActiveKeys(numActive, rng);
+  const activeKeys = selectActiveKeys(numActive, d, rng);
 
   // Cross-sharing scales with difficulty
   const crossShareChance = (d - 1) / 99;
