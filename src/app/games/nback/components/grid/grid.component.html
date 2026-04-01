@@ -1,0 +1,56 @@
+<div class="grid-container" [style.grid-template-columns]="gridColumns()">
+  @for (cell of cells(); track cell) {
+    <div class="cell"
+         [class.active]="cell === activeCell()">
+      @if (cell === activeCell()) {
+        @if (cellShape(); as shape) {
+          @switch (shape) {
+            @case ('circle') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="40" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+            @case ('square') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect x="15" y="15" width="70" height="70" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+            @case ('star') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+            @case ('triangle') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,10 90,85 10,85" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+            @case ('diamond') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,5 95,50 50,95 5,50" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+            @case ('hexagon') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+            @case ('cross') {
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="35,5 65,5 65,35 95,35 95,65 65,65 65,95 35,95 35,65 5,65 5,35 35,35" [attr.fill]="cellColor() || '#c7d2fe'"/>
+              </svg>
+            }
+          }
+        } @else {
+          <!-- Default circle when shape modality is off -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="40" [attr.fill]="cellColor() || '#c7d2fe'"/>
+          </svg>
+        }
+        @if (fallbackLetter()) {
+          <span class="fallback-letter">{{ fallbackLetter() }}</span>
+        }
+      }
+    </div>
+  }
+</div>

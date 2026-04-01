@@ -1,0 +1,48 @@
+@mixin summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 1rem;
+  background: rgba(15, 15, 26, 0.9);
+}
+
+@mixin summary-heading {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-accent);
+}
+
+@mixin result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.5rem;
+  background: rgba(30, 30, 50, 0.6);
+}
+
+@mixin result-correct {
+  color: var(--color-success-light);
+}
+
+@mixin result-incorrect {
+  color: var(--color-error);
+}
+
+@mixin result-streak {
+  color: var(--color-warning);
+}
+
+@mixin dismiss-btn {
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  outline: none;
+}
