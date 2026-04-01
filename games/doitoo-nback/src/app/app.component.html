@@ -4,8 +4,8 @@
 }
 
 <div class="container">
-  <!-- Grid only visible during playing and countdown -->
-  @if (game.stage() === 'playing' || game.stage() === 'countdown') {
+  <!-- Grid only visible during playing -->
+  @if (game.stage() === 'playing') {
     <app-grid
       [gridSize]="game.config().gridSize"
       [activeCell]="game.stage() === 'playing' ? game.currentStimulus()?.position ?? null : null"
@@ -48,5 +48,4 @@
       (clearHistory)="game.clearHistory()" />
   }
 
-  <div class="build-number">v{{ version }}</div>
 </div>
