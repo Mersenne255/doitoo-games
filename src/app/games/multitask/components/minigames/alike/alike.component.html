@@ -14,10 +14,11 @@
   <!-- Card grid -->
   <div class="content">
     @if (puzzle(); as p) {
-      <div class="card-row"
-           [style.--card-count]="p.cards.length">
+      <div class="card-row">
         @for (card of p.cards; track $index) {
           <button class="card-button"
+                  [style.width.px]="cardSize()"
+                  [style.height.px]="cardSize()"
                   [class.correct]="isSolved() && selectedIndex() === $index"
                   [class.incorrect]="isFailed() && selectedIndex() === $index"
                   [class.answer]="isFailed() && $index === p.answerIndex"

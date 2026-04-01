@@ -49,8 +49,6 @@
 }
 
 .card-row {
-  --card-count: 3;
-
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -64,15 +62,7 @@
 // ── Cards ─────────────────────────────────────────────────────────
 
 .card-button {
-  // Pure-CSS square sizing derived from card count.
-  // Eliminates the JS-measurement blink entirely — cards render
-  // at the right size on the very first frame.
-  --raw: calc((100% - (var(--card-count) - 1) * 8px) / var(--card-count));
-  width:  clamp(30px, var(--raw), 130px);
-  height: clamp(30px, var(--raw), 130px);
-
   flex: 0 0 auto;
-  aspect-ratio: 1;
   background: transparent;
   border: none;
   border-radius: 0.5rem;
