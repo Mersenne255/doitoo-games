@@ -32,8 +32,32 @@ export const DEFAULT_COMET_CONFIG: CometConfig = {
   gapSize: DEFAULT_GAP_SIZE,
 };
 
+/** Configuration for the Alike minigame */
+export type Shape = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon' | 'star';
+export type ShapeColor = 'red' | 'blue' | 'green' | 'amber' | 'purple' | 'orange';
+export type BorderColor = 'white' | 'gold' | 'cyan' | 'magenta';
+export type InnerLetter = string; // A–Z
+
+export interface ShapeCard {
+  shape: Shape;
+  shapeColor: ShapeColor;
+  borderColor: BorderColor;
+  innerLetter: InnerLetter;
+}
+
+export interface Puzzle {
+  cards: ShapeCard[];
+  answerIndex: number;
+}
+
+export interface AlikeConfig {
+  // Reserved for future configuration
+}
+
+export const DEFAULT_ALIKE_CONFIG: AlikeConfig = {};
+
 /** Config is now a union */
-export type MinigameConfig = MathEquationsConfig | CometConfig;
+export type MinigameConfig = MathEquationsConfig | CometConfig | AlikeConfig;
 
 export type EquationOutcome = 'correct' | 'incorrect' | 'timed_out';
 
@@ -63,6 +87,7 @@ export interface MinigameRegistryEntry {
 export const MINIGAME_REGISTRY: MinigameRegistryEntry[] = [
   { id: 'math-equations', name: 'Equations', defaultConfig: DEFAULT_MATH_CONFIG },
   { id: 'comet', name: 'Comet', defaultConfig: DEFAULT_COMET_CONFIG },
+  { id: 'alike', name: 'Alike', defaultConfig: DEFAULT_ALIKE_CONFIG },
 ];
 
 /**
@@ -103,4 +128,15 @@ export function scrollSpeedForDifficulty(difficulty: number): number {
 export function gapFactorForDifficulty(difficulty: number): number {
   const d = Math.max(1, Math.min(100, difficulty));
   return 1.0 - (d - 1) * 0.45 / 99;
+}
+
+/**
+ * Derive card count from difficulty for the Alike minigame.
+ * 3 cards for 1–33, 4 for 34–66, 5 for 67–100.
+ */
+export function cardCountForDifficulty(difficulty: number): number {
+  const d = Math.max(1, Math.min(100, difficulty));
+  if (d <= 33) return 3;
+  if (d <= 66) return 4;
+  return 5;
 }

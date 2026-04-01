@@ -1,4 +1,4 @@
-import { MathEquationsConfig, MathOperator, ProgressionSpeed } from '../models/game.models';
+import { AlikeConfig, DEFAULT_ALIKE_CONFIG, MathEquationsConfig, MathOperator, ProgressionSpeed } from '../models/game.models';
 
 const VALID_OPS: MathOperator[] = ['+', '−', '×', '/'];
 const VALID_SPEEDS: ProgressionSpeed[] = ['slow', 'medium', 'fast'];
@@ -16,4 +16,8 @@ export function validateProgressionSpeed(speed: string): ProgressionSpeed {
 
 export function validateSlotCount(count: number): number {
   return Math.min(Math.max(Math.round(count), 2), 3);
+}
+
+export function validateAlikeConfig(config: Partial<AlikeConfig>): AlikeConfig {
+  return DEFAULT_ALIKE_CONFIG;
 }

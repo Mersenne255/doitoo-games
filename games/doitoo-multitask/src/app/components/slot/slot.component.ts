@@ -2,12 +2,13 @@ import { Component, ChangeDetectionStrategy, inject, input, computed } from '@an
 import { GameService } from '../../services/game.service';
 import { MathEquationsComponent } from '../minigames/math-equations/math-equations.component';
 import { CometComponent } from '../minigames/comet/comet.component';
+import { AlikeComponent } from '../minigames/alike/alike.component';
 import { MinigameResult, MathEquationsConfig, CometConfig } from '../../models/game.models';
 
 @Component({
   selector: 'app-slot',
   standalone: true,
-  imports: [MathEquationsComponent, CometComponent],
+  imports: [MathEquationsComponent, CometComponent, AlikeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @switch (slotConfig()?.minigameId) {
@@ -21,6 +22,14 @@ import { MinigameResult, MathEquationsConfig, CometConfig } from '../../models/g
       }
       @case ('comet') {
         <app-comet
+          [config]="$any(slotConfig()!.config)"
+          [active]="true"
+          [slotIndex]="slotIndex()"
+          (completed)="onMinigameComplete($event)"
+        />
+      }
+      @case ('alike') {
+        <app-alike
           [config]="$any(slotConfig()!.config)"
           [active]="true"
           [slotIndex]="slotIndex()"
