@@ -39,7 +39,7 @@ import {
       to { transform: scale(1); opacity: 1; }
     }
     .word {
-      font-size: 4.5rem;
+      font-size: 3rem;
       font-weight: 900;
       color: white;
       text-transform: uppercase;
