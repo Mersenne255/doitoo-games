@@ -2,17 +2,24 @@
   "games": [
     {
       "id": "doitoo-numbers",
-      "name": "Numbers",
-      "description": "Test your number memory with sequences, complete recall, and reverse challenges.",
+      "name": "Short-term memory",
+      "description": "Short-term memory excercies via number recall techniques.",
       "icon": "games/doitoo-numbers/dist/browser/icon.png",
       "path": "games/doitoo-numbers/dist/browser/index.html"
     },
     {
       "id": "doitoo-nback",
-      "name": "N-Back",
-      "description": "Train your working memory with the Dual N-Back cognitive exercise.",
+      "name": "Working memory",
+      "description": "Working memory boosting with the Dual N-Back cognitive exercises.",
       "icon": "shared/nbacking_o.png",
       "path": "games/doitoo-nback/dist/browser/index.html"
+    },
+    {
+      "id": "doitoo-multitask",
+      "name": "Multitask",
+      "description": "Multilateral cognition boosting by stimulating all neurological sectors simultaneously.",
+      "icon": "shared/mtask-icon.png",
+      "path": "games/doitoo-multitask/dist/browser/index.html"
     }
   ]
 }
