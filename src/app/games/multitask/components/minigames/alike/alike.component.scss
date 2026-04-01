@@ -1,0 +1,110 @@
+:host {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+  max-height: 100%;
+
+  &.solved { background: rgba(34, 197, 94, 0.08); }
+  &.failed { background: rgba(239, 68, 68, 0.1); }
+}
+
+// ── Timer ─────────────────────────────────────────────────────────
+
+.timer-bar {
+  height: 6px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.timer-fill {
+  height: 100%;
+  background: #6366f1;
+  transition: width 0.1s linear;
+
+  &.warning { background: #ef4444; }
+  &.solved  { background: #22c55e; }
+}
+
+// ── Card layout ───────────────────────────────────────────────────
+
+.content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 8px;
+}
+
+.card-row {
+  --card-count: 3;
+
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+}
+
+// ── Cards ─────────────────────────────────────────────────────────
+
+.card-button {
+  // Pure-CSS square sizing derived from card count.
+  // Eliminates the JS-measurement blink entirely — cards render
+  // at the right size on the very first frame.
+  --raw: calc((100% - (var(--card-count) - 1) * 8px) / var(--card-count));
+  width:  clamp(30px, var(--raw), 130px);
+  height: clamp(30px, var(--raw), 130px);
+
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+
+  &:hover  { transform: scale(1.04); }
+  &:active { transform: scale(0.96); }
+
+  &.correct {
+    border: 3px solid #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  }
+
+  &.incorrect {
+    border: 3px solid #ef4444;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  }
+
+  &.answer {
+    border: 3px solid #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  }
+}
+
+.shape-svg {
+  width: 100%;
+  height: 100%;
+}

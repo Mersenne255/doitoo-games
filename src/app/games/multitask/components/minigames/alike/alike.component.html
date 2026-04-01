@@ -1,0 +1,100 @@
+<div class="game-container"
+     [class.solved]="isSolved()"
+     [class.failed]="isFailed()">
+
+  <!-- Timer progress bar -->
+  <div class="timer-bar">
+    <div class="timer-fill"
+         [style.width.%]="timerPercent()"
+         [class.warning]="timerPercent() < 25"
+         [class.solved]="isSolved()">
+    </div>
+  </div>
+
+  <!-- Card grid -->
+  <div class="content">
+    @if (puzzle(); as p) {
+      <div class="card-row"
+           [style.--card-count]="p.cards.length">
+        @for (card of p.cards; track $index) {
+          <button class="card-button"
+                  [class.correct]="isSolved() && selectedIndex() === $index"
+                  [class.incorrect]="isFailed() && selectedIndex() === $index"
+                  [class.answer]="isFailed() && $index === p.answerIndex"
+                  (pointerdown)="pickCard($index)">
+
+            <svg viewBox="0 0 80 80" class="shape-svg">
+              <defs>
+                <linearGradient [attr.id]="'g' + slotIndex() + '-' + $index"
+                                x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   [attr.stop-color]="lightFill(card, p)" />
+                  <stop offset="100%" [attr.stop-color]="darkFill(card, p)" />
+                </linearGradient>
+
+                <filter [attr.id]="'f' + slotIndex() + '-' + $index"
+                        x="-10%" y="-10%" width="130%" height="130%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3" />
+                </filter>
+              </defs>
+
+              @switch (card.shape) {
+                @case ('circle') {
+                  <circle cx="40" cy="40" r="26"
+                          [attr.fill]="shapeFill($index, p)"
+                          [attr.stroke]="stroke(card, p)"
+                          stroke-width="5"
+                          [attr.filter]="shadow($index)" />
+                }
+                @case ('square') {
+                  <rect x="14" y="14" width="52" height="52" rx="4"
+                        [attr.fill]="shapeFill($index, p)"
+                        [attr.stroke]="stroke(card, p)"
+                        stroke-width="5"
+                        [attr.filter]="shadow($index)" />
+                }
+                @case ('triangle') {
+                  <polygon points="40,8 70,66 10,66"
+                           [attr.fill]="shapeFill($index, p)"
+                           [attr.stroke]="stroke(card, p)"
+                           stroke-width="5" stroke-linejoin="round"
+                           [attr.filter]="shadow($index)" />
+                }
+                @case ('diamond') {
+                  <polygon points="40,8 72,40 40,72 8,40"
+                           [attr.fill]="shapeFill($index, p)"
+                           [attr.stroke]="stroke(card, p)"
+                           stroke-width="5" stroke-linejoin="round"
+                           [attr.filter]="shadow($index)" />
+                }
+                @case ('hexagon') {
+                  <polygon points="40,10 64,24 64,56 40,70 16,56 16,24"
+                           [attr.fill]="shapeFill($index, p)"
+                           [attr.stroke]="stroke(card, p)"
+                           stroke-width="5" stroke-linejoin="round"
+                           [attr.filter]="shadow($index)" />
+                }
+                @case ('star') {
+                  <path d="M 61,72 40,67 18,72 17,50 5,32 26,24 40,7 54,24 74,32 62,50 Z"
+                        [attr.fill]="shapeFill($index, p)"
+                        [attr.stroke]="stroke(card, p)"
+                        stroke-width="4" stroke-linejoin="round"
+                        [attr.filter]="shadow($index)" />
+                }
+              }
+
+              <text x="40"
+                    [attr.y]="card.shape === 'triangle' ? 46 : 42"
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    font-size="20" font-weight="700"
+                    fill="rgba(255,255,255,0.95)"
+                    font-family="Inter, system-ui, sans-serif">
+                {{ letter(card, p) }}
+              </text>
+            </svg>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -12,7 +12,7 @@ import { MinigameResult, MathEquationsConfig, CometConfig } from '../../models/g
   imports: [MathEquationsComponent, CometComponent, AlikeComponent, MatcherComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @switch (slotConfig()?.minigameId) {
+    @switch (slotConfig().minigameId) {
       @case ('math-equations') {
         <app-math-equations
           [config]="$any(slotConfig()!.config)"
