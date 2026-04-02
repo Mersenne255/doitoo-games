@@ -9,8 +9,10 @@ export interface GameEntry {
 export const GAME_LIST: GameEntry[] = [
   { route: '/nback', name: 'Dual N-Back', label: 'Working memory', description: 'Designed by science. Tested by millions. Conquered by you.', icon: 'assets/icons/nback-icon.png' },
   { route: '/multitask', name: 'Splittention', label: 'Multitasking', description: 'Three tasks, one brain. Let\'s see how long the juggling act lasts.', icon: 'assets/icons/multitask-icon.png' },
-  { route: '/mindflow', name: 'MindFlow', label: 'Executive function', description: 'Track positions and movements to the point of insanity.', icon: 'assets/icons/mindflow-icon.png' },
+  { route: '/mindflow', name: 'MindFlow', label: 'Executive function', description: 'Track positions and movements to the edge of sanity.', icon: 'assets/icons/mindflow-icon.png' },
   { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'You\'re forgetting where you put your keys. Time to fix that.', icon: 'assets/icons/numbers-icon.png' },
+  { route: '/reflexa', name: 'Reflexa', label: 'Inhibitory control', description: 'Your brain says left. The answer is right. Fight your instincts.', icon: 'assets/icons/reflexa-icon.png' },
+  { route: '/patternix', name: 'Patternix', label: 'Fluid intelligence', description: 'Decode the hidden rule. Predict the next shape. Outsmart the pattern.', icon: 'assets/icons/patternix-icon.png' },
 ];
 
 export const TAGLINES: string[] = [

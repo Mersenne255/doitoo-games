@@ -6,5 +6,6 @@ export const routes: Routes = [
   { path: 'nback', loadComponent: () => import('./games/nback/nback-game.component').then(m => m.NbackGameComponent) },
   { path: 'multitask', loadComponent: () => import('./games/multitask/multitask-game.component').then(m => m.MultitaskGameComponent) },
   { path: 'mindflow', loadComponent: () => import('./games/mindflow/mindflow-game.component').then(m => m.MindflowGameComponent) },
+  { path: 'reflexa', loadComponent: () => import('./games/reflexa/reflexa-game.component').then(m => m.ReflexaGameComponent) },
   { path: '**', redirectTo: '' },
 ];
