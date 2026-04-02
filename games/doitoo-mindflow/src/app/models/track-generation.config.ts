@@ -7,9 +7,9 @@ export const TRACK_GENERATION_DEFAULTS = {
   cellSizePx: 70,
 
   /** Minimum trunk length (cells from spawn to first junction). */
-  trunkLenMin: 3,
+  trunkLenMin: 2,
   /** Maximum trunk length (cells from spawn to first junction). */
-  trunkLenMax: 5,
+  trunkLenMax: 4,
 
   /** Minimum branch walk length (cells between junctions). */
   branchLenMin: 1,
@@ -20,7 +20,10 @@ export const TRACK_GENERATION_DEFAULTS = {
   maxBranchDepth: 100,
 
   /** Number of retry attempts when generation fails (overlap, poor distribution, etc). */
-  maxRetries: 1000,
+  maxRetries: 10,
+
+  /** Time budget in ms to try generating at a given station count before reducing by 1. */
+  retryTimeBudgetMs: 1000,
 
   /** Probability (0–1) of creating a 3-way junction when allowThreeWayJunctions is true. */
   threeWayProbability: 0.3,
