@@ -1,0 +1,34 @@
+/**
+ * All tunable constants for track layout generation in one place.
+ * Tweak these to adjust how the board looks and feels.
+ */
+export const TRACK_GENERATION_DEFAULTS = {
+  /** Size of one grid cell in pixels. Smaller = denser grid, larger = more spread out. */
+  cellSizePx: 70,
+
+  /** Minimum trunk length (cells from spawn to first junction). */
+  trunkLenMin: 3,
+  /** Maximum trunk length (cells from spawn to first junction). */
+  trunkLenMax: 5,
+
+  /** Minimum branch walk length (cells between junctions). */
+  branchLenMin: 1,
+  /** Maximum branch walk length (cells between junctions). */
+  branchLenMax: 5,
+
+  /** Maximum recursion depth for branching. Prevents infinite nesting. */
+  maxBranchDepth: 100,
+
+  /** Number of retry attempts when generation fails (overlap, poor distribution, etc). */
+  maxRetries: 1000,
+
+  /** Probability (0–1) of creating a 3-way junction when allowThreeWayJunctions is true. */
+  threeWayProbability: 0.3,
+
+  /** Minimum spatial coverage ratio for layouts with 4+ stations (0–1). */
+  spatialCoverageDefault: 0.6,
+  /** Relaxed spatial coverage ratio for layouts with ≤3 stations (0–1). */
+  spatialCoverageSmall: 0.5,
+};
+
+export type TrackGenerationDefaults = typeof TRACK_GENERATION_DEFAULTS;

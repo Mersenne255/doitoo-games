@@ -17,6 +17,7 @@ import {
   StationIdentity,
 } from '../models/game.models';
 import { generateStationIdentities } from './station-identity.util';
+import { TRACK_GENERATION_DEFAULTS } from '../models/track-generation.config';
 
 // ── Internal data structures (not exported) ──
 
@@ -191,8 +192,9 @@ function attemptGeneration(
     children: [],
   };
 
-  // 2. Grow trunk: random walk 2–4 cells downward from spawn
-  const trunkLen = 2 + Math.floor(rng() * 3); // 2, 3, or 4
+  // 2. Grow trunk: random walk from spawn to first junction
+  const { trunkLenMin, trunkLenMax } = TRACK_GENERATION_DEFAULTS;
+  const trunkLen = trunkLenMin + Math.floor(rng() * (trunkLenMax - trunkLenMin + 1));
   const trunkCells = straightWalk(spawnCell, 'down', trunkLen, gridSize, occupied);
   if (!trunkCells || trunkCells.length < 2) return null;
 
@@ -229,7 +231,7 @@ function attemptGeneration(
 
     // Determine number of branches
     let numBranches: number;
-    if (allowThreeWay && neighbors.length >= 3 && remainingStations >= 3 && rng() < 0.3) {
+    if (allowThreeWay && neighbors.length >= 3 && remainingStations >= 3 && rng() < TRACK_GENERATION_DEFAULTS.threeWayProbability) {
       numBranches = 3;
     } else {
       numBranches = Math.min(2, neighbors.length, remainingStations);
@@ -274,7 +276,8 @@ function attemptGeneration(
     for (let b = 0; b < chosenDirs.length; b++) {
       const dir = chosenDirs[b];
       const branchStations = stationsPerBranch[b];
-      const walkLen = 2 + Math.floor(rng() * 4); // 2–5 cells
+      const { branchLenMin, branchLenMax } = TRACK_GENERATION_DEFAULTS;
+      const walkLen = branchLenMin + Math.floor(rng() * (branchLenMax - branchLenMin + 1));
 
       const walkCells = straightWalk(junctionNode.cell, dir, walkLen, gridSize, occupied);
       if (!walkCells || walkCells.length < 2) {
@@ -300,7 +303,7 @@ function attemptGeneration(
 
       const walkEndCell = walkCells[walkCells.length - 1];
 
-      if (branchStations <= 1 || depth > 8) {
+      if (branchStations <= 1 || depth > TRACK_GENERATION_DEFAULTS.maxBranchDepth) {
         // Place station at end of walk
         const stationNode: GridNode = {
           cell: walkEndCell,
@@ -536,12 +539,16 @@ export function generateTrackLayout(config: TrackGeneratorConfig): TrackGenerato
   }
 
   // Determine spatial coverage threshold
-  const defaultCoverage = trainCount <= 3 ? 0.5 : 0.6;
+  const defaultCoverage = trainCount <= 3
+    ? TRACK_GENERATION_DEFAULTS.spatialCoverageSmall
+    : TRACK_GENERATION_DEFAULTS.spatialCoverageDefault;
   const minCoverage = config.minSpatialCoverage ?? defaultCoverage;
-  const effectiveCoverage = trainCount <= 3 ? Math.min(minCoverage, 0.5) : minCoverage;
+  const effectiveCoverage = trainCount <= 3
+    ? Math.min(minCoverage, TRACK_GENERATION_DEFAULTS.spatialCoverageSmall)
+    : minCoverage;
 
   // Retry loop
-  const MAX_RETRIES = 10;
+  const MAX_RETRIES = TRACK_GENERATION_DEFAULTS.maxRetries;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const tree = attemptGeneration(trainCount, config.gridSize, allowThreeWay, rng);
     if (!tree) continue;
