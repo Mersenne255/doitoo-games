@@ -2,13 +2,10 @@ import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { NavService } from './shared/services/nav.service';
+import { BUILD_INFO } from '../environments/build-info';
+import { GAME_LIST } from './home/game-list';
 
-const ROUTE_TITLES: Record<string, string> = {
-  '/numbers': 'Short-term memory',
-  '/nback': 'Working memory',
-  '/multitask': 'Multitask',
-  '/mindflow': 'Context-switching',
-};
+const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
 
 @Component({
   selector: 'app-root',
@@ -33,8 +30,26 @@ const ROUTE_TITLES: Record<string, string> = {
     <main [class.full-height]="nav.hidden()">
       <router-outlet />
     </main>
+    @if (!isGameRoute()) {
+      <footer class="app-footer">
+        <img class="footer-brain" src="assets/icons/doitoo-brain.svg" alt="Doitoo Brain" />
+        <span class="footer-meta">v{{ buildInfo.version }} · {{ buildInfo.buildTime }} · {{ buildInfo.gitHash }}</span>
+      </footer>
+    }
   `,
   styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    main {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
     .nav-bar {
       position: sticky;
       top: 0;
@@ -122,11 +137,34 @@ const ROUTE_TITLES: Record<string, string> = {
     }
 
     .full-height {
-      min-height: calc(100vh - var(--nav-height));
+      min-height: 0;
     }
 
     .nav-hidden ~ main.full-height {
-      min-height: 100vh;
+      min-height: 0;
+    }
+
+    .app-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.2rem 1rem 0.6rem 1rem;
+      background: rgba(15, 15, 26, 0.9);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(99, 102, 241, 0.15);
+    }
+
+    .footer-brain {
+      height: 40px;
+      width: auto;
+      color: #fff;
+      filter: brightness(0) invert(1);
+    }
+
+    .footer-meta {
+      font-size: 0.6rem;
+      color: var(--color-text-dim, #64748b);
+      letter-spacing: 0.02em;
     }
   `],
 })
@@ -135,6 +173,7 @@ export class AppComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly buildInfo = BUILD_INFO;
   readonly isGameRoute = signal(false);
   readonly gameTitle = signal('');
 
@@ -143,13 +182,12 @@ export class AppComponent {
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
         const url = e.urlAfterRedirects || e.url;
-        const title = ROUTE_TITLES[url];
-        this.isGameRoute.set(!!title);
-        this.gameTitle.set(title ?? '');
+        const game = GAME_ROUTE_MAP.get(url);
+        this.isGameRoute.set(!!game);
+        this.gameTitle.set(game?.name ?? '');
 
-        if (url === '/') {
-          this.nav.show();
-        }
+        // Always show nav on route change; games hide it themselves during gameplay
+        this.nav.show();
       });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());

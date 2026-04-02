@@ -56,8 +56,7 @@ import { TRACK_GENERATION_DEFAULTS } from '../../models/track-generation.config'
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      min-height: 100vh;
-      min-height: 100dvh;
+      min-height: 100%;
       padding-top: 1.5rem;
     }
 

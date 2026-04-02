@@ -6,3 +6,6 @@ out-tsc
 .kiro
 .vscode
 .idea/
+
+# Auto-generated build info
+src/environments/build-info.ts

@@ -12,10 +12,5 @@
 </head>
 <body>
   <app-root></app-root>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/ngsw-worker.js').catch(() => {});
-    }
-  </script>
 </body>
 </html>

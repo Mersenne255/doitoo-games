@@ -114,9 +114,9 @@ export function difficultyParams(difficulty: number): { operandMax: number } {
 
 /** How many seconds between each difficulty level increase */
 export const PROGRESSION_INTERVAL_SEC: Record<ProgressionSpeed, number> = {
-  slow: 15,
-  medium: 10,
-  fast: 5,
+  slow: 13,
+  medium: 8,
+  fast: 3,
 };
 
 /**

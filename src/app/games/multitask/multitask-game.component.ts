@@ -18,10 +18,10 @@ export class MultitaskGameComponent implements OnDestroy {
   constructor() {
     effect(() => {
       const stage = this.game.stage();
-      if (stage === 'playing' || stage === 'countdown') {
-        this.nav.hide();
-      } else if (stage === 'idle' || stage === 'summary') {
+      if (stage === 'idle') {
         this.nav.show();
+      } else {
+        this.nav.hide();
       }
     });
   }

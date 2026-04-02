@@ -116,6 +116,11 @@ export class GameService {
   setMode(mode: GameMode): void {
     this.mode.set(mode);
     this.storageService.saveMode(mode);
+    this.cancelShowing();
+    this.displayValue.set('');
+    this.inputValue.set('');
+    this.result.set(null);
+    this.stage.set('idle');
   }
 
   updateConfig(partial: Partial<ModeConfig>): void {
@@ -124,5 +129,10 @@ export class GameService {
       [this.mode()]: { ...all[this.mode()], ...partial },
     }));
     this.storageService.saveConfigs(this.configs());
+    this.cancelShowing();
+    this.displayValue.set('');
+    this.inputValue.set('');
+    this.result.set(null);
+    this.stage.set('idle');
   }
 }
