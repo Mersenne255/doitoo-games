@@ -49,16 +49,18 @@ export function generateLayout(
   const nextPathId = (): string => `path-${pathCounter++}`;
 
   // ── 1. Station placement ──
-  const padding = 0.15;
+  const stationMargin = 30; // pixels from edge for station shape radius + buffer
   const cx = width / 2;
   const cy = height / 2;
-  const rx = (width / 2) * (1 - padding);
-  const ry = (height / 2) * (1 - padding);
+  const rx = (width / 2) - stationMargin;
+  const ry = (height / 2) - stationMargin;
 
   const identities = generateStationIdentities(trainCount);
 
+  // Offset starting angle by half a step so no station lands exactly at top (where HUD is)
+  const angleOffset = Math.PI / trainCount;
   for (let i = 0; i < trainCount; i++) {
-    const angle = i * ((2 * Math.PI) / trainCount);
+    const angle = angleOffset + i * ((2 * Math.PI) / trainCount);
     stations.push({
       id: `station-${i}`,
       position: {
@@ -170,7 +172,7 @@ export function generateLayout(
     const spawnX = spawnCount === 1
       ? cx
       : cx + (s === 0 ? -width * 0.15 : width * 0.15);
-    const spawnPos: Point = { x: spawnX, y: 0 };
+    const spawnPos: Point = { x: spawnX, y: 10 };
 
     const pathId = nextPathId();
     const waypoints = buildWaypoints(spawnPos, hubJunction.position);

@@ -62,9 +62,9 @@ export class CountdownComponent implements OnDestroy {
   constructor() {
     afterNextRender(() => {
       this.timeouts.push(
-        setTimeout(() => this.step.set(1), 1000),
-        setTimeout(() => this.step.set(2), 2000),
-        setTimeout(() => this.done.emit(), 2500),
+        setTimeout(() => this.step.set(1), 350),
+        setTimeout(() => this.step.set(2), 700),
+        setTimeout(() => this.done.emit(), 1000),
       );
     });
   }

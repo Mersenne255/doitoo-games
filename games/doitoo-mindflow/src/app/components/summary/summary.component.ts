@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { GameService } from '../../services/game.service';
 
@@ -12,36 +12,35 @@ import { GameService } from '../../services/game.service';
       <h2>Round Complete</h2>
 
       @if (result(); as r) {
-        <div class="score">{{ r.score }}</div>
-        <div class="score-label">Final Score</div>
+        <div class="total">{{ r.score | number:'1.0-0' }}</div>
 
-        <div class="stat-grid">
-          <div class="stat">
-            <span class="stat-value correct">{{ r.correctDeliveries }}</span>
-            <span class="stat-label">Correct</span>
+        <div class="slots">
+          <div class="slot-result">
+            <span class="slot-title correct">✓ {{ r.correctDeliveries }}</span>
+            <span class="slot-label">Correct</span>
           </div>
-          <div class="stat">
-            <span class="stat-value incorrect">{{ r.misdeliveries }}</span>
-            <span class="stat-label">Misdeliveries</span>
+          <div class="slot-result">
+            <span class="slot-title incorrect">✗ {{ r.misdeliveries }}</span>
+            <span class="slot-label">Misdeliveries</span>
           </div>
-          <div class="stat">
-            <span class="stat-value">{{ r.accuracy | number:'1.0-1' }}%</span>
-            <span class="stat-label">Accuracy</span>
+          <div class="slot-result">
+            <span class="slot-title">{{ r.accuracy | number:'1.0-0' }}%</span>
+            <span class="slot-label">Accuracy</span>
           </div>
-          <div class="stat">
-            <span class="stat-value">{{ formatTime(r.elapsedTimeMs) }}</span>
-            <span class="stat-label">Time</span>
+          <div class="slot-result">
+            <span class="slot-title">{{ formatTime(r.elapsedTimeMs) }}</span>
+            <span class="slot-label">Time</span>
           </div>
-          <div class="stat">
-            <span class="stat-value streak">{{ r.longestStreak }}</span>
-            <span class="stat-label">Best Streak</span>
+          <div class="slot-result">
+            <span class="slot-title streak">{{ r.longestStreak }}</span>
+            <span class="slot-label">Best Streak</span>
           </div>
         </div>
       }
 
       <div class="actions">
-        <button class="btn play-again" (click)="game.startSession()">Play Again</button>
-        <button class="btn back" (click)="game.goToIdle()">Back</button>
+        <button class="dismiss-btn back" (click)="game.goToIdle()">Back</button>
+        <button class="dismiss-btn play-again" (click)="game.startSession()">Play Again</button>
       </div>
     </div>
   `,
@@ -50,22 +49,20 @@ import { GameService } from '../../services/game.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      min-height: 100dvh;
+      min-height: 80vh;
     }
 
     .summary-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.25rem;
+      gap: 1.5rem;
       padding: 2rem;
       border: 1px solid rgba(99, 102, 241, 0.3);
       border-radius: 1rem;
       background: rgba(15, 15, 26, 0.9);
-      backdrop-filter: blur(10px);
       min-width: 18rem;
-      max-width: 400px;
+      max-width: 340px;
       width: 90%;
     }
 
@@ -75,50 +72,42 @@ import { GameService } from '../../services/game.service';
       color: #a5b4fc;
     }
 
-    .score {
-      font-size: 3rem;
+    .total {
+      font-size: 2.5rem;
       font-weight: 900;
       color: #e2e8f0;
       line-height: 1;
     }
 
-    .score-label {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: -0.5rem;
-    }
-
-    .stat-grid {
+    .slots {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
+      gap: 0.5rem;
       width: 100%;
     }
 
-    .stat {
+    .slot-result {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.2rem;
-      padding: 0.5rem;
+      gap: 0.15rem;
+      padding: 0.5rem 0.25rem;
       border-radius: 0.5rem;
       background: rgba(30, 30, 50, 0.6);
     }
 
-    .stat-value {
-      font-size: 1.125rem;
+    .slot-title {
       font-weight: 800;
+      font-size: 1rem;
       color: #e2e8f0;
     }
 
-    .stat-value.correct { color: #86efac; }
-    .stat-value.incorrect { color: #fca5a5; }
-    .stat-value.streak { color: #fde68a; }
+    .slot-title.correct { color: #86efac; }
+    .slot-title.incorrect { color: #fca5a5; }
+    .slot-title.streak { color: #fde68a; }
 
-    .stat-label {
-      font-size: 0.65rem;
+    .slot-label {
+      font-size: 0.6rem;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -130,7 +119,7 @@ import { GameService } from '../../services/game.service';
       width: 100%;
     }
 
-    .btn {
+    .dismiss-btn {
       flex: 1;
       padding: 0.625rem 1rem;
       border-radius: 0.5rem;

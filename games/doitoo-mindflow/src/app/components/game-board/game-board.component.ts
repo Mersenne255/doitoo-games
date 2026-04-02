@@ -36,12 +36,16 @@ interface FeedbackAnimation {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<canvas #gameCanvas (click)="onCanvasClick($event)"
-    (touchstart)="onCanvasTouchStart($event)"></canvas>`,
+    (touchstart)="onCanvasTouchStart($event)"></canvas>
+    <button class="abort-fab" (click)="onAbort()" title="Abort (Esc)">✕</button>`,
   styles: [`
     :host {
       display: block;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      position: fixed;
+      inset: 0;
       overflow: hidden;
     }
     canvas {
@@ -49,6 +53,30 @@ interface FeedbackAnimation {
       width: 100%;
       height: 100%;
       touch-action: none;
+    }
+    .abort-fab {
+      position: fixed;
+      top: 0.5rem;
+      right: 0.5rem;
+      z-index: 10;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      background: rgba(15, 15, 26, 0.85);
+      color: #fca5a5;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, border-color 0.2s;
+      backdrop-filter: blur(4px);
+    }
+    .abort-fab:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.6);
     }
   `],
 })
@@ -84,6 +112,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.resizeCanvas();
     this.generateBoardLayout();
     this.startAnimationLoop();
+    // Hide platform toolbar when game board is active
+    window.parent?.postMessage({ type: 'HIDE_NAV' }, '*');
   }
 
   ngOnDestroy(): void {
@@ -91,6 +121,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = 0;
     }
+    // Restore platform toolbar
+    window.parent?.postMessage({ type: 'SHOW_NAV' }, '*');
   }
 
   @HostListener('window:resize')
@@ -103,14 +135,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   private resizeCanvas(): void {
     const canvas = this.canvasRef.nativeElement;
-    const parent = canvas.parentElement;
-    if (parent) {
-      canvas.width = parent.clientWidth;
-      canvas.height = parent.clientHeight;
-    } else {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
   }
 
   private generateBoardLayout(): void {
@@ -246,6 +272,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.hitTestJunction(pos.x, pos.y);
   }
 
+  onAbort(): void {
+    this.gameService.abortSession();
+  }
+
   onCanvasTouchStart(event: TouchEvent): void {
     event.preventDefault();
     if (event.touches.length > 0) {
@@ -265,7 +295,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   private hitTestJunction(x: number, y: number): void {
-    const hitRadius = 22;
+    const hitRadius = 28;
     for (let i = 0; i < this.layout.junctions.length; i++) {
       const junction = this.layout.junctions[i];
       const dx = x - junction.position.x;
@@ -297,6 +327,9 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     // Layer 3: Stations
     this.renderStations(ctx);
 
+    // Layer 3b: Spawn points
+    this.renderSpawnPoints(ctx);
+
     // Layer 4: Junctions
     this.renderJunctions(ctx);
 
@@ -313,8 +346,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   private renderPaths(ctx: CanvasRenderingContext2D): void {
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 2.5;
     for (const path of this.layout.paths) {
       if (path.waypoints.length < 2) continue;
       ctx.beginPath();
@@ -335,20 +368,47 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
   private renderStations(ctx: CanvasRenderingContext2D): void {
     for (const station of this.layout.stations) {
+      // Outer glow ring
       ctx.strokeStyle = station.identity.color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.25;
+      ctx.beginPath();
+      ctx.arc(station.position.x, station.position.y, 28, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Main station outline — thicker and brighter
+      ctx.strokeStyle = station.identity.color;
+      ctx.lineWidth = 4;
       this.drawShape(ctx, station.position.x, station.position.y, station.identity.shapeType, 20, false);
+    }
+  }
+
+  private renderSpawnPoints(ctx: CanvasRenderingContext2D): void {
+    for (const sp of this.layout.spawnPoints) {
+      // Bright outer ring
+      ctx.strokeStyle = 'rgba(165, 180, 252, 0.6)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(sp.position.x, sp.position.y, 16, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Inner filled dot
+      ctx.fillStyle = 'rgba(165, 180, 252, 0.5)';
+      ctx.beginPath();
+      ctx.arc(sp.position.x, sp.position.y, 6, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
   private renderJunctions(ctx: CanvasRenderingContext2D): void {
     for (const junction of this.layout.junctions) {
-      // Draw junction circle
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.lineWidth = 2;
+      // Draw junction circle — bigger and brighter
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(junction.position.x, junction.position.y, 14, 0, Math.PI * 2);
+      ctx.arc(junction.position.x, junction.position.y, 20, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
@@ -363,7 +423,6 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const path = this.layout.paths.find(p => p.id === currentPathId);
     if (!path || path.waypoints.length < 2) return;
 
-    // Direction from junction toward the first waypoint of the outgoing path
     const target = path.waypoints.length > 1 ? path.waypoints[1] : path.waypoints[0];
     const dx = target.x - junction.position.x;
     const dy = target.y - junction.position.y;
@@ -372,17 +431,17 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
     const nx = dx / dist;
     const ny = dy / dist;
-    const arrowLen = 8;
-    const tipX = junction.position.x + nx * 10;
-    const tipY = junction.position.y + ny * 10;
+    const arrowLen = 10;
+    const tipX = junction.position.x + nx * 14;
+    const tipY = junction.position.y + ny * 14;
 
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(tipX, tipY);
-    ctx.lineTo(tipX - nx * arrowLen + ny * 4, tipY - ny * arrowLen - nx * 4);
+    ctx.lineTo(tipX - nx * arrowLen + ny * 5, tipY - ny * arrowLen - nx * 5);
     ctx.moveTo(tipX, tipY);
-    ctx.lineTo(tipX - nx * arrowLen - ny * 4, tipY - ny * arrowLen + nx * 4);
+    ctx.lineTo(tipX - nx * arrowLen - ny * 5, tipY - ny * arrowLen + nx * 5);
     ctx.stroke();
   }
 
@@ -431,26 +490,31 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const delivered = scoring.correctDeliveries + scoring.misdeliveries;
     const remaining = config.shapeCount - delivered;
 
-    ctx.font = '18px Inter, sans-serif';
+    ctx.font = '16px Inter, sans-serif';
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
     ctx.shadowBlur = 4;
 
-    // Score (top-left)
-    ctx.fillStyle = '#ffffff';
+    // Correct / Incorrect / Remaining in top-left
     ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${Math.floor(scoring.score)}`, 16, 16);
+    ctx.fillStyle = '#86efac';
+    ctx.fillText(`${scoring.correctDeliveries}`, 16, 16);
 
-    // Streak (top-center)
-    ctx.textAlign = 'center';
-    const streakText = scoring.streak > 0
-      ? `Streak: ${scoring.streak} x${Math.min(scoring.streak, 5)}`
-      : 'Streak: 0';
-    ctx.fillText(streakText, canvasWidth / 2, 16);
+    const correctWidth = ctx.measureText(`${scoring.correctDeliveries}`).width;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText(' / ', 16 + correctWidth, 16);
 
-    // Shapes remaining (top-right)
-    ctx.textAlign = 'right';
-    ctx.fillText(`Remaining: ${remaining}`, canvasWidth - 16, 16);
+    const slashWidth = ctx.measureText(' / ').width;
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillText(`${scoring.misdeliveries}`, 16 + correctWidth + slashWidth, 16);
+
+    const incorrectWidth = ctx.measureText(`${scoring.misdeliveries}`).width;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText(' / ', 16 + correctWidth + slashWidth + incorrectWidth, 16);
+
+    const slash2Width = ctx.measureText(' / ').width;
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(`${remaining}`, 16 + correctWidth + slashWidth + incorrectWidth + slash2Width, 16);
 
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
