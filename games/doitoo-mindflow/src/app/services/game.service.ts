@@ -69,8 +69,8 @@ export class GameService {
       accuracy: calculateAccuracy(state.correctDeliveries, state.misdeliveries),
       elapsedTimeMs: elapsed,
       longestStreak: state.longestStreak,
-      trainCount: cfg.trainCount,
-      shapeCount: cfg.shapeCount,
+      destinations: cfg.destinations,
+      runners: cfg.runners,
     };
 
     this.roundResult.set(result);

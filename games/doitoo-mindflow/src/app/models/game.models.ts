@@ -1,23 +1,16 @@
-// ── game.models.ts ──
+import { TRACK_GENERATION_DEFAULTS } from './track-generation.config';
 
 export type GameStage = 'idle' | 'countdown' | 'playing' | 'summary';
 
-export type ShapeType = 'circle' | 'square' | 'triangle' | 'diamond' | 'hexagon';
+export type ShapeType = typeof TRACK_GENERATION_DEFAULTS.shapeTypes[number];
 
-export const SHAPE_TYPES: ShapeType[] = ['circle', 'square', 'triangle', 'diamond', 'hexagon'];
+export const SHAPE_TYPES: ShapeType[] = [...TRACK_GENERATION_DEFAULTS.shapeTypes];
 
 export type BaseSpeed = 'slow' | 'medium' | 'fast';
 
-export const BASE_SPEED_VALUES: Record<BaseSpeed, number> = {
-  slow: 80,    // pixels per second
-  medium: 150,
-  fast: 250,
-};
+export const BASE_SPEED_VALUES: Record<BaseSpeed, number> = { ...TRACK_GENERATION_DEFAULTS.speed };
 
-export const COLOR_PALETTE: string[] = [
-  '#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7',
-  '#f97316', '#06b6d4', '#ec4899', '#84cc16', '#f5f5f5',
-];
+export const COLOR_PALETTE: string[] = [...TRACK_GENERATION_DEFAULTS.colorPalette];
 
 /** A station identity: unique (shapeType, color) pair */
 export interface StationIdentity {
@@ -27,17 +20,17 @@ export interface StationIdentity {
 
 /** Game configuration */
 export interface MindFlowConfig {
-  trainCount: number;       // 2–20, default 4
-  shapeCount: number;       // 5–100, default 20
+  destinations: number;     // 2–20, number of stations (was trainCount)
+  runners: number;          // 5–100, number of shapes to spawn (was shapeCount)
   baseSpeed: BaseSpeed;     // default 'medium'
-  spawnInterval: number;    // 1–10 seconds, default 3
+  spawnInterval: number;    // 1–5 seconds (decimal), default 2
 }
 
 export const DEFAULT_CONFIG: MindFlowConfig = {
-  trainCount: 4,
-  shapeCount: 20,
+  destinations: 4,
+  runners: 20,
   baseSpeed: 'medium',
-  spawnInterval: 3,
+  spawnInterval: 2,
 };
 
 /** A 2D point on the canvas */
@@ -110,8 +103,8 @@ export interface RoundResult {
   accuracy: number;           // percentage 0–100
   elapsedTimeMs: number;
   longestStreak: number;
-  trainCount: number;
-  shapeCount: number;
+  destinations: number;
+  runners: number;
 }
 
 /** Scoring state tracked during a round */
