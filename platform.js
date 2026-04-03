@@ -16,6 +16,76 @@ const Platform = (function () {
   const REQUIRED_FIELDS = ['id', 'name', 'description', 'icon', 'path'];
   const ACTIVE_GAME_KEY = 'platform:activeGame';
 
+  const TAGLINES = [   
+    'IQ is not optional',   
+    'No brain, no gain',
+    'Your neurons called. They want a challenge.',
+    'Skull day is every day',
+    'Think harder. Then harder again.',
+    'Mental reps don\'t count unless they hurt',
+    'Your brain skipped leg day. And every other day.',
+    'Comfort zone? Never heard of her.',
+    'If your brain isn\'t crying, you\'re not trying',
+    'Swole mind, zero excuses',
+    'Grind the grey matter',
+    'Neurons don\'t grow in the shade',
+    'Rest day is for your body, not your brain',
+    'Cognitive gains or cognitive shame',
+    'Train your brain or it trains you',
+    'Your IQ won\'t spot itself',
+    'Synapses don\'t fire themselves',
+    'Think until it burns. Then think more.',
+    'Weak focus is a choice',
+    'Your prefrontal cortex deserves better',
+    'No shortcuts. Only neural pathways.',
+    'Flex that frontal lobe',
+    'Brains over everything',
+    'You vs. your last brain cell. Fight.',
+    'Mental gains loading...',
+    'Discipline is remembering what your brain forgot',
+    'Cry now, think later',
+    'Every neuron earned, not given',
+    'Your working memory is not working hard enough',
+    'Mediocre minds don\'t play here',
+    'Your brain skipped brain day... again.',
+    'No pain, no prefrontal gain',
+    'Lift heavy thoughts or stay average',
+    'Your neurons are soft. Harden them.',
+    'Mental DOMS or mental loss',
+    'Weak focus gets deleted',
+    'Synapses don’t grow from comfort',
+    'Your cortex called — it’s embarrassed',
+    'Brain gains don’t come from excuses',
+    'Grind until your IQ begs for mercy',
+    'Think heavy. Lift heavier thoughts.',
+    'Lazy neurons get pruned forever',
+    'Your working memory is slacking again',
+    'No reps, no respect from your future self',
+    'Feel the burn in your frontal lobe',
+    'Cognitive PRs or permanent regression',
+    'Your brain’s been benching feathers',
+    'Stop scrolling. Start skull-crushing problems.',
+    'Mental atrophy is not a personality trait',
+    'If your head isn’t pounding, you’re coasting',
+    'Neurons hate weak owners',
+    'Build the brain or become the background',
+    'Your amygdala is scared of hard mode',
+    'Comfort is for corpses, not cortexes',
+    'Every missed problem is a missed gain',
+    'Train insane or remain the same (dumb)',
+    'Your brain is calling collect from the comfort zone',
+    'Flex the frontal or flex the excuses',
+    'Mushy mind = deleted from the leaderboard',
+    'Sweat your synapses or stay soft',
+    'Cognitive failure is not an option',
+    'Your IQ is crying for another set',
+    'Push past the plateau or perish',
+    'Brain dead? Nah, just brain lazy.',
+    'No mercy for mediocre minds',
+    'Forge your mind in the fire of failure',
+    'Weak thoughts die in this app'
+  ];
+
   // ── Cached DOM references (populated on DOMContentLoaded) ──
   let backButton = null;
   let navBar = null;
@@ -281,6 +351,12 @@ const Platform = (function () {
     errorMessage = document.getElementById('error-message');
     errorBackButton = document.getElementById('error-back-button');
     gameFrame = document.getElementById('game-frame');
+
+    // Set random tagline
+    const taglineEl = document.getElementById('tagline');
+    if (taglineEl) {
+      taglineEl.textContent = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
+    }
 
     // Wire up back buttons
     backButton.addEventListener('click', returnToSelector);
