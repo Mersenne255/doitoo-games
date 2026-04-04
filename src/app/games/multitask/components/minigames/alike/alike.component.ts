@@ -6,8 +6,10 @@ import {
   signal,
   OnInit,
   OnDestroy,
+  AfterViewInit,
   inject,
   effect,
+  ElementRef,
 } from '@angular/core';
 
 import {
@@ -18,6 +20,7 @@ import {
   timeLimitForDifficulty,
 } from '../../../models/game.models';
 import { generatePuzzle } from '../../../utils/puzzle-generator.util';
+import { computeCardPacking } from '../../../utils/card-packing.util';
 import { GameService } from '../../../services/game.service';
 
 // ── Color palettes ──────────────────────────────────────────────────
@@ -45,7 +48,7 @@ const DEFAULT_FILL = '#6366f1';
   templateUrl: './alike.component.html',
   styleUrl: './alike.component.scss',
 })
-export class AlikeComponent implements OnInit, OnDestroy {
+export class AlikeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // ── Inputs / Outputs ────────────────────────────────────────────
 
@@ -57,6 +60,7 @@ export class AlikeComponent implements OnInit, OnDestroy {
   // ── Services ────────────────────────────────────────────────────
 
   private readonly game = inject(GameService);
+  private readonly el = inject(ElementRef);
 
   // ── Reactive state (template-bound) ─────────────────────────────
 
@@ -65,6 +69,7 @@ export class AlikeComponent implements OnInit, OnDestroy {
   readonly isSolved = signal(false);
   readonly isFailed = signal(false);
   readonly timerPercent = signal(100);
+  readonly cardSize = signal(80);
 
   // ── Private state ───────────────────────────────────────────────
 
@@ -75,6 +80,7 @@ export class AlikeComponent implements OnInit, OnDestroy {
   private timerHandle: ReturnType<typeof setInterval> | null = null;
   private advanceHandle: ReturnType<typeof setTimeout> | null = null;
   private gameOver = false;
+  private resizeObserver: ResizeObserver | null = null;
 
   // ── Template helpers (SVG attributes) ───────────────────────────
 
@@ -130,8 +136,18 @@ export class AlikeComponent implements OnInit, OnDestroy {
     this.nextPuzzle();
   }
 
+  ngAfterViewInit(): void {
+    const content = (this.el.nativeElement as HTMLElement).querySelector('.content');
+    if (content) {
+      this.resizeObserver = new ResizeObserver(() => this.recalculateLayout());
+      this.resizeObserver.observe(content);
+    }
+    this.recalculateLayout();
+  }
+
   ngOnDestroy(): void {
     this.stopTimers();
+    this.resizeObserver?.disconnect();
   }
 
   // ── User interaction ────────────────────────────────────────────
@@ -163,6 +179,7 @@ export class AlikeComponent implements OnInit, OnDestroy {
     this.selectedIndex.set(null);
     this.isSolved.set(false);
     this.startTimer();
+    setTimeout(() => this.recalculateLayout(), 0);
   }
 
   private startTimer(): void {
@@ -216,5 +233,19 @@ export class AlikeComponent implements OnInit, OnDestroy {
     this.correctCount = 0;
     this.totalCount = 0;
     this.timerPercent.set(100);
+  }
+
+  // ── Layout ──────────────────────────────────────────────────────
+
+  private recalculateLayout(): void {
+    const content = (this.el.nativeElement as HTMLElement).querySelector('.content');
+    if (!content) return;
+
+    const w = content.clientWidth - 16;  // subtract padding
+    const h = content.clientHeight - 16;
+    if (w <= 0 || h <= 0) return;
+
+    const count = this.puzzle()?.cards.length ?? 3;
+    this.cardSize.set(computeCardPacking(w, h, count, 8, 30, 500).cardSize);
   }
 }
