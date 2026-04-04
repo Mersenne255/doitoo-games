@@ -1,0 +1,17 @@
+<div class="buttons-container">
+  @for (modality of modalities(); track modality; let i = $index) {
+    <button
+      class="match-btn"
+      [class.pressed]="pressedThisStep().has(modality)"
+      [class.fb-hit]="feedback().get(modality) === 'hit'"
+      [class.fb-miss]="feedback().get(modality) === 'miss'"
+      [class.fb-false-alarm]="feedback().get(modality) === 'false_alarm'"
+      [disabled]="disabled() || pressedThisStep().has(modality)"
+      (click)="matchPress.emit(modality)"
+    >
+      <img class="btn-icon" [src]="icons[modality]" [alt]="labels[modality]" />
+      <span class="label">{{ labels[modality] }}</span>
+      <span class="key-hint">{{ keys[modality] }}</span>
+    </button>
+  }
+</div>

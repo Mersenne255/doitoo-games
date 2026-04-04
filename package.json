@@ -2,22 +2,27 @@
   "name": "doitoo-games",
   "version": "1.0.0",
   "private": true,
-  "description": "Doitoo Games — a multi-game launcher platform",
+  "description": "Doitoo Games: a multi-game platform for cognitive boosting",
   "scripts": {
-    "dev": "node scripts/dev.js",
-    "dev:mindflow": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-mindflow\"",
-    "dev:multitask": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-multitask\"",
-    "dev:nback": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-nback\"",
-    "dev:numbers": "npx concurrently \"npm run serve\" \"npm run watch --prefix games/doitoo-numbers\"",
-    "serve": "npx http-server . -p 8080 -c-1",
-    "serve:dist": "npx http-server dist -p 8080 -c-1",
-    "build:games": "node scripts/build-games.js",
-    "build:platform": "node scripts/build.js",
-    "build": "npm run build:games && npm run build:platform"
+    "build": "ng build",
+    "start": "ng serve",
+    "serve": "ng serve",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "@angular/router": "^21.2.0",
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "fast-check": "^3.22.0",
-    "http-server": "^14.1.1"
+    "@angular-devkit/build-angular": "^21.2.0",
+    "@angular/cli": "^21.2.0",
+    "@angular/compiler-cli": "^21.2.0",
+    "fast-check": "^3.23.0",
+    "typescript": "~5.9.0",
+    "vitest": "^4.1.2"
   }
 }

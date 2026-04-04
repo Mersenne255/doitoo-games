@@ -1,0 +1,24 @@
+<div class="container">
+  <app-display
+    [displayValue]="game.displayValue()"
+    [inputValue]="game.inputValue()"
+    [stage]="game.stage()"
+    [mode]="game.mode()"
+    [result]="game.result()"
+    [numberLength]="game.config().numberLength" />
+
+  <app-keyboard
+    [disabled]="game.stage() !== 'input'"
+    [showStart]="game.stage() !== 'input'"
+    [stage]="game.stage()"
+    (keyPress)="onVirtualKey($event)"
+    (startGame)="game.startGame()"
+    (abort)="game.confirm()" />
+
+  <app-config
+    [disabled]="game.stage() === 'showing' || game.stage() === 'input'"
+    [mode]="game.mode()"
+    [config]="game.config()"
+    (modeChange)="game.setMode($event)"
+    (configChange)="game.updateConfig($event)" />
+</div>

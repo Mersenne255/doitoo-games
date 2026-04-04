@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.title {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  gap: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.build-number {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 0.7rem;
+  text-align: center;
+  padding: 0.5rem 0;
+}

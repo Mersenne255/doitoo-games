@@ -1,8 +1,0 @@
-{
-  "name": "Doitoo Multitask",
-  "short_name": "Multitask",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#0f0f1a",
-  "theme_color": "#000000"
-}
