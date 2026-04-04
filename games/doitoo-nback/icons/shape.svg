@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Circle, triangle, and square overlapping -->
-  <circle cx="35" cy="35" r="22" fill="#a855f7" fill-opacity="0.7" stroke="#c084fc" stroke-width="2"/>
-  <polygon points="65,15 88,60 42,60" fill="#3b82f6" fill-opacity="0.7" stroke="#60a5fa" stroke-width="2"/>
-  <rect x="30" y="55" width="38" height="38" rx="4" fill="#22c55e" fill-opacity="0.7" stroke="#4ade80" stroke-width="2"/>
-</svg>
