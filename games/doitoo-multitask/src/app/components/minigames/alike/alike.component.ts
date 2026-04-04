@@ -12,7 +12,7 @@ template:`
 <div class="tb"><div class="tf" [style.width.%]="tp()" [class.w]="tp()<25" [class.ok]="solved()"></div></div>
 <div class="ct">@if(puzzle();as p){<div class="cr">
 @for(card of p.cards;track $index){
-<button class="cb" [style.width.px]="cs()" [style.height.px]="cs()" [class.correct]="solved()&&si()===$index" [class.incorrect]="failed()&&si()===$index" [class.answer]="failed()&&$index===p.answerIndex" (touchstart)="onTouch($event,$index)" (click)="pick($index)">
+<button class="cb" [style.width.px]="cs()" [style.height.px]="cs()" [class.correct]="solved()&&si()===$index" [class.incorrect]="failed()&&si()===$index" [class.answer]="failed()&&$index===p.answerIndex" (pointerdown)="pick($index)">
 <svg viewBox="0 0 80 80" class="sv"><defs>
 <linearGradient [attr.id]="gid($index)" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" [attr.stop-color]="fl(card,p)"/><stop offset="100%" [attr.stop-color]="fd(card,p)"/></linearGradient>
 <filter [attr.id]="fid($index)" x="-10%" y="-10%" width="130%" height="130%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/></filter>
@@ -29,14 +29,14 @@ template:`
 </svg></button>}
 </div>}</div></div>`,
 styles:[`
-:host{display:flex;flex:1;min-height:0;overflow:hidden}
+:host{display:flex;flex:1;min-height:0;overflow:hidden;touch-action:none}
 .g{display:flex;flex-direction:column;flex:1;border-radius:.5rem;overflow:hidden;position:relative;min-height:0;max-height:100%}
 .g.ok{background:rgba(34,197,94,.08)}.g.fail{background:rgba(239,68,68,.1)}
 .tb{height:6px;width:100%;background:rgba(255,255,255,.06);flex-shrink:0}
 .tf{height:100%;background:#6366f1;transition:width .1s linear}.tf.w{background:#ef4444}.tf.ok{background:#22c55e}
 .ct{display:flex;flex:1;min-height:0;overflow:hidden;padding:8px}
 .cr{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;align-items:center;gap:8px;width:100%;height:100%}
-.cb{flex:0 0 auto;background:transparent;border:none;border-radius:.5rem;cursor:pointer;padding:0;transition:transform .15s;outline:none;display:flex;align-items:center;justify-content:center}
+.cb{flex:0 0 auto;background:transparent;border:none;border-radius:.5rem;cursor:pointer;padding:0;transition:transform .15s;outline:none;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
 .cb:hover{transform:scale(1.04)}.cb:active{transform:scale(.96)}
 .cb.correct{border:3px solid #22c55e;box-shadow:0 0 12px rgba(34,197,94,.4)}
 .cb.incorrect{border:3px solid #ef4444;box-shadow:0 0 12px rgba(239,68,68,.4)}
@@ -70,6 +70,7 @@ export class AlikeComponent implements OnInit,OnDestroy,AfterViewInit{
   private timer(){this.clr();this.ms=timeLimitForDifficulty(this.game.currentDifficulty())*1000;this.elapsed=0;this.tp.set(100);this.ti=setInterval(()=>{this.elapsed+=50;this.tp.set(Math.max(0,100-this.elapsed/this.ms*100));if(this.elapsed>=this.ms){this.clr();this.end()}},50)}
   private clr(){if(this.ti){clearInterval(this.ti);this.ti=null}if(this.at){clearTimeout(this.at);this.at=null}}
   onTouch(e:TouchEvent,i:number){e.preventDefault();this.pick(i)}
+  pick(i:number){Event,i:number){e.preventDefault();this.pick(i)}
   pick(i:number){if(this.done||this.solved()||this.failed()||this.si()!==null)return;this.si.set(i);const p=this.puzzle();if(!p)return;if(i===p.answerIndex){this.solved.set(true);this.correctCount.update(c=>c+1);this.totalCount.update(c=>c+1);this.clr();this.at=setTimeout(()=>this.next(),1000)}else this.end()}
   private end(){if(this.done)return;this.done=true;this.failed.set(true);this.totalCount.update(c=>c+1);this.clr();const t=this.totalCount();this.completed.emit({slotIndex:this.slotIndex(),score:this.correctCount(),total:t,maxDifficulty:this.game.currentDifficulty(),details:{correct:this.correctCount(),incorrect:t-this.correctCount(),timedOut:0}})}
   private rst(){this.clr();this.done=false;this.puzzle.set(null);this.si.set(null);this.solved.set(false);this.failed.set(false);this.correctCount.set(0);this.totalCount.set(0);this.tp.set(100)}
