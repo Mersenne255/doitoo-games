@@ -22,8 +22,7 @@
               { "glob": "manifest.json", "input": "src", "output": "/" },
               { "glob": "favicon.svg", "input": "icons", "output": "/" },
               { "glob": "icon.png", "input": "icons", "output": "/" },
-              { "glob": "icon-192.png", "input": "icons", "output": "/" },
-              { "glob": "icon-512.png", "input": "icons", "output": "/" },
+              { "glob": "doitoo-logo.svg", "input": "icons", "output": "/" },
               { "glob": "apple-touch-icon.png", "input": "icons", "output": "/" }
             ],
             "styles": ["src/styles.scss"],
