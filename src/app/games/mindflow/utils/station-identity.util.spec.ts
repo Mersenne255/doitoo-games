@@ -3,7 +3,7 @@ import { generateStationIdentities } from './station-identity.util';
 import { COLOR_PALETTE, SHAPE_TYPES } from '../models/game.models';
 
 describe('generateStationIdentities', () => {
-  const totalCombos = SHAPE_TYPES.length * COLOR_PALETTE.length; // 5 × 10 = 50
+  const totalCombos = SHAPE_TYPES.length * COLOR_PALETTE.length; // 5 × 5 = 25
 
   it('should return the correct number of identities', () => {
     for (const count of [1, 2, 5, 10, 15, 20]) {
@@ -16,8 +16,8 @@ describe('generateStationIdentities', () => {
     expect(generateStationIdentities(0).length).toBe(0);
   });
 
-  it('should produce all unique shape+color pairs for counts up to 50', () => {
-    for (const count of [2, 5, 10, 15, 20, 50]) {
+  it('should produce all unique shape+color pairs for counts up to totalCombos', () => {
+    for (const count of [2, 5, 10, 15, 20, totalCombos]) {
       const result = generateStationIdentities(count);
       const keys = result.map(id => `${id.shapeType}:${id.color}`);
       const uniqueKeys = new Set(keys);
@@ -25,8 +25,8 @@ describe('generateStationIdentities', () => {
     }
   });
 
-  it('should never produce duplicate identities for any count 2–20', () => {
-    for (let count = 2; count <= 20; count++) {
+  it('should never produce duplicate identities for any count 2–totalCombos', () => {
+    for (let count = 2; count <= totalCombos; count++) {
       const result = generateStationIdentities(count);
       const keys = result.map(id => `${id.shapeType}:${id.color}`);
       const uniqueKeys = new Set(keys);
@@ -86,8 +86,8 @@ describe('generateStationIdentities', () => {
     expect(a).toEqual(b);
   });
 
-  it('should not have any two stations with same color AND same shape for counts ≤ 50', () => {
-    const result = generateStationIdentities(50);
+  it('should not have any two stations with same color AND same shape for counts ≤ totalCombos', () => {
+    const result = generateStationIdentities(totalCombos);
     for (let i = 0; i < result.length; i++) {
       for (let j = i + 1; j < result.length; j++) {
         const same = result[i].shapeType === result[j].shapeType &&
@@ -120,10 +120,11 @@ describe('generateTrackLayout station identity uniqueness', () => {
     }
   });
 
-  it('should never have two stations with the same color for ≤10 stations', () => {
+  it('should never have two stations with the same color for ≤ palette size', () => {
     for (let run = 0; run < 20; run++) {
+      const count = Math.min(COLOR_PALETTE.length, 5);
       const result = generateTrackLayout({
-        trainCount: 8,
+        trainCount: count,
         screenWidth: 800,
         screenHeight: 600,
         gridSize: { cols: 20, rows: 15 },

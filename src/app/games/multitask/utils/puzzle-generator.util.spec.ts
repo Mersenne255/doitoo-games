@@ -1,5 +1,4 @@
-import { describe, it } from 'node:test';
-import * as assert from 'node:assert/strict';
+import { describe, it, assert } from 'vitest';
 import * as fc from 'fast-check';
 import {
   generatePuzzle,
