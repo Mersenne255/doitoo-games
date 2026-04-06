@@ -41,7 +41,8 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     :host {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
+      height: 100dvh;
     }
 
     main {
@@ -51,8 +52,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     }
 
     .nav-bar {
-      position: sticky;
-      top: 0;
+      flex-shrink: 0;
       z-index: 100;
       display: flex;
       justify-content: center;
@@ -64,9 +64,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     }
 
     .nav-bar.nav-hidden {
-      transform: translateY(-100%);
-      opacity: 0;
-      pointer-events: none;
+      display: none;
     }
 
     .nav-inner {
@@ -145,6 +143,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     }
 
     .app-footer {
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
