@@ -15,9 +15,10 @@ import {
   template: `
     <div class="overlay">
       @switch (step()) {
-        @case (0) { <div class="word">Ready</div> }
-        @case (1) { <div class="word">Steady</div> }
-        @case (2) { <div class="word go">Go!</div> }
+        @case (0) { <div class="word">3</div> }
+        @case (1) { <div class="word">2</div> }
+        @case (2) { <div class="word">1</div> }
+        @case (3) { <div class="word go">Go!</div> }
       }
     </div>
   `,
@@ -47,7 +48,7 @@ import {
       text-transform: uppercase;
       letter-spacing: 0.08em;
       text-shadow: 0 0 40px rgba(99, 102, 241, 0.8), 0 0 80px rgba(99, 102, 241, 0.4);
-      animation: zoom-in 0.3s ease-out both;
+      animation: zoom-in 0.2s ease-out both;
     }
     .word.go {
       color: #22c55e;
@@ -56,7 +57,7 @@ import {
   `],
 })
 export class CountdownComponent implements OnDestroy {
-  stepTimings = input<[number, number, number]>([500, 1000, 1500]);
+  stepTimings = input<[number, number, number, number]>([350, 700, 1050, 1400]);
   done = output<void>();
   step = signal(0);
 
@@ -68,7 +69,8 @@ export class CountdownComponent implements OnDestroy {
       this.timeouts.push(
         setTimeout(() => this.step.set(1), t[0]),
         setTimeout(() => this.step.set(2), t[1]),
-        setTimeout(() => this.done.emit(), t[2]),
+        setTimeout(() => this.step.set(3), t[2]),
+        setTimeout(() => this.done.emit(), t[3]),
       );
     });
   }

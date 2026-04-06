@@ -17,7 +17,7 @@ import { NavService } from '../../shared/services/nav.service';
       <app-config-panel />
     }
     @if (game.stage() === 'countdown') {
-      <app-countdown [stepTimings]="[350, 700, 1000]" (done)="game.onCountdownDone()" />
+      <app-countdown [stepTimings]="[350, 700, 1050, 1400]" (done)="game.onCountdownDone()" />
     }
     @if (game.stage() === 'playing') {
       <app-game-board />
@@ -29,8 +29,7 @@ import { NavService } from '../../shared/services/nav.service';
   styles: [`
     :host {
       display: block;
-      min-height: 100vh;
-      min-height: 100dvh;
+      height: 100%;
     }
   `],
 })
@@ -42,10 +41,10 @@ export class MindflowGameComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       const stage = this.game.stage();
-      if (stage === 'playing') {
-        this.nav.hide();
-      } else if (stage === 'idle' || stage === 'summary') {
+      if (stage === 'idle') {
         this.nav.show();
+      } else {
+        this.nav.hide();
       }
     });
   }

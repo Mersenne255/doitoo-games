@@ -21,14 +21,12 @@ import {
   calculateModalityScore,
   calculateSessionResult,
 } from '../utils/scoring.util';
-import { NavService } from '../../../shared/services/nav.service';
 
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly storage = inject(StorageService);
   private readonly stimulusService = inject(StimulusService);
   private readonly audioService = inject(AudioService);
-  private readonly nav = inject(NavService);
 
   // ── Signals ──
   readonly stage: WritableSignal<GameStage> = signal<GameStage>('idle');
@@ -62,7 +60,6 @@ export class GameService {
     this.sequence = generateSequence(this.config());
     this.stepClassifications = new Map();
     this.sessionResult.set(null);
-    this.nav.hide();
   }
 
   /** Called by CountdownComponent when the 3-2-1 countdown finishes. */
@@ -146,7 +143,6 @@ export class GameService {
     this.stimulusService.abort();
     this.resetPlayingState();
     this.stage.set('idle');
-    this.nav.show();
   }
 
   /** Accept the N-level suggestion from the session result. */
@@ -223,7 +219,6 @@ export class GameService {
 
     this.resetPlayingState();
     this.stage.set('summary');
-    this.nav.show();
   }
 
   private resetPlayingState(): void {

@@ -4,7 +4,9 @@
   "private": true,
   "description": "Doitoo Games: a multi-game platform for cognitive boosting",
   "scripts": {
+    "prebuild": "node scripts/generate-build-info.js",
     "build": "ng build",
+    "preserve": "node scripts/generate-build-info.js",
     "start": "ng serve",
     "serve": "ng serve",
     "test": "vitest --run"
@@ -15,6 +17,7 @@
     "@angular/core": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "@angular/service-worker": "^21.2.7",
     "tslib": "^2.3.0"
   },
   "devDependencies": {

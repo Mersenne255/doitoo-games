@@ -13,6 +13,7 @@ import { GAME_LIST, TAGLINES } from './game-list';
         <a class="game-card" [routerLink]="game.route">
           <img class="card-icon" [src]="game.icon" [alt]="game.name + ' icon'" />
           <span class="card-name">{{ game.name }}</span>
+          <span class="card-label">{{ game.label }}</span>
           <span class="card-description">{{ game.description }}</span>
         </a>
       }
@@ -93,6 +94,16 @@ import { GAME_LIST, TAGLINES } from './game-list';
       font-size: 1rem;
       font-weight: 700;
       color: #f1f5f9;
+    }
+
+    .card-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #818cf8;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
     }
 
     .card-description {

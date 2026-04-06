@@ -1,6 +1,6 @@
 import {
   Component, ChangeDetectionStrategy, input, output, signal,
-  OnInit, OnDestroy, inject, effect, computed, ElementRef, viewChild,
+  OnInit, OnDestroy, inject, effect, computed, ElementRef, viewChild, HostListener,
 } from '@angular/core';
 import {
   MatcherConfig, MinigameResult, ShapeCard, Shape, ShapeColor,
@@ -25,6 +25,9 @@ const BORDER_COLORS: Record<string, string> = {
 };
 
 const FIRST_CARD_DISPLAY_MS = 2000;
+
+/** Hotkey pairs [no, yes] indexed by visual slot position */
+const SLOT_HOTKEYS: [string, string][] = [['z', 'x'], ['c', 'v'], ['b', 'n']];
 
 type ActiveProperty = keyof ShapeCard;
 
@@ -93,6 +96,9 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     </div>
   </div>
 
+  <!-- Score counter -->
+  <div class="score-badge">{{ correctCount() }}</div>
+
   <!-- Card display area -->
   <div class="card-display">
     @if (isGameOver() && showComparison() && previousCard() && currentCard()) {
@@ -103,19 +109,19 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
           <svg viewBox="0 0 80 80" class="compare-svg">
             <defs>
               <linearGradient [attr.id]="'grad-prev-' + slotIndex()" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" [attr.stop-color]="fillLight(previousCard()!)"/>
-                <stop offset="100%" [attr.stop-color]="fillDark(previousCard()!)"/>
+                <stop offset="0%" [attr.stop-color]="fillLight(previousCard()!, true)"/>
+                <stop offset="100%" [attr.stop-color]="fillDark(previousCard()!, true)"/>
               </linearGradient>
             </defs>
             @switch (previousCard()!.shape) {
-              @case ('circle')  { <circle cx="40" cy="40" r="26" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!)" stroke-width="5"/> }
-              @case ('square')  { <rect x="14" y="14" width="52" height="52" rx="4" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!)" stroke-width="5"/> }
-              @case ('triangle'){ <polygon points="40,8 70,66 10,66" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!)" stroke-width="5" stroke-linejoin="round"/> }
-              @case ('diamond') { <polygon points="40,8 72,40 40,72 8,40" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!)" stroke-width="5" stroke-linejoin="round"/> }
-              @case ('hexagon') { <polygon points="40,10 64,24 64,56 40,70 16,56 16,24" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!)" stroke-width="5" stroke-linejoin="round"/> }
-              @case ('star')    { <path d="M 61,72 40,67 18,72 17,50 5,32 26,24 40,7 54,24 74,32 62,50 Z" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!)" stroke-width="4" stroke-linejoin="round"/> }
+              @case ('circle')  { <circle cx="40" cy="40" r="26" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!, true)" stroke-width="5"/> }
+              @case ('square')  { <rect x="14" y="14" width="52" height="52" rx="4" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!, true)" stroke-width="5"/> }
+              @case ('triangle'){ <polygon points="40,8 70,66 10,66" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!, true)" stroke-width="5" stroke-linejoin="round"/> }
+              @case ('diamond') { <polygon points="40,8 72,40 40,72 8,40" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!, true)" stroke-width="5" stroke-linejoin="round"/> }
+              @case ('hexagon') { <polygon points="40,10 64,24 64,56 40,70 16,56 16,24" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!, true)" stroke-width="5" stroke-linejoin="round"/> }
+              @case ('star')    { <path d="M 61,72 40,67 18,72 17,50 5,32 26,24 40,7 54,24 74,32 62,50 Z" [attr.fill]="prevGradUrl()" [attr.stroke]="borderStroke(previousCard()!, true)" stroke-width="4" stroke-linejoin="round"/> }
             }
-            @if (showLetters()) {
+            @if (showPreviousLetters()) {
               <text x="40" [attr.y]="previousCard()!.shape==='triangle'?46:42" text-anchor="middle" dominant-baseline="central" font-size="20" font-weight="700" fill="rgba(255,255,255,.95)">{{ previousCard()!.innerLetter }}</text>
             }
           </svg>
@@ -144,7 +150,8 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
         </div>
       </div>
     } @else if (displayCard(); as card) {
-      <!-- Single card view -->
+      <!-- Single card view — keyed to restart animation on each new card -->
+      @for (k of [cardKey()]; track k) {
       <div class="single-card">
         <svg viewBox="0 0 80 80" class="card-svg">
           <defs>
@@ -169,6 +176,7 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
           }
         </svg>
       </div>
+      }
     }
   </div>
 
@@ -176,8 +184,8 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
   @if (!isGameOver()) {
     <div class="question-text">Does something match?</div>
     <div class="button-row" [class.disabled]="!canAnswer()">
-      <button class="answer-btn no-btn" (touchstart)="onTouch($event, false)" (click)="onAnswer(false)">No</button>
-      <button class="answer-btn yes-btn" (touchstart)="onTouch($event, true)" (click)="onAnswer(true)">Yes</button>
+      <button class="answer-btn no-btn" (touchstart)="onTouch($event, false)" (click)="onAnswer(false)"><span>No</span> @if (hotkeys(); as hk) { <span class="hotkey">{{ hk[0] }}</span> }</button>
+      <button class="answer-btn yes-btn" (touchstart)="onTouch($event, true)" (click)="onAnswer(true)"><span>Yes</span> @if (hotkeys(); as hk) { <span class="hotkey">{{ hk[1] }}</span> }</button>
     </div>
   }
 </div>`,
@@ -189,6 +197,7 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
       border-radius: .5rem; overflow: hidden;
       min-height: 0; max-height: 100%;
       transition: background .3s;
+      position: relative;
     }
     .game-area.correct-flash { background: rgba(34, 197, 94, .08); }
     .game-area.incorrect-flash { background: rgba(239, 68, 68, .1); }
@@ -198,6 +207,16 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     .timer-fill.warning { background: #ef4444; }
     .timer-fill.correct { background: #22c55e; }
 
+    .score-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      z-index: 1;
+    }
+
     .card-display {
       display: flex; align-items: center; justify-content: center;
       flex: 1; min-height: 0; overflow: hidden;
@@ -206,6 +225,11 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     /* Single card — always in normal flow, never absolute */
     .single-card {
       display: flex; align-items: center; justify-content: center;
+      animation: slideIn 250ms ease-out both;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(60px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
     .card-svg { width: min(180px, 55vmin); height: min(180px, 55vmin); }
 
@@ -237,7 +261,7 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
       font-size: clamp(1.2rem, 5vmin, 2.2rem); font-weight: 700;
       cursor: pointer; transition: all .12s; outline: none;
       font-family: 'Inter', system-ui, sans-serif;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: .75rem 0; touch-action: manipulation;
     }
     .no-btn {
@@ -247,6 +271,14 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     .yes-btn { background: rgba(34,197,94,.12); color: #4ade80; }
     .answer-btn:hover { filter: brightness(1.2); }
     .answer-btn:active { transform: scale(.95); }
+
+    .hotkey {
+      font-size: 0.45em;
+      opacity: 0.35;
+      text-transform: uppercase;
+      font-weight: 500;
+      line-height: 1;
+    }
   `],
 })
 export class MatcherComponent implements OnInit, OnDestroy {
@@ -258,12 +290,37 @@ export class MatcherComponent implements OnInit, OnDestroy {
 
   private readonly game = inject(GameService);
 
+  /** Visual position of this slot among active slots (0-based) */
+  readonly visualPosition = computed(() => {
+    const activeSlots = this.game.activeSlots();
+    return activeSlots.findIndex(s => s.index === this.slotIndex());
+  });
+
+  /** Hotkey pair [no, yes] for this slot */
+  readonly hotkeys = computed(() => {
+    const pos = this.visualPosition();
+    return pos >= 0 && pos < SLOT_HOTKEYS.length ? SLOT_HOTKEYS[pos] : null;
+  });
+
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    const keys = this.hotkeys();
+    if (!keys || this.game.stage() !== 'playing') return;
+    const key = event.key.toLowerCase();
+    if (key === keys[0]) this.onAnswer(false);
+    else if (key === keys[1]) this.onAnswer(true);
+  }
+
   // ── Game state signals ──
   readonly currentCard = signal<ShapeCard | null>(null);
   readonly previousCard = signal<ShapeCard | null>(null);
   readonly displayCard = signal<ShapeCard | null>(null);
   readonly activeProperties = signal<ActiveProperty[]>(['shape', 'shapeColor']);
+  /** Properties that were active when the previous card was generated (for correct comparison) */
+  readonly previousActiveProperties = signal<ActiveProperty[]>(['shape', 'shapeColor']);
   readonly showLetters = computed(() => this.activeProperties().includes('innerLetter'));
+  /** Whether the previous card had letters visible (derived from previousActiveProperties) */
+  readonly showPreviousLetters = computed(() => this.previousActiveProperties().includes('innerLetter'));
 
   readonly flashState = signal<'correct' | 'incorrect' | null>(null);
   readonly isGameOver = signal(false);
@@ -278,6 +335,7 @@ export class MatcherComponent implements OnInit, OnDestroy {
 
   readonly correctCount = signal(0);
   readonly totalCount = signal(0);
+  readonly cardKey = signal(0);
 
   // ── Timer state ──
   private timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -292,16 +350,19 @@ export class MatcherComponent implements OnInit, OnDestroy {
   currGradUrl() { return `url(#grad-curr-${this.slotIndex()})`; }
   shadowUrl() { return `url(#shadow-${this.slotIndex()})`; }
 
-  fillDark(card: ShapeCard): string {
-    return this.activeProperties().includes('shapeColor')
+  fillDark(card: ShapeCard, usePreviousProps = false): string {
+    const props = usePreviousProps ? this.previousActiveProperties() : this.activeProperties();
+    return props.includes('shapeColor')
       ? (FILL_DARK[card.shapeColor] || '#4f46e5') : '#4f46e5';
   }
-  fillLight(card: ShapeCard): string {
-    return this.activeProperties().includes('shapeColor')
+  fillLight(card: ShapeCard, usePreviousProps = false): string {
+    const props = usePreviousProps ? this.previousActiveProperties() : this.activeProperties();
+    return props.includes('shapeColor')
       ? (FILL_LIGHT[card.shapeColor] || '#6366f1') : '#6366f1';
   }
-  borderStroke(card: ShapeCard): string {
-    return this.activeProperties().includes('borderColor')
+  borderStroke(card: ShapeCard, usePreviousProps = false): string {
+    const props = usePreviousProps ? this.previousActiveProperties() : this.activeProperties();
+    return props.includes('borderColor')
       ? (BORDER_COLORS[card.borderColor] || '#e2e8f0') : 'transparent';
   }
 
@@ -338,19 +399,27 @@ export class MatcherComponent implements OnInit, OnDestroy {
 
   private advanceToNextCard(): void {
     const difficulty = this.game.currentDifficulty();
-    const props = activePropertiesForDifficulty(difficulty);
-    this.activeProperties.set(props);
+    const newProps = activePropertiesForDifficulty(difficulty);
+
+    // Save the properties that were active for the outgoing card
+    this.previousActiveProperties.set([...this.activeProperties()]);
+    this.activeProperties.set(newProps);
 
     const previousCard = this.currentCard()!;
     this.previousCard.set(previousCard);
 
+    // Use only properties that are active in BOTH the old and new sets
+    // so we don't compare properties the player couldn't see on the previous card
+    const compareProps = newProps.filter(p => this.previousActiveProperties().includes(p));
+
     const shouldMatch = Math.random() < 0.5;
     const nextCard = shouldMatch
-      ? generateMatchingCard(previousCard, props)
-      : generateDifferentCard(previousCard, props);
+      ? generateMatchingCard(previousCard, compareProps)
+      : generateDifferentCard(previousCard, compareProps);
 
     this.currentCard.set(nextCard);
     this.displayCard.set(nextCard);
+    this.cardKey.update(k => k + 1);
     this.isAnswerLocked.set(false);
 
     const timeLimitMs = matcherTimeLimitForDifficulty(difficulty) * 1000;
@@ -389,7 +458,8 @@ export class MatcherComponent implements OnInit, OnDestroy {
     const current = this.currentCard();
     if (!previous || !current) return;
 
-    const isMatch = cardsShareProperty(current, previous, this.activeProperties());
+    const isMatch = cardsShareProperty(current, previous,
+      this.activeProperties().filter(p => this.previousActiveProperties().includes(p)));
     const isCorrect = isYes === isMatch;
 
     this.totalCount.update((n: number) => n + 1);
@@ -399,10 +469,9 @@ export class MatcherComponent implements OnInit, OnDestroy {
       this.flashState.set('correct');
       this.clearTimers();
 
-      this.correctPauseTimeout = setTimeout(() => {
-        this.flashState.set(null);
-        this.advanceToNextCard();
-      }, 500);
+      // Brief flash then advance immediately — player can answer the next card right away
+      this.advanceToNextCard();
+      setTimeout(() => this.flashState.set(null), 200);
     } else {
       this.handleGameOver();
     }

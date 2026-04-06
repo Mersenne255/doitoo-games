@@ -69,9 +69,10 @@ import { CountdownComponent } from '../../../../shared/components/countdown/coun
     :host {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100%;
       padding: 1rem;
       gap: 1rem;
+      overflow: auto;
     }
 
     .config-container {

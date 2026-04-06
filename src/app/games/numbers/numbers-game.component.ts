@@ -1,9 +1,8 @@
-import { Component, ChangeDetectionStrategy, HostListener, inject, effect, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, HostListener, inject, OnDestroy } from '@angular/core';
 import { GameService } from './services/game.service';
 import { DisplayComponent } from './components/display/display.component';
 import { KeyboardComponent } from './components/keyboard/keyboard.component';
 import { ConfigComponent } from './components/config/config.component';
-import { NavService } from '../../shared/services/nav.service';
 
 @Component({
   selector: 'app-numbers-game',
@@ -15,21 +14,8 @@ import { NavService } from '../../shared/services/nav.service';
 })
 export class NumbersGameComponent implements OnDestroy {
   readonly game = inject(GameService);
-  private readonly nav = inject(NavService);
-
-  constructor() {
-    effect(() => {
-      const stage = this.game.stage();
-      if (stage === 'showing' || stage === 'input') {
-        this.nav.hide();
-      } else {
-        this.nav.show();
-      }
-    });
-  }
 
   ngOnDestroy(): void {
-    this.nav.show();
   }
 
   @HostListener('window:keydown', ['$event'])

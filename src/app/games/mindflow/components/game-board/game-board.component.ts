@@ -22,6 +22,7 @@ import { generateLayout, generateLayoutAsync } from '../../utils/layout-generato
 import { classifyDelivery } from '../../utils/delivery.util';
 import { cycleJunction, getNextPathForShape } from '../../utils/junction.util';
 import { spawnShape } from '../../utils/shape-spawner.util';
+import { VISUAL_CONFIG } from '../../models/visual.config';
 
 interface FeedbackAnimation {
   x: number;
@@ -97,6 +98,14 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   private nextSpawnTime = 0;
   private shapeIdCounter = 0;
   private isGenerating = false;
+  private gameStartTime = 0;
+  private nextShapePreview: { identity: import('../../models/game.models').StationIdentity; spawnPoint: import('../../models/game.models').SpawnPoint } | null = null;
+
+  // Junction animation state
+  private junctionAngles = new Map<string, number>();       // current rendered angle
+  private junctionTargetAngles = new Map<string, number>(); // target angle after switch
+  private junctionTapTimes = new Map<string, number>();     // timestamp of last tap
+  private layoutGeneration = 0; // monotonic counter to discard stale async results
 
   constructor() {
     effect(() => {
@@ -111,7 +120,6 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
     this.resizeCanvas();
-    this.generateBoardLayout();
     this.startAnimationLoop();
   }
 
@@ -125,7 +133,9 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   @HostListener('window:resize')
   onWindowResize(): void {
     this.resizeCanvas();
-    this.generateBoardLayout();
+    if (this.gameService.stage() === 'playing') {
+      this.generateBoardLayout();
+    }
   }
 
   // ── 17.7: Responsive canvas sizing ──
@@ -140,9 +150,14 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     const config = this.gameService.config();
     this.isGenerating = true;
+    const gen = ++this.layoutGeneration;
     generateLayoutAsync(config.destinations, canvas.width, canvas.height).then(layout => {
+      if (gen !== this.layoutGeneration) return; // stale result, discard
       this.layout = layout;
       this.isGenerating = false;
+      this.junctionAngles.clear();
+      this.junctionTargetAngles.clear();
+      this.prepareNextPreview();
     });
   }
 
@@ -154,8 +169,12 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.feedbackAnimations = [];
     this.spawnedCount = 0;
     this.shapeIdCounter = 0;
-    this.nextSpawnTime = performance.now();
-    this.lastFrameTime = performance.now();
+    const now = performance.now();
+    this.gameStartTime = now;
+    this.nextSpawnTime = now + 2000; // 2-second delay before first spawn
+    this.lastFrameTime = now;
+    this.nextShapePreview = null; // will be set when layout is ready
+    this.junctionTapTimes.clear();
   }
 
   // ── 17.1: Animation loop ──
@@ -189,19 +208,49 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     const spawnPoints = this.layout.spawnPoints;
     if (spawnPoints.length === 0) return;
 
-    const spawnPoint = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
-    const stations = this.layout.stations;
-    const identities = stations.map(s => s.identity);
+    // Use the pre-computed preview if available, otherwise pick randomly
+    let spawnPoint: import('../../models/game.models').SpawnPoint;
+    let identity: import('../../models/game.models').StationIdentity;
 
-    const shape = spawnShape(
-      identities,
-      spawnPoint,
-      `shape-${this.shapeIdCounter++}`,
-      timestamp,
-    );
+    if (this.nextShapePreview) {
+      spawnPoint = this.nextShapePreview.spawnPoint;
+      identity = this.nextShapePreview.identity;
+    } else {
+      spawnPoint = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+      const identities = this.layout.stations.map(s => s.identity);
+      identity = identities[Math.floor(Math.random() * identities.length)];
+    }
+
+    const shape: ActiveShape = {
+      id: `shape-${this.shapeIdCounter++}`,
+      identity,
+      currentPathId: spawnPoint.outgoingPathId,
+      progressAlongPath: 0,
+      spawnTime: timestamp,
+    };
     this.activeShapes.push(shape);
     this.spawnedCount++;
     this.nextSpawnTime = timestamp + config.spawnInterval * 1000;
+
+    // Prepare preview for the next shape
+    this.prepareNextPreview();
+  }
+
+  private prepareNextPreview(): void {
+    const config = this.gameService.config();
+    if (this.spawnedCount >= config.runners) {
+      this.nextShapePreview = null;
+      return;
+    }
+    const spawnPoints = this.layout.spawnPoints;
+    if (spawnPoints.length === 0) {
+      this.nextShapePreview = null;
+      return;
+    }
+    const spawnPoint = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+    const identities = this.layout.stations.map(s => s.identity);
+    const identity = identities[Math.floor(Math.random() * identities.length)];
+    this.nextShapePreview = { identity, spawnPoint };
   }
 
   // ── 17.2: Shape movement system ──
@@ -218,7 +267,15 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      const progressDelta = (speed * (deltaTime / 1000)) / path.length;
+      // Ease-in: on the first path (from spawn), ramp speed from 0.2x to 1x over the first 30% of progress
+      const isFirstPath = this.layout.spawnPoints.some(sp => sp.outgoingPathId === shape.currentPathId);
+      let speedMultiplier = 1;
+      if (isFirstPath && shape.progressAlongPath < 0.3) {
+        const t = shape.progressAlongPath / 0.3; // 0..1
+        speedMultiplier = 0.2 + 0.8 * t * t; // quadratic ease-in from 0.2 to 1.0
+      }
+
+      const progressDelta = (speed * speedMultiplier * (deltaTime / 1000)) / path.length;
       shape.progressAlongPath += progressDelta;
 
       if (shape.progressAlongPath >= 1.0) {
@@ -296,16 +353,41 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   private hitTestJunction(x: number, y: number): void {
-    const hitRadius = 28;
+    const hitRadius = VISUAL_CONFIG.junction.hitRadius;
     for (let i = 0; i < this.layout.junctions.length; i++) {
       const junction = this.layout.junctions[i];
       const dx = x - junction.position.x;
       const dy = y - junction.position.y;
       if (dx * dx + dy * dy <= hitRadius * hitRadius) {
         this.layout.junctions[i] = cycleJunction(junction);
+        this.junctionTapTimes.set(junction.id, performance.now());
+        // Compute new target angle for the switched path
+        const newJunction = this.layout.junctions[i];
+        const targetAngle = this.computeJunctionAngle(newJunction);
+        if (targetAngle !== null) {
+          this.junctionTargetAngles.set(junction.id, targetAngle);
+        }
         return;
       }
     }
+  }
+
+  /** Compute the angle a junction arrow should point toward based on its active path */
+  private computeJunctionAngle(junction: Junction): number | null {
+    if (junction.outgoingPathIds.length === 0) return null;
+    const currentPathId = junction.outgoingPathIds[junction.switchIndex];
+    const path = this.layout.paths.find(p => p.id === currentPathId);
+    if (!path || path.waypoints.length < 2) return null;
+    // Use the first waypoint (immediate next cell) for direction, not the far endpoint
+    const target = path.waypoints[0];
+    const dx = target.x - junction.position.x;
+    const dy = target.y - junction.position.y;
+    // If the first waypoint is at the junction position, fall back to the second
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && path.waypoints.length > 1) {
+      const t2 = path.waypoints[1];
+      return Math.atan2(t2.y - junction.position.y, t2.x - junction.position.x) + Math.PI / 2;
+    }
+    return Math.atan2(dy, dx) + Math.PI / 2;
   }
 
   // ── Rendering ──
@@ -335,10 +417,10 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     this.renderStations(ctx);
 
     // Layer 3b: Spawn points
-    this.renderSpawnPoints(ctx);
+    this.renderSpawnPoints(ctx, timestamp);
 
     // Layer 4: Junctions
-    this.renderJunctions(ctx);
+    this.renderJunctions(ctx, timestamp);
 
     // Layer 5: Active shapes
     this.renderActiveShapes(ctx);
@@ -353,8 +435,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
   }
 
   private renderPaths(ctx: CanvasRenderingContext2D): void {
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = VISUAL_CONFIG.paths.color;
+    ctx.lineWidth = VISUAL_CONFIG.paths.lineWidth;
     for (const path of this.layout.paths) {
       if (path.waypoints.length < 2) continue;
       ctx.beginPath();
@@ -370,79 +452,177 @@ export class GameBoardComponent implements OnInit, OnDestroy {
     for (const station of this.layout.stations) {
       // Outer glow ring
       ctx.strokeStyle = station.identity.color;
-      ctx.lineWidth = 2;
-      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = VISUAL_CONFIG.station.glowLineWidth;
+      ctx.globalAlpha = VISUAL_CONFIG.station.glowAlpha;
       ctx.beginPath();
-      ctx.arc(station.position.x, station.position.y, 28, 0, Math.PI * 2);
+      ctx.arc(station.position.x, station.position.y, VISUAL_CONFIG.station.glowRadius, 0, Math.PI * 2);
       ctx.stroke();
       ctx.globalAlpha = 1;
 
       // Main station outline — thicker and brighter
       ctx.strokeStyle = station.identity.color;
-      ctx.lineWidth = 4;
-      this.drawShape(ctx, station.position.x, station.position.y, station.identity.shapeType, 20, false);
+      ctx.lineWidth = VISUAL_CONFIG.station.outlineWidth;
+      const stationSize = VISUAL_CONFIG.station.shapeSizeByType[station.identity.shapeType] ?? VISUAL_CONFIG.station.shapeSize;
+      this.drawShape(ctx, station.position.x, station.position.y, station.identity.shapeType, stationSize, false);
     }
   }
 
-  private renderSpawnPoints(ctx: CanvasRenderingContext2D): void {
+  private renderSpawnPoints(ctx: CanvasRenderingContext2D, timestamp: number): void {
+    const isPlaying = this.gameService.stage() === 'playing';
+    const config = this.gameService.config();
+    const spawnIntervalMs = config.spawnInterval * 1000;
+
     for (const sp of this.layout.spawnPoints) {
-      // Bright outer ring
-      ctx.strokeStyle = 'rgba(165, 180, 252, 0.6)';
-      ctx.lineWidth = 2.5;
+      const R = VISUAL_CONFIG.spawnPoint.outerRadius;
+      const isPreviewSpawn = isPlaying && this.nextShapePreview?.spawnPoint.id === sp.id;
+
+      // Background ring (white base)
+      ctx.strokeStyle = VISUAL_CONFIG.spawnPoint.outerColor;
+      ctx.lineWidth = VISUAL_CONFIG.spawnPoint.outerLineWidth;
       ctx.beginPath();
-      ctx.arc(sp.position.x, sp.position.y, 16, 0, Math.PI * 2);
+      ctx.arc(sp.position.x, sp.position.y, R, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Inner filled dot
-      ctx.fillStyle = 'rgba(165, 180, 252, 0.5)';
+      // Green progress arc on the spawn point that has the next shape
+      if (isPreviewSpawn) {
+        const elapsed = timestamp - (this.nextSpawnTime - spawnIntervalMs);
+        const progress = Math.max(0, Math.min(1, elapsed / spawnIntervalMs));
+        const startAngle = -Math.PI / 2; // 12 o'clock
+        const endAngle = startAngle + progress * Math.PI * 2;
+
+        // Glow effect
+        ctx.save();
+        ctx.shadowColor = '#22c55e';
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = VISUAL_CONFIG.spawnPoint.outerLineWidth + 1.5;
+        ctx.beginPath();
+        ctx.arc(sp.position.x, sp.position.y, R, startAngle, endAngle);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Inner dot
+      ctx.fillStyle = VISUAL_CONFIG.spawnPoint.innerColor;
       ctx.beginPath();
-      ctx.arc(sp.position.x, sp.position.y, 6, 0, Math.PI * 2);
+      ctx.arc(sp.position.x, sp.position.y, VISUAL_CONFIG.spawnPoint.innerRadius, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Draw next shape preview at its spawn point
+    if (this.nextShapePreview && isPlaying) {
+      const preview = this.nextShapePreview;
+      const sp = preview.spawnPoint;
+      ctx.fillStyle = preview.identity.color;
+      const size = VISUAL_CONFIG.activeShape.sizeByType[preview.identity.shapeType] ?? VISUAL_CONFIG.activeShape.size;
+      this.drawShape(ctx, sp.position.x, sp.position.y, preview.identity.shapeType, size, true);
     }
   }
 
-  private renderJunctions(ctx: CanvasRenderingContext2D): void {
+  private renderJunctions(ctx: CanvasRenderingContext2D, timestamp: number): void {
+    const R = VISUAL_CONFIG.junction.circleRadius;
+    const PULSE_DURATION = 200; // ms
+
     for (const junction of this.layout.junctions) {
-      // Outer circle — pure white filled
-      ctx.fillStyle = '#ffffffc2';
+      // Initialize angle tracking if needed
+      if (!this.junctionAngles.has(junction.id)) {
+        const angle = this.computeJunctionAngle(junction);
+        if (angle !== null) {
+          this.junctionAngles.set(junction.id, angle);
+          this.junctionTargetAngles.set(junction.id, angle);
+        }
+      }
+
+      // Smoothly interpolate current angle toward target
+      const currentAngle = this.junctionAngles.get(junction.id) ?? 0;
+      const targetAngle = this.junctionTargetAngles.get(junction.id) ?? currentAngle;
+      let diff = targetAngle - currentAngle;
+      // Normalize to [-PI, PI] for shortest rotation
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      const lerpSpeed = 0.15;
+      const newAngle = currentAngle + diff * lerpSpeed;
+      this.junctionAngles.set(junction.id, newAngle);
+
+      // Pulse scale on tap
+      let scale = 1;
+      const tapTime = this.junctionTapTimes.get(junction.id);
+      if (tapTime) {
+        const elapsed = timestamp - tapTime;
+        if (elapsed < PULSE_DURATION) {
+          const t = elapsed / PULSE_DURATION;
+          scale = 1 + 0.15 * Math.sin(t * Math.PI); // bump up then back
+        }
+      }
+
+      ctx.save();
+      ctx.translate(junction.position.x, junction.position.y);
+      ctx.scale(scale, scale);
+
+      // White filled circle
+      ctx.fillStyle = VISUAL_CONFIG.junction.circleColor;
       ctx.beginPath();
-      ctx.arc(junction.position.x, junction.position.y, 24, 0, Math.PI * 2);
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw directional arrow
-      this.drawJunctionArrow(ctx, junction);
+      // Small indicators on circle edge for each alternative (inactive) path
+      this.drawPathIndicators(ctx, junction, R);
+
+      // Arrow using animated angle
+      this.drawJunctionArrowAnimated(ctx, R, newAngle);
+
+      ctx.restore();
     }
   }
 
-  private drawJunctionArrow(ctx: CanvasRenderingContext2D, junction: Junction): void {
-    if (junction.outgoingPathIds.length === 0) return;
-    const currentPathId = junction.outgoingPathIds[junction.switchIndex];
-    const path = this.layout.paths.find(p => p.id === currentPathId);
-    if (!path || path.waypoints.length < 2) return;
+  /** Draw small dot indicators on the circle edge for inactive outgoing paths */
+  private drawPathIndicators(ctx: CanvasRenderingContext2D, junction: Junction, R: number): void {
+    for (let i = 0; i < junction.outgoingPathIds.length; i++) {
+      if (i === junction.switchIndex) continue;
+      const pathId = junction.outgoingPathIds[i];
+      const path = this.layout.paths.find(p => p.id === pathId);
+      if (!path || path.waypoints.length < 2) continue;
 
-    const target = path.waypoints.length > 1 ? path.waypoints[1] : path.waypoints[0];
-    const dx = target.x - junction.position.x;
-    const dy = target.y - junction.position.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist === 0) return;
+      const target = path.waypoints[1];
+      const dx = target.x - junction.position.x;
+      const dy = target.y - junction.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist === 0) continue;
 
-    const nx = dx / dist;
-    const ny = dy / dist;
+      const nx = dx / dist;
+      const ny = dy / dist;
 
-    // Thick bright arrow — filled triangle pointing in the active direction
-    const tipX = junction.position.x + nx * 18;
-    const tipY = junction.position.y + ny * 18;
-    const baseX = junction.position.x - nx * 6;
-    const baseY = junction.position.y - ny * 6;
-    const wingSpread = 8;
+      // Position on the circle edge (relative to translated origin)
+      const ix = nx * R;
+      const iy = ny * R;
 
-    ctx.fillStyle = '#000000'; // black triangle on white circle
+      ctx.fillStyle = VISUAL_CONFIG.junction.indicator.color;
+      ctx.beginPath();
+      ctx.arc(ix, iy, VISUAL_CONFIG.junction.indicator.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /** Draw the junction arrow at a given angle (already translated to junction center) */
+  private drawJunctionArrowAnimated(ctx: CanvasRenderingContext2D, R: number, angle: number): void {
+    const tip = R * VISUAL_CONFIG.junction.arrow.tipExtent;
+    const backY = R * VISUAL_CONFIG.junction.arrow.backExtent;
+    const backW = R * VISUAL_CONFIG.junction.arrow.backWidth;
+    const notchY = R * VISUAL_CONFIG.junction.arrow.notchDepth;
+
+    ctx.save();
+    ctx.rotate(angle);
+
+    ctx.fillStyle = VISUAL_CONFIG.junction.arrow.color;
     ctx.beginPath();
-    ctx.moveTo(tipX, tipY);
-    ctx.lineTo(baseX + ny * wingSpread, baseY - nx * wingSpread);
-    ctx.lineTo(baseX - ny * wingSpread, baseY + nx * wingSpread);
+    ctx.moveTo(0, -tip);
+    ctx.lineTo(backW, backY);
+    ctx.lineTo(0, notchY);
+    ctx.lineTo(-backW, backY);
     ctx.closePath();
     ctx.fill();
+
+    ctx.restore();
   }
 
   private renderActiveShapes(ctx: CanvasRenderingContext2D): void {
@@ -453,7 +633,8 @@ export class GameBoardComponent implements OnInit, OnDestroy {
       const pos = this.interpolatePath(path, shape.progressAlongPath);
 
       ctx.fillStyle = shape.identity.color;
-      this.drawShape(ctx, pos.x, pos.y, shape.identity.shapeType, 14, true);
+      const shapeSize = VISUAL_CONFIG.activeShape.sizeByType[shape.identity.shapeType] ?? VISUAL_CONFIG.activeShape.size;
+      this.drawShape(ctx, pos.x, pos.y, shape.identity.shapeType, shapeSize, true);
     }
   }
 
@@ -464,12 +645,12 @@ export class GameBoardComponent implements OnInit, OnDestroy {
 
       const progress = elapsed / fb.duration;
       const alpha = 1 - progress;
-      const radius = 20 + progress * 30;
+      const radius = VISUAL_CONFIG.feedback.startRadius + progress * VISUAL_CONFIG.feedback.expandBy;
 
       ctx.strokeStyle = fb.correct
         ? `rgba(34, 197, 94, ${alpha})`
         : `rgba(239, 68, 68, ${alpha})`;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = VISUAL_CONFIG.feedback.lineWidth;
       ctx.beginPath();
       ctx.arc(fb.x, fb.y, radius, 0, Math.PI * 2);
       ctx.stroke();

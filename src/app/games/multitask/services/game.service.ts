@@ -5,7 +5,6 @@ import {
   PROGRESSION_INTERVAL_SEC,
 } from '../models/game.models';
 import { StorageService } from './storage.service';
-import { NavService } from '../../../shared/services/nav.service';
 
 function createDefaultSlot(): SlotConfig {
   return { minigameId: null, config: { ...DEFAULT_MATH_CONFIG } };
@@ -19,7 +18,6 @@ function createAssignedSlot(): SlotConfig {
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly storage = inject(StorageService);
-  private readonly nav = inject(NavService);
   private readonly saved = this.storage.load();
 
   readonly stage: WritableSignal<GameStage> = signal('idle');
@@ -101,7 +99,6 @@ export class GameService {
     this.slotResults.set([]);
     this.totalScore.set(0);
     this.stage.set('countdown');
-    this.nav.hide();
   }
 
   beginPlaying(): void {
@@ -146,7 +143,6 @@ export class GameService {
     this.slotResults.set([]);
     this.totalScore.set(0);
     this.stage.set('idle');
-    this.nav.show();
   }
 
   dismissSummary(): void {
@@ -157,7 +153,6 @@ export class GameService {
     this.currentDifficulty.set(this.startingDifficulty());
     this.sessionElapsedSec.set(0);
     this.stage.set('idle');
-    this.nav.show();
   }
 
   playAgain(): void {
