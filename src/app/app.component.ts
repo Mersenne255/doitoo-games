@@ -8,6 +8,7 @@ import { ConfirmPopupComponent } from './shared/components/confirm-popup/confirm
 import { ConfirmService } from './shared/services/confirm.service';
 import { BUILD_INFO } from '../environments/build-info';
 import { GAME_LIST } from './home/game-list';
+import { FavoritesService } from './shared/services/favorites.service';
 
 const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
 
@@ -23,7 +24,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5"/><path d="M19 9.5V19a1 1 0 0 1-1 1h-4v-5h-4v5H6a1 1 0 0 1-1-1V9.5"/></svg>
           </a>
         }
-        <div class="nav-brand">
+        <div class="nav-brand" [class.has-filter]="!isGameRoute()">
           <img class="nav-logo" src="assets/icons/brand/doitoo-games.svg" alt="Doitoo Games" />
           @if (isGameRoute()) {
             <span class="nav-subtitle">{{ gameTitle() }}</span>
@@ -32,6 +33,18 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
         @if (isGameRoute()) {
           <button class="info-button" (click)="openGameInfo()" aria-label="Game info">
             <img src="assets/icons/ui/info.svg" alt="Info" class="info-icon" />
+          </button>
+        }
+        @if (!isGameRoute()) {
+          <button class="filter-button"
+                  (click)="favSvc.toggleFilter()"
+                  [attr.aria-label]="favSvc.filterOn() ? 'Show all games' : 'Show favorites only'">
+            <svg width="20" height="20" viewBox="0 0 24 24"
+                 [attr.fill]="favSvc.filterOn() ? '#facc15' : 'none'"
+                 [attr.stroke]="favSvc.filterOn() ? '#facc15' : '#c7d2fe'"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
           </button>
         }
       </div>
@@ -101,6 +114,14 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     }
 
     .back-button:not(.hidden) ~ .nav-brand {
+      padding: 0 45px;
+    }
+
+    .filter-button ~ .nav-brand {
+      padding: 0 45px;
+    }
+
+    .nav-brand.has-filter {
       padding: 0 45px;
     }
 
@@ -176,6 +197,26 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
       filter: brightness(0) invert(0.75);
     }
 
+    .filter-button {
+      position: absolute;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .filter-button:hover {
+      opacity: 0.7;
+    }
+
     .full-height {
       min-height: 0;
     }
@@ -213,6 +254,7 @@ export class AppComponent {
   readonly nav = inject(NavService);
   readonly gameInfo = inject(GameInfoService);
   readonly confirmSvc = inject(ConfirmService);
+  readonly favSvc = inject(FavoritesService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 

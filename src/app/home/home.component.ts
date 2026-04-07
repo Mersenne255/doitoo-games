@@ -1,7 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { GAME_LIST, TAGLINES, GameEntry } from './game-list';
 import { GameInfoService, routeToGameId } from '../shared/services/game-info.service';
+import { FavoritesService } from '../shared/services/favorites.service';
 
 @Component({
   selector: 'app-home',
@@ -10,8 +11,18 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
   template: `
     <p class="tagline">{{ tagline }}</p>
     <section class="game-selector">
-      @for (game of games; track game.route) {
+      @for (game of filteredGames(); track game.route) {
         <a class="game-card" [routerLink]="game.route">
+          <button class="card-fav-btn"
+                  (click)="toggleFav($event, game.route)"
+                  [attr.aria-label]="favSvc.isFavorite(game.route) ? 'Remove from favorites' : 'Add to favorites'">
+            <svg width="18" height="18" viewBox="0 0 24 24"
+                 [attr.fill]="favSvc.isFavorite(game.route) ? '#facc15' : 'none'"
+                 [attr.stroke]="favSvc.isFavorite(game.route) ? '#facc15' : '#94a3b8'"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </button>
           <button class="card-info-btn"
                   (click)="openInfo($event, game)"
                   [attr.aria-label]="'Info about ' + game.name">
@@ -24,6 +35,9 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
         </a>
       }
     </section>
+    @if (favSvc.filterOn() && filteredGames().length === 0) {
+      <p class="empty-favorites">No games marked as favorites. Tap the ★ on a game card to add one.</p>
+    }
   `,
   styles: [`
     :host {
@@ -117,6 +131,27 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
       color: #94a3b8;
     }
 
+    .card-fav-btn {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      z-index: 1;
+    }
+
+    .card-fav-btn:hover {
+      opacity: 0.7;
+    }
+
     .card-info-btn {
       position: absolute;
       top: 6px;
@@ -143,12 +178,26 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
       height: 16px;
       filter: brightness(0) invert(0.6);
     }
+
+    .empty-favorites {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.9rem;
+      padding: 2rem 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
   `],
 })
 export class HomeComponent implements OnInit {
   private readonly gameInfo = inject(GameInfoService);
   private readonly router = inject(Router);
-  readonly games = GAME_LIST;
+  readonly favSvc = inject(FavoritesService);
+  readonly filteredGames = computed(() => {
+    if (!this.favSvc.filterOn()) return GAME_LIST;
+    const favs = this.favSvc.favorites();
+    return GAME_LIST.filter(g => favs.has(g.route));
+  });
   readonly tagline = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
 
   ngOnInit(): void {
@@ -164,5 +213,11 @@ export class HomeComponent implements OnInit {
     event.stopPropagation();
     event.preventDefault();
     this.gameInfo.open(routeToGameId(game.route), game.name, game.icon);
+  }
+
+  toggleFav(event: Event, route: string): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.favSvc.toggleFavorite(route);
   }
 }
