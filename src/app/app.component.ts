@@ -2,6 +2,8 @@ import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { NavService } from './shared/services/nav.service';
+import { GameInfoService, routeToGameId } from './shared/services/game-info.service';
+import { GameInfoPopupComponent } from './shared/components/game-info-popup/game-info-popup.component';
 import { BUILD_INFO } from '../environments/build-info';
 import { GAME_LIST } from './home/game-list';
 
@@ -10,7 +12,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, GameInfoPopupComponent],
   template: `
     <nav class="nav-bar" [class.nav-hidden]="nav.hidden()" role="navigation">
       <div class="nav-inner">
@@ -25,6 +27,11 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
             <span class="nav-subtitle">{{ gameTitle() }}</span>
           }
         </div>
+        @if (isGameRoute()) {
+          <button class="info-button" (click)="openGameInfo()" aria-label="Game info">
+            <img src="assets/icons/info-icon.svg" alt="Info" class="info-icon" />
+          </button>
+        }
       </div>
     </nav>
     <main [class.full-height]="nav.hidden()">
@@ -35,6 +42,9 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
         <img class="footer-brain" src="assets/icons/doitoo-brain.svg" alt="Doitoo Brain" />
         <span class="footer-meta">v{{ buildInfo.version }} · {{ buildInfo.buildTime }} · {{ buildInfo.gitHash }}</span>
       </footer>
+    }
+    @if (gameInfo.isOpen()) {
+      <app-game-info-popup />
     }
   `,
   styles: [`
@@ -134,6 +144,32 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
       height: 18px;
     }
 
+    .info-button {
+      position: absolute;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .info-button:hover {
+      opacity: 0.7;
+    }
+
+    .info-icon {
+      width: 20px;
+      height: 20px;
+      filter: brightness(0) invert(0.75);
+    }
+
     .full-height {
       min-height: 0;
     }
@@ -169,12 +205,15 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
 })
 export class AppComponent {
   readonly nav = inject(NavService);
+  readonly gameInfo = inject(GameInfoService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly buildInfo = BUILD_INFO;
   readonly isGameRoute = signal(false);
   readonly gameTitle = signal('');
+  private readonly currentRoute = signal('');
+  private readonly gameIcon = signal('');
 
   constructor() {
     const sub = this.router.events
@@ -184,11 +223,17 @@ export class AppComponent {
         const game = GAME_ROUTE_MAP.get(url);
         this.isGameRoute.set(!!game);
         this.gameTitle.set(game?.name ?? '');
+        this.currentRoute.set(url);
+        this.gameIcon.set(game?.icon ?? '');
 
         // Always show nav on route change; games hide it themselves during gameplay
         this.nav.show();
       });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  openGameInfo(): void {
+    this.gameInfo.open(routeToGameId(this.currentRoute()), this.gameTitle(), this.gameIcon());
   }
 }

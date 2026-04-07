@@ -6,5 +6,7 @@ export const routes: Routes = [
   { path: 'nback', loadComponent: () => import('./games/nback/nback-game.component').then(m => m.NbackGameComponent) },
   { path: 'multitask', loadComponent: () => import('./games/multitask/multitask-game.component').then(m => m.MultitaskGameComponent) },
   { path: 'mindflow', loadComponent: () => import('./games/mindflow/mindflow-game.component').then(m => m.MindflowGameComponent) },
+  { path: 'chromaclash', loadComponent: () => import('./games/chromaclash/chromaclash-game.component').then(m => m.ChromaclashGameComponent) },
+  { path: 'phantomlink', loadComponent: () => import('./games/phantomlink/phantomlink-game.component').then(m => m.PhantomlinkGameComponent) },
   { path: '**', redirectTo: '' },
 ];

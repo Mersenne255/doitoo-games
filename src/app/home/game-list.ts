@@ -9,8 +9,9 @@ export interface GameEntry {
 export const GAME_LIST: GameEntry[] = [
   { route: '/nback', name: 'Dual N-Back', label: 'Working memory', description: 'Designed by science. Tested by millions. Conquered by you.', icon: 'assets/icons/nback-icon.png' },
   { route: '/multitask', name: 'Splittention', label: 'Multitasking', description: 'Three tasks, one brain. Let\'s see how long the juggling act lasts.', icon: 'assets/icons/multitask-icon.png' },
-  { route: '/mindflow', name: 'MindFlow', label: 'Executive function', description: 'Track positions and movements to the point of insanity.', icon: 'assets/icons/mindflow-icon.png' },
+  { route: '/mindflow', name: 'MindFlow', label: 'Executive function', description: 'Track positions and movements to the edge of sanity.', icon: 'assets/icons/mindflow-icon.png' },
   { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'You\'re forgetting where you put your keys. Time to fix that.', icon: 'assets/icons/numbers-icon.png' },
+  { route: '/phantomlink', name: 'PhantomLink', label: 'Memory updating', description: 'You memorize, we change. Over and over again.', icon: 'assets/icons/phantom-icon.png' },
 ];
 
 export const TAGLINES: string[] = [

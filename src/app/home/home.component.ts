@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { GAME_LIST, TAGLINES } from './game-list';
+import { GAME_LIST, TAGLINES, GameEntry } from './game-list';
+import { GameInfoService, routeToGameId } from '../shared/services/game-info.service';
 
 @Component({
   selector: 'app-home',
@@ -11,6 +12,11 @@ import { GAME_LIST, TAGLINES } from './game-list';
     <section class="game-selector">
       @for (game of games; track game.route) {
         <a class="game-card" [routerLink]="game.route">
+          <button class="card-info-btn"
+                  (click)="openInfo($event, game)"
+                  [attr.aria-label]="'Info about ' + game.name">
+            <img src="assets/icons/info-icon.svg" alt="Info" class="card-info-icon" />
+          </button>
           <img class="card-icon" [src]="game.icon" [alt]="game.name + ' icon'" />
           <span class="card-name">{{ game.name }}</span>
           <span class="card-label">{{ game.label }}</span>
@@ -56,6 +62,7 @@ import { GAME_LIST, TAGLINES } from './game-list';
     }
 
     .game-card {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -111,9 +118,43 @@ import { GAME_LIST, TAGLINES } from './game-list';
       line-height: 1.4;
       color: #94a3b8;
     }
+
+    .card-info-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      z-index: 1;
+    }
+
+    .card-info-btn:hover {
+      opacity: 0.7;
+    }
+
+    .card-info-icon {
+      width: 16px;
+      height: 16px;
+      filter: brightness(0) invert(0.6);
+    }
   `],
 })
 export class HomeComponent {
+  private readonly gameInfo = inject(GameInfoService);
   readonly games = GAME_LIST;
   readonly tagline = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
+
+  openInfo(event: Event, game: GameEntry): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.gameInfo.open(routeToGameId(game.route), game.name, game.icon);
+  }
 }
