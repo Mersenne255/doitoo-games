@@ -267,15 +267,7 @@ export class GameBoardComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      // Ease-in: on the first path (from spawn), ramp speed from 0.2x to 1x over the first 30% of progress
-      const isFirstPath = this.layout.spawnPoints.some(sp => sp.outgoingPathId === shape.currentPathId);
-      let speedMultiplier = 1;
-      if (isFirstPath && shape.progressAlongPath < 0.3) {
-        const t = shape.progressAlongPath / 0.3; // 0..1
-        speedMultiplier = 0.2 + 0.8 * t * t; // quadratic ease-in from 0.2 to 1.0
-      }
-
-      const progressDelta = (speed * speedMultiplier * (deltaTime / 1000)) / path.length;
+      const progressDelta = (speed * (deltaTime / 1000)) / path.length;
       shape.progressAlongPath += progressDelta;
 
       if (shape.progressAlongPath >= 1.0) {
