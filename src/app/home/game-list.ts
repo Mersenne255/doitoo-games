@@ -12,6 +12,7 @@ export const GAME_LIST: GameEntry[] = [
   { route: '/mindflow', name: 'MindFlow', label: 'Executive function', description: 'Track positions and movements to the edge of sanity.', icon: 'assets/icons/mindflow-icon.png' },
   { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'You\'re forgetting where you put your keys. Time to fix that.', icon: 'assets/icons/numbers-icon.png' },
   { route: '/phantomlink', name: 'PhantomLink', label: 'Memory updating', description: 'You memorize, we change. Over and over again.', icon: 'assets/icons/phantom-icon.png' },
+  // { route: '/synapsort', name: 'SynapSort', label: 'Cognitive flexibility', description: 'The rules just changed. Again. Keep up.', icon: 'assets/icons/synapsort-icon.png' },
 ];
 
 export const TAGLINES: string[] = [

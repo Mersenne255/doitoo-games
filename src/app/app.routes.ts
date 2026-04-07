@@ -8,5 +8,7 @@ export const routes: Routes = [
   { path: 'mindflow', loadComponent: () => import('./games/mindflow/mindflow-game.component').then(m => m.MindflowGameComponent) },
   { path: 'chromaclash', loadComponent: () => import('./games/chromaclash/chromaclash-game.component').then(m => m.ChromaclashGameComponent) },
   { path: 'phantomlink', loadComponent: () => import('./games/phantomlink/phantomlink-game.component').then(m => m.PhantomlinkGameComponent) },
+  { path: 'matrixiq', loadComponent: () => import('./games/matrixiq/matrixiq-game.component').then(m => m.MatrixiqGameComponent) },
+  { path: 'synapsort', loadComponent: () => import('./games/synapsort/synapsort-game.component').then(m => m.SynapsortGameComponent) },
   { path: '**', redirectTo: '' },
 ];
