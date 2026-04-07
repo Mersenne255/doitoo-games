@@ -8,9 +8,11 @@ export interface ConfirmOptions {
   secondaryLabel?: string;
   secondarySubLabel?: string;
   secondaryColor?: 'danger' | 'primary';
+  tertiaryLabel?: string;
+  tertiaryColor?: 'danger' | 'primary';
 }
 
-export type ConfirmResult = 'confirm' | 'secondary' | 'cancel';
+export type ConfirmResult = 'confirm' | 'secondary' | 'tertiary' | 'cancel';
 
 @Injectable({ providedIn: 'root' })
 export class ConfirmService {
@@ -36,6 +38,12 @@ export class ConfirmService {
   secondary(): void {
     this.isOpen.set(false);
     this.resolve?.('secondary');
+    this.resolve = null;
+  }
+
+  tertiary(): void {
+    this.isOpen.set(false);
+    this.resolve?.('tertiary');
     this.resolve = null;
   }
 

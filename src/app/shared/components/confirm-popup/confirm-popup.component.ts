@@ -16,17 +16,23 @@ import { ConfirmService } from '../../services/confirm.service';
   template: `
     <div class="backdrop" (click)="onBackdrop($event)" role="dialog" aria-modal="true">
       <div class="panel" #panel>
+        <button class="close-x" (click)="svc.dismiss()" aria-label="Close">✕</button>
         <p class="message">{{ svc.options().message }}</p>
         <div class="actions">
-          <button class="btn cancel" (click)="svc.dismiss()">
-            {{ svc.options().cancelLabel || 'Cancel' }}
-          </button>
           @if (svc.options().secondaryLabel) {
             <button class="btn cancel" (click)="svc.secondary()">
               {{ svc.options().secondaryLabel }}
               @if (svc.options().secondarySubLabel) {
                 <span class="btn-sub">{{ svc.options().secondarySubLabel }}</span>
               }
+            </button>
+          }
+          @if (svc.options().tertiaryLabel) {
+            <button class="btn confirm"
+              [class.danger]="svc.options().tertiaryColor === 'danger'"
+              [class.primary]="svc.options().tertiaryColor !== 'danger'"
+              (click)="svc.tertiary()">
+              {{ svc.options().tertiaryLabel }}
             </button>
           }
           <button class="btn confirm" #confirmBtn
@@ -59,6 +65,7 @@ import { ConfirmService } from '../../services/confirm.service';
     }
 
     .panel {
+      position: relative;
       background: rgba(20, 20, 40, 0.97);
       border: 1px solid rgba(99, 102, 241, 0.25);
       border-radius: 12px;
@@ -67,6 +74,14 @@ import { ConfirmService } from '../../services/confirm.service';
       width: 90%;
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
       animation: slide-up 0.2s ease;
+    }
+
+    .close-x {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      border: none; background: none; color: #64748b;
+      font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.4rem;
+      border-radius: 0.25rem; line-height: 1;
+      &:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
     }
 
     @keyframes slide-up {

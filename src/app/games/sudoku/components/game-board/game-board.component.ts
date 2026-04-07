@@ -106,12 +106,18 @@ import { Router } from '@angular/router';
             </div>
 
             <div class="tool-bar">
-              <button class="tool-btn" [disabled]="game.undoStack().length === 0"
-                (click)="game.undo()" aria-label="Undo">↩</button>
-              <button class="tool-btn" [disabled]="game.redoStack().length === 0"
-                (click)="game.redo()" aria-label="Redo">↪</button>
-              <button class="tool-btn hint" (click)="onHint()" aria-label="Hint">💡</button>
-              <button class="tool-btn give-up" (click)="onGiveUp()" aria-label="Give up">🏳️</button>
+              <div class="tool-left">
+                <button class="tool-btn give-up" (click)="onGiveUp()" aria-label="Give up">←</button>
+              </div>
+              <div class="tool-center">
+                <button class="tool-btn" [disabled]="game.undoStack().length === 0"
+                  (click)="game.undo()" aria-label="Undo">↩</button>
+                <button class="tool-btn" [disabled]="game.redoStack().length === 0"
+                  (click)="game.redo()" aria-label="Redo">↪</button>
+              </div>
+              <div class="tool-right">
+                <button class="tool-btn hint" (click)="onHint()" aria-label="Hint">💡</button>
+              </div>
             </div>
           </div>
 
@@ -363,9 +369,14 @@ import { Router } from '@angular/router';
 
     .tool-bar {
       display: flex;
+      align-items: center;
       gap: 0.5rem;
       justify-content: center;
     }
+
+    .tool-left, .tool-right { display: flex; gap: 0.5rem; flex: 1; }
+    .tool-right { justify-content: flex-end; }
+    .tool-center { display: flex; gap: 0.5rem; justify-content: center; flex-shrink: 0; }
 
     .tool-btn {
       width: 2.5rem;
@@ -671,12 +682,13 @@ export class GameBoardComponent implements OnDestroy {
   onGiveUp(): void {
     this.confirmSvc.confirm({
       message: 'Give up on this puzzle?',
-      cancelLabel: 'Keep Trying',
       confirmLabel: 'Show Solution',
       confirmColor: 'danger',
       secondaryLabel: 'Go home',
       secondarySubLabel: 'Progress saved',
       secondaryColor: 'primary',
+      tertiaryLabel: 'Leave',
+      tertiaryColor: 'danger',
     }).then(result => {
       if (result === 'confirm') {
         this.game.giveUp();
@@ -685,6 +697,8 @@ export class GameBoardComponent implements OnDestroy {
         this.game.stage.set('idle');
         try { localStorage.removeItem('doitoo:last-route'); } catch { /* ignore */ }
         this.router.navigateByUrl('/');
+      } else if (result === 'tertiary') {
+        this.game.abortSession();
       }
     });
   }

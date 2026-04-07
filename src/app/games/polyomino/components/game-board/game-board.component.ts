@@ -50,15 +50,17 @@ import { DecimalPipe } from '@angular/common';
         </div>
         @if (!game.solved() && !game.gaveUp()) {
         <div class="tool-bar">
-          <div class="tool-left"></div>
+          <div class="tool-left">
+            <button class="tool-btn give-up" (click)="onGiveUp()">←</button>
+          </div>
           <div class="tool-center">
+            <button class="tool-btn remove-btn" [disabled]="!selectedBoardPieceId()" (click)="removeSelected()">✕</button>
             <button class="tool-btn rotate-btn" [class.flash-error]="rotateFlashError()" [disabled]="!hasAnySelection()" (click)="rotateSelectedCCW()">↺</button>
             <button class="tool-btn rotate-btn" [class.flash-error]="rotateFlashError()" [disabled]="!hasAnySelection()" (click)="rotateSelected()">↻</button>
             <button class="tool-btn rotate-btn" [class.flash-error]="rotateFlashError()" [disabled]="!hasAnySelection()" (click)="flipSelected()">⇔</button>
           </div>
           <div class="tool-right">
             <button class="tool-btn hint" (click)="onHint()">💡</button>
-            <button class="tool-btn give-up" (click)="onGiveUp()">🏳️</button>
           </div>
         </div>
         }
@@ -459,9 +461,37 @@ export class GameBoardComponent implements OnDestroy, AfterViewInit {
     const rect = bEl.getBoundingClientRect(), cs = this.cellSizePx(); if (cs <= 0) return;
     const col = Math.floor((x - rect.left) / cs), row = Math.floor((y - rect.top) / cs);
     const oriented = this.getOrientedCells(piece); if (!oriented.length) return;
-    const midR = Math.floor((Math.min(...oriented.map(([r]) => r)) + Math.max(...oriented.map(([r]) => r))) / 2);
-    const midC = Math.floor((Math.min(...oriented.map(([, c]) => c)) + Math.max(...oriented.map(([, c]) => c))) / 2);
-    this.snapRow.set(row - midR); this.snapCol.set(col - midC);
+    const puzzle = this.game.puzzle(); if (!puzzle) return;
+    const occ = this.game.boardState();
+
+    // Compute piece center for distance sorting
+    const midR = (Math.min(...oriented.map(([r]) => r)) + Math.max(...oriented.map(([r]) => r))) / 2;
+    const midC = (Math.min(...oriented.map(([, c]) => c)) + Math.max(...oriented.map(([, c]) => c))) / 2;
+
+    // Try center-based anchor first (most intuitive)
+    const centerAnchorR = Math.round(row - midR);
+    const centerAnchorC = Math.round(col - midC);
+    if (checkPlacement(puzzle.board, occ, oriented, centerAnchorR, centerAnchorC).valid) {
+      this.snapRow.set(centerAnchorR); this.snapCol.set(centerAnchorC);
+      return;
+    }
+
+    // Try each cell of the piece as the anchor over the hovered grid cell
+    // Sort by distance from piece center for most natural placement
+    const candidates = oriented.map(([pr, pc]) => ({
+      anchorR: row - pr, anchorC: col - pc,
+      dist: Math.abs(pr - midR) + Math.abs(pc - midC),
+    })).sort((a, b) => a.dist - b.dist);
+
+    for (const { anchorR, anchorC } of candidates) {
+      if (checkPlacement(puzzle.board, occ, oriented, anchorR, anchorC).valid) {
+        this.snapRow.set(anchorR); this.snapCol.set(anchorC);
+        return;
+      }
+    }
+
+    // No valid placement found — show as invalid at center position
+    this.snapRow.set(centerAnchorR); this.snapCol.set(centerAnchorC);
   }
 
   private finishDrag(pieceId: string): void {
@@ -507,9 +537,30 @@ export class GameBoardComponent implements OnDestroy, AfterViewInit {
     }
     const piece = this.selectedPiece();
     if (piece) {
-      const o = this.getOrientedCells(piece);
-      if (o.length && this.game.placePiece(piece.id, row - o[0][0], col - o[0][1], piece.currentOrientation))
-        this.game.selectedPieceId.set(null);
+      const oriented = this.getOrientedCells(piece);
+      if (!oriented.length) return;
+      const puzzle = this.game.puzzle()!;
+      const occ = this.game.boardState();
+
+      // Try center-based anchor first
+      const midR = (Math.min(...oriented.map(([r]) => r)) + Math.max(...oriented.map(([r]) => r))) / 2;
+      const midC = (Math.min(...oriented.map(([, c]) => c)) + Math.max(...oriented.map(([, c]) => c))) / 2;
+      const centerR = Math.round(row - midR), centerC = Math.round(col - midC);
+      if (this.game.placePiece(piece.id, centerR, centerC, piece.currentOrientation)) {
+        this.game.selectedPieceId.set(null); return;
+      }
+
+      // Try each cell of the piece over the clicked cell, closest to center first
+      const candidates = oriented.map(([pr, pc]) => ({
+        anchorR: row - pr, anchorC: col - pc,
+        dist: Math.abs(pr - midR) + Math.abs(pc - midC),
+      })).sort((a, b) => a.dist - b.dist);
+
+      for (const { anchorR, anchorC } of candidates) {
+        if (this.game.placePiece(piece.id, anchorR, anchorC, piece.currentOrientation)) {
+          this.game.selectedPieceId.set(null); return;
+        }
+      }
     }
   }
 
@@ -545,6 +596,15 @@ export class GameBoardComponent implements OnDestroy, AfterViewInit {
     if (id) this.game.flipPiece(id);
   }
 
+  removeSelected(): void {
+    const boardId = this.selectedBoardPieceId();
+    if (boardId) {
+      this.selectedBoardPieceId.set(null);
+      this.game.removePiece(boardId);
+      this.game.selectedPieceId.set(boardId);
+    }
+  }
+
   private flashError(): void {
     this.rotateFlashError.set(true);
     setTimeout(() => this.rotateFlashError.set(false), 400);
@@ -555,8 +615,26 @@ export class GameBoardComponent implements OnDestroy, AfterViewInit {
       .then(r => { if (r === 'confirm') this.game.requestHint(); });
   }
   onGiveUp(): void {
-    this.confirmSvc.confirm({ message: 'Give up on this puzzle?', cancelLabel: 'Keep Trying', confirmLabel: 'Show Solution', confirmColor: 'danger', secondaryLabel: 'Go home', secondarySubLabel: 'Progress saved', secondaryColor: 'primary' })
-      .then(r => { if (r === 'confirm') this.game.giveUp(); else if (r === 'secondary') { this.game.persistState(); this.game.stage.set('idle'); try { localStorage.removeItem('doitoo:last-route'); } catch {} this.router.navigateByUrl('/'); } });
+    this.confirmSvc.confirm({
+      message: 'Give up on this puzzle?',
+      confirmLabel: 'Show Solution',
+      confirmColor: 'danger',
+      secondaryLabel: 'Go home',
+      secondarySubLabel: 'Progress saved',
+      secondaryColor: 'primary',
+      tertiaryLabel: 'Leave',
+      tertiaryColor: 'danger',
+    }).then(r => {
+      if (r === 'confirm') this.game.giveUp();
+      else if (r === 'secondary') {
+        this.game.persistState();
+        this.game.stage.set('idle');
+        try { localStorage.removeItem('doitoo:last-route'); } catch {}
+        this.router.navigateByUrl('/');
+      } else if (r === 'tertiary') {
+        this.game.abortSession();
+      }
+    });
   }
 
   @HostListener('window:resize') onResize(): void { this.viewportTick.update(n => n + 1); }
