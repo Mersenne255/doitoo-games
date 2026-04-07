@@ -99,6 +99,11 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
   <!-- Score counter -->
   <div class="score-badge">{{ correctCount() }}</div>
 
+  <!-- Separator line — behind the symbol, in front of background -->
+  @if (!isGameOver()) {
+    <div class="tap-separator"></div>
+  }
+
   <!-- Card display area -->
   <div class="card-display">
     @if (isGameOver() && showComparison() && previousCard() && currentCard()) {
@@ -180,12 +185,15 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     }
   </div>
 
-  <!-- Bottom: question + buttons -->
+  <!-- Clickable halves overlay -->
   @if (!isGameOver()) {
-    <div class="question-text">Does something match?</div>
-    <div class="button-row" [class.disabled]="!canAnswer()">
-      <button class="answer-btn no-btn" (touchstart)="onTouch($event, false)" (click)="onAnswer(false)"><span>No</span> @if (hotkeys(); as hk) { <span class="hotkey">{{ hk[0] }}</span> }</button>
-      <button class="answer-btn yes-btn" (touchstart)="onTouch($event, true)" (click)="onAnswer(true)"><span>Yes</span> @if (hotkeys(); as hk) { <span class="hotkey">{{ hk[1] }}</span> }</button>
+    <div class="tap-overlay" [class.disabled]="!canAnswer()">
+      <div class="tap-half tap-no" (touchstart)="onTouch($event, false)" (click)="onAnswer(false)">
+        <span class="tap-label no-label">No Match @if (hotkeys(); as hk) { <span class="hotkey">{{ hk[0] }}</span> }</span>
+      </div>
+      <div class="tap-half tap-yes" (touchstart)="onTouch($event, true)" (click)="onAnswer(true)">
+        <span class="tap-label yes-label">Some Match @if (hotkeys(); as hk) { <span class="hotkey">{{ hk[1] }}</span> }</span>
+      </div>
     </div>
   }
 </div>`,
@@ -220,6 +228,7 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     .card-display {
       display: flex; align-items: center; justify-content: center;
       flex: 1; min-height: 0; overflow: hidden;
+      position: relative; z-index: 1;
     }
 
     /* Single card — always in normal flow, never absolute */
@@ -231,7 +240,7 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
       from { transform: translateX(60px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    .card-svg { width: min(180px, 55vmin); height: min(180px, 55vmin); }
+    .card-svg { width: 140px; height: 140px; max-width: 80%; max-height: 80%; }
 
     /* Comparison view */
     .comparison {
@@ -246,38 +255,38 @@ function generateDifferentCard(ref: ShapeCard, props: ActiveProperty[]): ShapeCa
     .current-label { color: #f87171; }
     .compare-svg { width: min(110px, 35vmin); height: min(110px, 35vmin); }
 
-    /* Bottom */
-    .question-text {
-      font-size: clamp(.9rem, 3.5vmin, 1.3rem); color: #94a3b8; font-weight: 600;
-      letter-spacing: .3px; text-align: center; padding: 6px 8px; flex-shrink: 0;
+    /* Tap overlay — covers entire game area */
+    .tap-overlay {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; cursor: pointer;
     }
-    .button-row {
-      display: grid; grid-template-columns: 1fr 1fr;
-      width: 100%; flex-shrink: 0;
+    .tap-overlay.disabled { opacity: .3; pointer-events: none; }
+    .tap-half {
+      flex: 1; display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 12px; touch-action: manipulation;
+      transition: background .1s; text-align: center;
     }
-    .button-row.disabled { opacity: .3; pointer-events: none; }
-    .answer-btn {
-      border: none; border-top: 1px solid rgba(255,255,255,.08);
-      font-size: clamp(1.2rem, 5vmin, 2.2rem); font-weight: 700;
-      cursor: pointer; transition: all .12s; outline: none;
-      font-family: 'Inter', system-ui, sans-serif;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: .75rem 0; touch-action: manipulation;
+    .tap-half:active { background: rgba(255,255,255,.04); }
+    .tap-separator {
+      position: absolute; top: 0; bottom: 0; left: 50%;
+      width: 2px; transform: translateX(-50%);
+      background: rgba(255,255,255,.10);
+      z-index: 0;
     }
-    .no-btn {
-      background: rgba(239,68,68,.12); color: #f87171;
-      border-right: 1px solid rgba(255,255,255,.08);
+    .tap-label {
+      font-size: clamp(.6rem, 2.5vmin, 1rem); font-weight: 700;
+      letter-spacing: .5px; text-transform: uppercase; opacity: .8;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      pointer-events: none; user-select: none;
+      -webkit-text-stroke: 2px black; paint-order: stroke fill;
+      white-space: nowrap;
     }
-    .yes-btn { background: rgba(34,197,94,.12); color: #4ade80; }
-    .answer-btn:hover { filter: brightness(1.2); }
-    .answer-btn:active { transform: scale(.95); }
-
+    .no-label { color: #f87171; }
+    .yes-label { color: #4ade80; }
     .hotkey {
-      font-size: 0.45em;
-      opacity: 0.35;
-      text-transform: uppercase;
-      font-weight: 500;
-      line-height: 1;
+      font-size: 0.75em; opacity: 0.5; text-transform: uppercase;
+      font-weight: 600; line-height: 1;
+      -webkit-text-stroke: 2px black; paint-order: stroke fill;
     }
   `],
 })

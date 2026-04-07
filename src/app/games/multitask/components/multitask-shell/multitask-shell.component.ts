@@ -2,13 +2,13 @@ import { Component, ChangeDetectionStrategy, inject, OnDestroy, viewChild, Eleme
 import { GameService } from '../../services/game.service';
 import { SlotComponent } from '../slot/slot.component';
 import { ConfigPanelComponent } from '../config-panel/config-panel.component';
-
+import { GameEndBarComponent } from '../../../../shared/components/game-end-bar/game-end-bar.component';
 import { CountdownComponent } from '../../../../shared/components/countdown/countdown.component';
 
 @Component({
   selector: 'app-multitask-shell',
   standalone: true,
-  imports: [SlotComponent, ConfigPanelComponent, CountdownComponent],
+  imports: [SlotComponent, ConfigPanelComponent, CountdownComponent, GameEndBarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (game.stage() === 'countdown') {
@@ -37,30 +37,18 @@ import { CountdownComponent } from '../../../../shared/components/countdown/coun
           }
         </div>
         @if (game.stage() === 'summary') {
-          <div class="summary-bar" [class.collapsed]="summaryCollapsed">
-            @if (!summaryCollapsed) {
-              <div class="summary-content">
-                <div class="summary-stats">
-                  <div class="stat">
-                    <span class="stat-label">Time</span>
-                    <span class="stat-value">{{ game.sessionElapsedSec() }}s</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-label">Level</span>
-                    <span class="stat-value">{{ game.maxDifficultyReached() }}</span>
-                  </div>
-                </div>
-                <div class="summary-actions">
-                  <button class="back-btn" (click)="game.dismissSummary()">Back</button>
-                  <button class="again-btn" (click)="game.playAgain()">Again</button>
-                </div>
+          <app-game-end-bar (back)="game.dismissSummary()" (again)="game.playAgain()">
+            <div class="summary-stats">
+              <div class="stat">
+                <span class="stat-label">Time</span>
+                <span class="stat-value">{{ game.sessionElapsedSec() }}s</span>
               </div>
-            }
-            <button class="summary-toggle" (click)="summaryCollapsed = !summaryCollapsed"
-              [attr.title]="summaryCollapsed ? 'Show results' : 'Hide results'">
-              <span class="toggle-icon" [class.flipped]="summaryCollapsed">‹</span>
-            </button>
-          </div>
+              <div class="stat">
+                <span class="stat-label">Level</span>
+                <span class="stat-value">{{ game.maxDifficultyReached() }}</span>
+              </div>
+            </div>
+          </app-game-end-bar>
         }
       </div>
     }
@@ -165,65 +153,6 @@ import { CountdownComponent } from '../../../../shared/components/countdown/coun
       pointer-events: none;
     }
 
-    .summary-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 10;
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      background: rgba(15, 15, 26, 0.94);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid rgba(255,255,255,0.08);
-      transition: transform 0.25s ease;
-    }
-
-    .summary-bar.collapsed {
-      transform: translateY(100%);
-    }
-
-    .summary-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.5rem;
-    }
-
-    .summary-toggle {
-      background: rgba(15, 15, 26, 0.94);
-      border: none;
-      border-left: 1px solid rgba(255,255,255,0.08);
-      cursor: pointer;
-      color: #64748b;
-      font-size: 1rem;
-      padding: 0 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.2s;
-    }
-
-    .summary-bar.collapsed .summary-toggle {
-      position: fixed;
-      bottom: 0; right: 0;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 0.4rem 0 0 0;
-      padding: 0.3rem 0.5rem;
-      backdrop-filter: blur(10px);
-    }
-
-    .summary-toggle:hover { color: #94a3b8; }
-
-    .toggle-icon {
-      display: inline-block;
-      transition: transform 0.25s;
-    }
-    .toggle-icon.flipped {
-      transform: rotate(180deg);
-    }
-
     .summary-stats {
       display: flex; gap: 2rem; justify-content: center;
     }
@@ -241,38 +170,10 @@ import { CountdownComponent } from '../../../../shared/components/countdown/coun
       font-size: 1.25rem; font-weight: 800; color: #e2e8f0;
       letter-spacing: -0.02em;
     }
-
-    .summary-actions {
-      display: flex; gap: 0.75rem; width: 100%; max-width: 20rem;
-    }
-
-    .back-btn, .again-btn {
-      flex: 1;
-      padding: 0.6rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 600; font-size: 0.9rem;
-      cursor: pointer; transition: background 0.2s;
-      outline: none; text-align: center;
-    }
-
-    .back-btn {
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.06);
-      color: #94a3b8;
-      &:hover { background: rgba(255,255,255,0.12); }
-    }
-
-    .again-btn {
-      border: 1px solid rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.2);
-      color: #86efac;
-      &:hover { background: rgba(34, 197, 94, 0.35); }
-    }
   `],
 })
 export class MultitaskShellComponent implements OnDestroy {
   readonly game = inject(GameService);
-  summaryCollapsed = false;
 
   private readonly slotGrid = viewChild<ElementRef<HTMLElement>>('slotGrid');
   private preventTouch = (e: TouchEvent) => e.preventDefault();
