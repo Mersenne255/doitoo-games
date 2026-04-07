@@ -13,6 +13,7 @@ export const GAME_LIST: GameEntry[] = [
   { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'You\'re forgetting where you put your keys. Time to fix that.', icon: 'assets/icons/numbers-icon.png' },
   { route: '/phantomlink', name: 'PhantomLink', label: 'Memory updating', description: 'You memorize, we change. Over and over again.', icon: 'assets/icons/phantom-icon.png' },
   // { route: '/synapsort', name: 'SynapSort', label: 'Cognitive flexibility', description: 'The rules just changed. Again. Keep up.', icon: 'assets/icons/synapsort-icon.png' },
+  // { route: '/focusforge', name: 'FocusForge', label: 'Selective attention', description: 'It\'s right there. You just can\'t see it. Yet.', icon: 'assets/icons/focusforge-icon.png' },
 ];
 
 export const TAGLINES: string[] = [
