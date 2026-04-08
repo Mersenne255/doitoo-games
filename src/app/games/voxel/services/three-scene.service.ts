@@ -1,22 +1,16 @@
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { ViewDirection, VoxelShape } from '../models/game.models';
+import { InteractionMode, ShapeDiff, VoxelColor, VoxelShape, VOXEL_COLORS } from '../models/game.models';
 
 const BACKGROUND_COLOR = 0x0f0f1a;
-const STANDARD_COLOR = 0x6366f1;   // indigo
+const STANDARD_COLOR = 0x6366f1;
 const EDGE_COLOR = 0x818cf8;
 const EDGE_OPACITY = 0.5;
-
-/** Predefined camera positions for each view direction (distance from center). */
-const CAMERA_OFFSETS: Record<ViewDirection, [number, number, number]> = {
-  front:  [0, 0, 8],
-  back:   [0, 0, -8],
-  right:  [8, 0, 0],
-  left:   [-8, 0, 0],
-  top:    [0, 8, 0.01],   // slight Z offset to avoid gimbal lock
-  bottom: [0, -8, 0.01],
-};
+const CORRECT_COLOR = 0x22c55e;
+const MISSING_COLOR = 0xef4444;
+const EXTRA_COLOR = 0xf59e0b;
+const ANCHOR_EDGE_COLOR = 0xfde68a;
 
 @Injectable({ providedIn: 'root' })
 export class ThreeSceneService {
@@ -28,25 +22,42 @@ export class ThreeSceneService {
   private isDisposed = false;
   private shapeCenter = new THREE.Vector3();
 
+  // Build scene state
+  private cubeMeshes = new Map<string, THREE.Mesh>();
+  private cubeEdges = new Map<string, THREE.LineSegments>();
+  private hoverMesh: THREE.Mesh | null = null;
+  private highlightedCubeKey: string | null = null;
+  private highlightedOriginalColor: number | null = null;
+  private currentMode: InteractionMode = 'build';
+  private colorMode = false;
+
+  // Tap vs drag detection
+  private pointerStartX = 0;
+  private pointerStartY = 0;
+  private pointerStartTime = 0;
+
+  // Shared geometry
+  private boxGeo = new THREE.BoxGeometry(1, 1, 1);
+  private edgesGeo = new THREE.EdgesGeometry(this.boxGeo);
+
+  // ── Study scene (existing init) ──
+
   init(canvas: HTMLCanvasElement, shape: VoxelShape, colorMode: boolean): void {
     this.isDisposed = false;
+    this.colorMode = colorMode;
     const parent = canvas.parentElement!;
     const width = parent.clientWidth;
     const height = parent.clientHeight;
 
-    // Renderer
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(BACKGROUND_COLOR);
 
-    // Camera — isometric-like 3/4 angle
     this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
 
-    // Compute shape center for orbit target
     const bb = shape.boundingBox;
     this.shapeCenter.set(
       (bb.min[0] + bb.max[0]) / 2,
@@ -54,7 +65,6 @@ export class ThreeSceneService {
       (bb.min[2] + bb.max[2]) / 2,
     );
 
-    // Position camera at 3/4 isometric-like angle
     const maxDim = Math.max(bb.max[0] - bb.min[0], bb.max[1] - bb.min[1], bb.max[2] - bb.min[2]) + 1;
     const dist = maxDim * 2.5;
     this.camera.position.set(
@@ -64,46 +74,337 @@ export class ThreeSceneService {
     );
     this.camera.lookAt(this.shapeCenter);
 
-    // Orbit Controls
-    this.controls = new OrbitControls(this.camera, canvas);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.1;
-    this.controls.enablePan = false;
-    this.controls.minDistance = 3;
-    this.controls.maxDistance = 20;
-    this.controls.target.copy(this.shapeCenter);
-    this.controls.touches = {
-      ONE: THREE.TOUCH.ROTATE,
-      TWO: THREE.TOUCH.DOLLY_ROTATE,
-    };
-    this.controls.update();
+    this.setupControls(canvas);
+    this.addLighting();
 
-    // Lighting
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(5, 5, 5);
-    this.scene.add(dirLight);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    this.scene.add(ambientLight);
-
-    // Render voxels
-    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-    const edgesGeo = new THREE.EdgesGeometry(boxGeo);
     const edgeMat = new THREE.LineBasicMaterial({ color: EDGE_COLOR, transparent: true, opacity: EDGE_OPACITY });
 
     for (const voxel of shape.voxels) {
       const mat = new THREE.MeshStandardMaterial({
         color: colorMode ? voxel.color : STANDARD_COLOR,
       });
-      const mesh = new THREE.Mesh(boxGeo, mat);
+      const mesh = new THREE.Mesh(this.boxGeo, mat);
       mesh.position.set(...voxel.position);
       this.scene.add(mesh);
 
-      const edges = new THREE.LineSegments(edgesGeo, edgeMat);
+      const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
       edges.position.set(...voxel.position);
       this.scene.add(edges);
     }
   }
+
+  // ── Build scene ──
+
+  initBuildScene(canvas: HTMLCanvasElement, anchorPosition: [number, number, number], colorMode: boolean): void {
+    this.isDisposed = false;
+    this.colorMode = colorMode;
+    this.cubeMeshes.clear();
+    this.cubeEdges.clear();
+    this.hoverMesh = null;
+    this.highlightedCubeKey = null;
+    this.highlightedOriginalColor = null;
+    this.currentMode = 'build';
+
+    const parent = canvas.parentElement!;
+    const width = parent.clientWidth;
+    const height = parent.clientHeight;
+
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(BACKGROUND_COLOR);
+
+    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    this.shapeCenter.set(...anchorPosition);
+
+    this.camera.position.set(
+      this.shapeCenter.x + 6,
+      this.shapeCenter.y + 5,
+      this.shapeCenter.z + 6,
+    );
+    this.camera.lookAt(this.shapeCenter);
+
+    this.setupControls(canvas);
+    this.addLighting();
+
+    // Add anchor cube with distinct visual
+    this.addCubeToScene(anchorPosition, colorMode ? VOXEL_COLORS[0] : undefined, true);
+  }
+
+  // ── Comparison scene ──
+
+  initComparisonScene(canvas: HTMLCanvasElement, shapeDiff: ShapeDiff, colorMode: boolean): void {
+    this.isDisposed = false;
+    this.colorMode = colorMode;
+
+    const parent = canvas.parentElement!;
+    const width = parent.clientWidth;
+    const height = parent.clientHeight;
+
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(BACKGROUND_COLOR);
+
+    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+
+    // Compute center from all cubes
+    const allPositions = [
+      ...shapeDiff.correct.map(v => [v.x, v.y, v.z]),
+      ...shapeDiff.missing.map(v => [v.x, v.y, v.z]),
+      ...shapeDiff.extra.map(v => [v.x, v.y, v.z]),
+    ];
+    if (allPositions.length > 0) {
+      const cx = allPositions.reduce((s, p) => s + p[0], 0) / allPositions.length;
+      const cy = allPositions.reduce((s, p) => s + p[1], 0) / allPositions.length;
+      const cz = allPositions.reduce((s, p) => s + p[2], 0) / allPositions.length;
+      this.shapeCenter.set(cx, cy, cz);
+    } else {
+      this.shapeCenter.set(0, 0, 0);
+    }
+
+    const maxDim = Math.max(
+      ...allPositions.map(p => Math.abs(p[0] - this.shapeCenter.x)),
+      ...allPositions.map(p => Math.abs(p[1] - this.shapeCenter.y)),
+      ...allPositions.map(p => Math.abs(p[2] - this.shapeCenter.z)),
+      1,
+    ) + 1;
+    const dist = maxDim * 3;
+    this.camera.position.set(
+      this.shapeCenter.x + dist * 0.7,
+      this.shapeCenter.y + dist * 0.6,
+      this.shapeCenter.z + dist * 0.7,
+    );
+    this.camera.lookAt(this.shapeCenter);
+
+    this.setupControls(canvas);
+    this.addLighting();
+
+    // Correct cubes — green solid
+    for (const v of shapeDiff.correct) {
+      const mat = new THREE.MeshStandardMaterial({ color: CORRECT_COLOR });
+      const mesh = new THREE.Mesh(this.boxGeo, mat);
+      mesh.position.set(v.x, v.y, v.z);
+      this.scene.add(mesh);
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0x86efac, transparent: true, opacity: 0.5 });
+      const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
+      edges.position.set(v.x, v.y, v.z);
+      this.scene.add(edges);
+    }
+
+    // Missing cubes — red wireframe/ghost
+    for (const v of shapeDiff.missing) {
+      const fillMat = new THREE.MeshStandardMaterial({
+        color: MISSING_COLOR,
+        transparent: true,
+        opacity: 0.15,
+      });
+      const fillMesh = new THREE.Mesh(this.boxGeo, fillMat);
+      fillMesh.position.set(v.x, v.y, v.z);
+      this.scene.add(fillMesh);
+      const edgeMat = new THREE.LineBasicMaterial({ color: MISSING_COLOR });
+      const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
+      edges.position.set(v.x, v.y, v.z);
+      this.scene.add(edges);
+    }
+
+    // Extra cubes — orange solid
+    for (const v of shapeDiff.extra) {
+      const mat = new THREE.MeshStandardMaterial({ color: EXTRA_COLOR });
+      const mesh = new THREE.Mesh(this.boxGeo, mat);
+      mesh.position.set(v.x, v.y, v.z);
+      this.scene.add(mesh);
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.5 });
+      const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
+      edges.position.set(v.x, v.y, v.z);
+      this.scene.add(edges);
+    }
+  }
+
+  // ── Interaction mode ──
+
+  setInteractionMode(mode: InteractionMode): void {
+    this.currentMode = mode;
+    // Orbit controls stay enabled in both modes — taps are distinguished from drags
+    if (this.controls) {
+      this.controls.enabled = true;
+    }
+    this.setHoverPreview(null);
+    this.setHoverHighlight(null);
+  }
+
+  // ── Raycasting ──
+
+  getClickedFace(event: MouseEvent | TouchEvent): { position: [number, number, number]; faceNormal: [number, number, number] } | null {
+    if (!this.camera || !this.scene || !this.renderer) return null;
+
+    const ndc = this.getNDC(event);
+    if (!ndc) return null;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, this.camera);
+
+    const meshes = this.getMeshesFromScene();
+    const intersections = raycaster.intersectObjects(meshes);
+    if (intersections.length === 0 || !intersections[0].face) return null;
+
+    const hit = intersections[0];
+    // Face normal is in object-local space. Since cubes are axis-aligned with no rotation,
+    // we just need to transform the normal by the object's world rotation (identity in our case).
+    const normal = hit.face!.normal.clone();
+    normal.transformDirection(hit.object.matrixWorld);
+
+    const fn: [number, number, number] = [
+      Math.round(normal.x),
+      Math.round(normal.y),
+      Math.round(normal.z),
+    ];
+
+    const cubePos = hit.object.position;
+    const adjacent: [number, number, number] = [
+      Math.round(cubePos.x) + fn[0],
+      Math.round(cubePos.y) + fn[1],
+      Math.round(cubePos.z) + fn[2],
+    ];
+
+    return { position: adjacent, faceNormal: fn };
+  }
+
+  getClickedCube(event: MouseEvent | TouchEvent): [number, number, number] | null {
+    if (!this.camera || !this.scene || !this.renderer) return null;
+
+    const ndc = this.getNDC(event);
+    if (!ndc) return null;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, this.camera);
+
+    const meshes = this.getMeshesFromScene();
+    const intersections = raycaster.intersectObjects(meshes);
+    if (intersections.length === 0) return null;
+
+    const pos = intersections[0].object.position;
+    return [Math.round(pos.x), Math.round(pos.y), Math.round(pos.z)];
+  }
+
+  // ── Build scene cube management ──
+
+  addCubeToScene(position: [number, number, number], color?: VoxelColor, isAnchor = false): void {
+    if (!this.scene) return;
+    const key = `${position[0]},${position[1]},${position[2]}`;
+    if (this.cubeMeshes.has(key)) return;
+
+    const hexColor = color ? parseInt(color.replace('#', ''), 16) : STANDARD_COLOR;
+    const mat = new THREE.MeshStandardMaterial({ color: hexColor });
+    const mesh = new THREE.Mesh(this.boxGeo, mat);
+    mesh.position.set(...position);
+    this.scene.add(mesh);
+    this.cubeMeshes.set(key, mesh);
+
+    const edgeColor = isAnchor ? ANCHOR_EDGE_COLOR : EDGE_COLOR;
+    const edgeOpacity = isAnchor ? 0.9 : EDGE_OPACITY;
+    const edgeMat = new THREE.LineBasicMaterial({ color: edgeColor, transparent: true, opacity: edgeOpacity });
+    const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
+    edges.position.set(...position);
+    this.scene.add(edges);
+    this.cubeEdges.set(key, edges);
+  }
+
+  removeCubeFromScene(position: [number, number, number]): void {
+    if (!this.scene) return;
+    const key = `${position[0]},${position[1]},${position[2]}`;
+
+    const mesh = this.cubeMeshes.get(key);
+    if (mesh) {
+      this.scene.remove(mesh);
+      (mesh.material as THREE.Material).dispose();
+      this.cubeMeshes.delete(key);
+    }
+
+    const edges = this.cubeEdges.get(key);
+    if (edges) {
+      this.scene.remove(edges);
+      (edges.material as THREE.Material).dispose();
+      this.cubeEdges.delete(key);
+    }
+  }
+
+  // ── Hover preview (Add mode) ──
+
+  setHoverPreview(position: [number, number, number] | null, color?: VoxelColor): void {
+    if (!this.scene) return;
+
+    // Remove existing hover mesh
+    if (this.hoverMesh) {
+      this.scene.remove(this.hoverMesh);
+      (this.hoverMesh.material as THREE.Material).dispose();
+      this.hoverMesh = null;
+    }
+
+    if (position) {
+      const hexColor = color ? parseInt(color.replace('#', ''), 16) : STANDARD_COLOR;
+      const mat = new THREE.MeshStandardMaterial({
+        color: hexColor,
+        transparent: true,
+        opacity: 0.4,
+      });
+      this.hoverMesh = new THREE.Mesh(this.boxGeo, mat);
+      this.hoverMesh.position.set(...position);
+      this.scene.add(this.hoverMesh);
+    }
+  }
+
+  // ── Hover highlight (Remove mode) ──
+
+  setHoverHighlight(position: [number, number, number] | null): void {
+    // Restore previous highlight
+    if (this.highlightedCubeKey !== null && this.highlightedOriginalColor !== null) {
+      const mesh = this.cubeMeshes.get(this.highlightedCubeKey);
+      if (mesh) {
+        (mesh.material as THREE.MeshStandardMaterial).emissive.setHex(0x000000);
+      }
+      this.highlightedCubeKey = null;
+      this.highlightedOriginalColor = null;
+    }
+
+    if (position) {
+      const key = `${position[0]},${position[1]},${position[2]}`;
+      const mesh = this.cubeMeshes.get(key);
+      if (mesh) {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        this.highlightedOriginalColor = mat.emissive.getHex();
+        this.highlightedCubeKey = key;
+        mat.emissive.setHex(0xff0000);
+        mat.emissiveIntensity = 0.4;
+      }
+    }
+  }
+
+  // ── Tap vs drag detection ──
+
+  recordPointerDown(event: MouseEvent | TouchEvent): void {
+    const coords = this.getClientCoords(event);
+    if (!coords) return;
+    this.pointerStartX = coords.x;
+    this.pointerStartY = coords.y;
+    this.pointerStartTime = Date.now();
+  }
+
+  isTap(event: MouseEvent | TouchEvent): boolean {
+    const coords = this.getClientCoords(event);
+    if (!coords) return false;
+    const dx = coords.x - this.pointerStartX;
+    const dy = coords.y - this.pointerStartY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const elapsed = Date.now() - this.pointerStartTime;
+    return distance < 5 && elapsed < 300;
+  }
+
+  // ── Animation loop ──
 
   startAnimationLoop(): void {
     if (this.isDisposed) return;
@@ -126,20 +427,6 @@ export class ThreeSceneService {
     }
   }
 
-  rotateTo(direction: ViewDirection): void {
-    if (!this.camera || !this.controls || this.isDisposed) return;
-
-    const offset = CAMERA_OFFSETS[direction];
-    this.camera.position.set(
-      this.shapeCenter.x + offset[0],
-      this.shapeCenter.y + offset[1],
-      this.shapeCenter.z + offset[2],
-    );
-    this.camera.lookAt(this.shapeCenter);
-    this.controls.target.copy(this.shapeCenter);
-    this.controls.update();
-  }
-
   resize(): void {
     if (!this.renderer || !this.camera || this.isDisposed) return;
 
@@ -160,7 +447,6 @@ export class ThreeSceneService {
 
     this.stopAnimationLoop();
 
-    // Traverse scene and dispose geometries/materials
     if (this.scene) {
       this.scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -189,5 +475,75 @@ export class ThreeSceneService {
     this.scene = null;
     this.camera = null;
     this.controls = null;
+    this.cubeMeshes.clear();
+    this.cubeEdges.clear();
+    this.hoverMesh = null;
+    this.highlightedCubeKey = null;
+    this.highlightedOriginalColor = null;
+  }
+
+  // ── Private helpers ──
+
+  private setupControls(canvas: HTMLCanvasElement): void {
+    if (!this.camera) return;
+    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.1;
+    this.controls.enablePan = true;
+    this.controls.panSpeed = 0.8;
+    this.controls.minDistance = 3;
+    this.controls.maxDistance = 20;
+    this.controls.target.copy(this.shapeCenter);
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN,
+    };
+    this.controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_PAN,
+    };
+    this.controls.update();
+  }
+
+  private addLighting(): void {
+    if (!this.scene) return;
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(5, 5, 5);
+    this.scene.add(dirLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    this.scene.add(ambientLight);
+  }
+
+  private getNDC(event: MouseEvent | TouchEvent): THREE.Vector2 | null {
+    if (!this.renderer) return null;
+    const canvas = this.renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+    const coords = this.getClientCoords(event);
+    if (!coords) return null;
+    return new THREE.Vector2(
+      ((coords.x - rect.left) / rect.width) * 2 - 1,
+      -((coords.y - rect.top) / rect.height) * 2 + 1,
+    );
+  }
+
+  private getClientCoords(event: MouseEvent | TouchEvent): { x: number; y: number } | null {
+    if ('touches' in event) {
+      const touch = event.touches[0] || (event as TouchEvent).changedTouches[0];
+      if (!touch) return null;
+      return { x: touch.clientX, y: touch.clientY };
+    }
+    return { x: (event as MouseEvent).clientX, y: (event as MouseEvent).clientY };
+  }
+
+  private getMeshesFromScene(): THREE.Mesh[] {
+    const meshes: THREE.Mesh[] = [];
+    if (!this.scene) return meshes;
+    this.scene.traverse((obj) => {
+      if (obj instanceof THREE.Mesh && obj !== this.hoverMesh) {
+        meshes.push(obj);
+      }
+    });
+    return meshes;
   }
 }

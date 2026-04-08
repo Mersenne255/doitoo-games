@@ -1,532 +1,431 @@
 import {
-  Component,
-  ChangeDetectionStrategy,
-  OnDestroy,
-  inject,
-  signal,
-  effect,
-  computed,
-  ViewChild,
-  ElementRef,
+  Component, ChangeDetectionStrategy, OnDestroy, inject,
+  signal, effect, computed, ViewChild, ElementRef, afterNextRender, Injector,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { GameService } from '../../services/game.service';
 import { ThreeSceneService } from '../../services/three-scene.service';
-import {
-  Projection,
-  ProjectionCell,
-  SPEED_MODE_DELAYS,
-  VoxelStage,
-} from '../../models/game.models';
-
-type FeedbackState = 'correct' | 'incorrect' | 'timeout' | null;
+import { GameInfoService } from '../../../../shared/services/game-info.service';
+import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../models/game.models';
 
 @Component({
   selector: 'app-game-board',
   standalone: true,
+  imports: [DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="board">
-      <!-- Top bar: progress left, abort right -->
-      <div class="top-bar">
-        <span class="progress">Trial {{ currentIndex() + 1 }} / {{ totalTrials() }}</span>
-        <button class="abort-btn" (click)="onAbort()" aria-label="Abort">✕</button>
-      </div>
-
-      <!-- Memorizing stage -->
-      @if (stage() === 'memorizing') {
-        <!-- Memorization timer bar (only when finite) -->
-        @if (hasMemorizationTimer()) {
-          <div class="timer-bar-track">
-            <div class="timer-bar-fill"
-                 [style.width.%]="memTimerPercent()"
-                 [class.urgent]="memTimerPercent() < 25"></div>
-          </div>
-          <div class="timer-label" [class.urgent-text]="memTimerPercent() < 25">
-            {{ memTimerDisplay() }}s
-          </div>
-        }
-
-        <!-- 3D Canvas -->
-        <div class="canvas-wrapper">
-          <canvas #threeCanvas class="three-canvas"></canvas>
+      <!-- ═══ STUDY PHASE ═══ -->
+      @if (stage() === 'studying') {
+        <div class="canvas-wrapper full">
+          <canvas #studyCanvas class="three-canvas"></canvas>
         </div>
-
-        <!-- Ready button -->
-        <button class="ready-btn" (click)="onReady()">Ready</button>
+        <button class="abort-float" (click)="onAbort()" aria-label="Close">✕</button>
+        <div class="overlay-controls">
+          <button class="ready-text-btn" (click)="onReady()" aria-label="Ready">Ready</button>
+        </div>
       }
 
-      <!-- Questioning stage -->
-      @if (stage() === 'questioning') {
-        <!-- Response timer bar (only when finite) -->
-        @if (hasResponseTimer()) {
-          <div class="timer-bar-track">
-            <div class="timer-bar-fill"
-                 [style.width.%]="responseTimerPercent()"
-                 [class.urgent]="responseTimerPercent() < 25"></div>
+      <!-- ═══ BUILD PHASE ═══ -->
+      @if (stage() === 'building') {
+        <div class="canvas-wrapper full"
+          (pointerdown)="onPointerDown($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointermove)="onPointerMove($event)">
+          <canvas #buildCanvas class="three-canvas"></canvas>
+        </div>
+        <button class="abort-float" (click)="onAbort()" aria-label="Close">✕</button>
+
+        <!-- Solved overlay -->
+        @if (game.solved()) {
+          <div class="solved-overlay">
+            <div class="solved-text">✓</div>
+            <div class="solved-actions">
+              <button class="ctrl-btn next-btn" (click)="onNextRound()" aria-label="Next round">→</button>
+              <button class="ctrl-btn end-btn" (click)="onEnd()" aria-label="End session">⏹</button>
+            </div>
           </div>
         }
 
-        <!-- Feedback 3D re-display -->
-        @if (showFeedback3D()) {
-          <div class="canvas-wrapper feedback-canvas">
-            <canvas #feedbackCanvas class="three-canvas"></canvas>
+        <!-- Bottom overlay controls -->
+        <div class="overlay-controls">
+          @if (showColorPicker()) {
+            <div class="color-row">
+              @for (c of colors(); track c) {
+                <button class="color-dot"
+                  [style.background-color]="c"
+                  [class.selected]="selectedColor() === c"
+                  (click)="onColorSelect(c)"></button>
+              }
+            </div>
+          }
+          <div class="ctrl-row">
+            <span class="cube-label">
+              <svg class="cube-icon" viewBox="0 0 32 32" width="32" height="32">
+                <path d="M16 2 L28 9 L28 23 L16 30 L4 23 L4 9 Z" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                <path d="M4 9 L16 16 L28 9" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+                <path d="M16 16 L16 30" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+              </svg>
+              <span class="cube-num">{{ cubeCount() }}</span>
+            </span>
+            <div class="mode-group">
+              <button class="ctrl-btn" [class.active]="interactionMode() === 'build'"
+                (click)="onModeChange('build')" aria-label="Build">＋</button>
+              <button class="ctrl-btn" [class.active]="interactionMode() === 'remove'"
+                (click)="onModeChange('remove')" aria-label="Remove">－</button>
+            </div>
+            <div class="right-group">
+              <button class="ctrl-btn info-btn" (click)="onOpenInfo()" aria-label="Info">?</button>
+              <button class="ctrl-btn giveup-btn" (click)="onGiveUp()" aria-label="Give up">🏳</button>
+            </div>
           </div>
-        } @else {
-          <!-- Question text -->
-          <div class="question-area">
-            <p class="question-text">
-              What does this object look like from the
-              <span class="direction-highlight">{{ askedDirection() }}</span>?
-            </p>
-          </div>
-
-          <!-- Option cards 2×2 grid -->
-          <div class="options-grid">
-            @for (option of options(); track $index) {
-              <button class="option-card"
-                      [class.selected-correct]="feedbackState() && $index === selectedIndex() && feedbackState() === 'correct'"
-                      [class.selected-incorrect]="feedbackState() && $index === selectedIndex() && (feedbackState() === 'incorrect' || feedbackState() === 'timeout')"
-                      [class.highlight-correct]="feedbackState() && $index === correctIndex()"
-                      [disabled]="!!feedbackState()"
-                      (click)="onOptionTap($index)"
-                      [attr.aria-label]="'Option ' + ($index + 1)">
-                <div class="projection-grid"
-                     [style.grid-template-columns]="'repeat(' + option.width + ', 1fr)'"
-                     [style.grid-template-rows]="'repeat(' + option.height + ', 1fr)'">
-                  @for (row of getRowIndices(option); track row) {
-                    @for (col of getColIndices(option); track col) {
-                      <div class="projection-cell"
-                           [style.background-color]="getCellColor(option.grid[row][col])">
-                      </div>
-                    }
-                  }
-                </div>
-              </button>
-            }
-          </div>
-        }
+        </div>
       }
+
+      <!-- ═══ COMPARISON (Give Up) — side by side ═══ -->
+      @if (stage() === 'comparison') {
+        <div class="comparison-split">
+          <div class="split-pane">
+            <div class="split-label">Original</div>
+            <div class="canvas-wrapper split-canvas">
+              <canvas #compOriginalCanvas class="three-canvas"></canvas>
+            </div>
+          </div>
+          <div class="split-pane">
+            <div class="split-label">Your build</div>
+            <div class="canvas-wrapper split-canvas">
+              <canvas #compBuildCanvas class="three-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="overlay-controls">
+          <div class="ctrl-row">
+            <button class="ctrl-btn next-btn" (click)="onNextRound()" aria-label="Next round">→</button>
+            <button class="ctrl-btn end-btn" (click)="onEnd()" aria-label="End session">⏹</button>
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
     :host { display: block; width: 100%; height: 100%; }
+    .board { display: flex; flex-direction: column; height: 100vh; height: 100dvh; position: relative; }
 
-    .board {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      height: 100dvh;
-      padding: 0.75rem 1rem;
-      max-width: 600px;
-      margin: 0 auto;
-      box-sizing: border-box;
-    }
+    .canvas-wrapper { position: relative; overflow: hidden; touch-action: none; }
+    .canvas-wrapper.full { flex: 1; min-height: 0; }
+    .three-canvas { width: 100%; height: 100%; display: block; }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .progress { color: #94a3b8; font-size: 0.85rem; font-weight: 600; }
-
-    .abort-btn {
-      width: 2rem; height: 2rem; border-radius: 50%;
+    /* Abort button floating top-right */
+    .abort-float {
+      position: absolute; top: 0.75rem; right: 0.75rem; z-index: 15;
+      width: 2.25rem; height: 2.25rem; border-radius: 50%;
       border: 1px solid rgba(239, 68, 68, 0.4);
       background: rgba(15, 15, 26, 0.85);
-      color: #fca5a5; font-size: 0.875rem; font-weight: 700;
+      color: #fca5a5; font-size: 0.9rem; font-weight: 700;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s, border-color 0.2s;
       backdrop-filter: blur(4px);
     }
-    .abort-btn:hover {
+    .abort-float:hover {
       background: rgba(239, 68, 68, 0.25);
       border-color: rgba(239, 68, 68, 0.6);
     }
 
-    /* Timer bar */
-    .timer-bar-track {
-      height: 4px; background: rgba(255,255,255,0.1);
-      border-radius: 2px; margin-top: 0.5rem; overflow: hidden;
-    }
-    .timer-bar-fill {
-      height: 100%; background: #6366f1; border-radius: 2px;
-      transition: width 50ms linear;
-    }
+    /* Timer */
+    .timer-bar-track { height: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .timer-bar-fill { height: 100%; background: #6366f1; transition: width 50ms linear; }
     .timer-bar-fill.urgent { background: #ef4444; }
 
-    .timer-label {
-      text-align: center; color: #94a3b8; font-size: 0.8rem;
-      font-weight: 600; margin-top: 0.25rem;
-      transition: color 0.3s;
+    /* Overlay controls at bottom */
+    .overlay-controls {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
+      padding: 0.75rem 0.75rem; z-index: 10;
+      background: linear-gradient(transparent, rgba(15,15,26,0.85) 30%);
+      pointer-events: none;
     }
-    .timer-label.urgent-text { color: #ef4444; }
+    .overlay-controls > * { pointer-events: auto; }
 
-    /* Canvas wrapper */
-    .canvas-wrapper {
-      flex: 1; position: relative; min-height: 0;
-      border-radius: 0.75rem; overflow: hidden;
-      margin: 0.5rem 0;
+    .ctrl-row {
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; gap: 0.4rem;
+      width: 100%;
     }
-    .three-canvas {
-      width: 100%; height: 100%;
-      display: block; border-radius: 0.75rem;
-    }
-    .feedback-canvas {
-      border: 1px solid rgba(99, 102, 241, 0.3);
-    }
+    .mode-group { display: flex; gap: 0.3rem; justify-self: center; }
+    .right-group { display: flex; gap: 0.3rem; justify-self: end; }
+    .cube-label { justify-self: start; }
 
-    /* Ready button */
-    .ready-btn {
-      align-self: center;
-      padding: 0.6rem 2.5rem; border-radius: 0.75rem;
-      border: 1px solid rgba(99, 102, 241, 0.5);
-      background: rgba(99, 102, 241, 0.2);
-      color: #a5b4fc; font-weight: 700; font-size: 1rem;
-      cursor: pointer; transition: background 0.2s, transform 0.15s;
-      margin-bottom: 0.5rem;
-      backdrop-filter: blur(6px);
-    }
-    .ready-btn:hover { background: rgba(99, 102, 241, 0.35); }
-    .ready-btn:active { transform: scale(0.97); }
-
-    /* Question area */
-    .question-area {
-      text-align: center; padding: 1rem 0.5rem;
-    }
-    .question-text {
-      color: #e2e8f0; font-size: 1.05rem; font-weight: 500;
-      line-height: 1.5; margin: 0;
-    }
-    .direction-highlight {
-      color: #818cf8; font-weight: 800; text-transform: capitalize;
+    .color-row {
+      display: flex; gap: 0.3rem; justify-content: center;
     }
 
-    /* Options grid */
-    .options-grid {
-      flex: 1; display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 0.6rem; padding: 0.25rem 0 1rem;
-      min-height: 0;
-    }
-
-    .option-card {
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 0.75rem;
-      border: 1.5px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.04);
+    .ctrl-btn {
+      width: 2.75rem; height: 2.75rem; border-radius: 0.6rem;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(15,15,26,0.9);
+      color: #cbd5e1; font-size: 1.1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
       backdrop-filter: blur(8px);
-      cursor: pointer; padding: 0.5rem;
-      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-      min-height: 44px; min-width: 44px;
+      transition: all 0.15s;
     }
-    .option-card:hover:not(:disabled) {
-      border-color: rgba(99, 102, 241, 0.5);
-      transform: scale(1.02);
+    .ctrl-btn:hover { background: rgba(255,255,255,0.1); }
+    .ctrl-btn.active {
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: white; border-color: transparent;
+      box-shadow: 0 2px 10px rgba(99,102,241,0.4);
     }
-    .option-card:active:not(:disabled) { transform: scale(0.98); }
-    .option-card:disabled { cursor: default; }
+    .ctrl-btn.ready-btn { background: rgba(34,197,94,0.25); border-color: rgba(34,197,94,0.5); color: #86efac; font-size: 1.3rem; }
 
-    .option-card.selected-correct {
-      box-shadow: 0 0 16px rgba(34, 197, 94, 0.6), 0 0 32px rgba(34, 197, 94, 0.25);
-      border-color: rgba(34, 197, 94, 0.7);
+    .ready-text-btn {
+      padding: 0.6rem 2.5rem; border-radius: 0.75rem;
+      border: 1px solid rgba(34,197,94,0.5);
+      background: rgba(34,197,94,0.2);
+      color: #86efac; font-weight: 700; font-size: 1rem;
+      cursor: pointer; min-height: 44px;
+      backdrop-filter: blur(8px);
     }
-    .option-card.selected-incorrect {
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.6), 0 0 32px rgba(239, 68, 68, 0.25);
-      border-color: rgba(239, 68, 68, 0.7);
+    .ready-text-btn:hover { background: rgba(34,197,94,0.35); }
+    .ctrl-btn.next-btn { background: rgba(99,102,241,0.25); border-color: rgba(99,102,241,0.5); color: #a5b4fc; }
+    .ctrl-btn.end-btn { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); color: #94a3b8; }
+    .ctrl-btn.giveup-btn { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+    .ctrl-btn.info-btn { font-weight: 800; }
+
+    .cube-label {
+      justify-self: start;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      width: 2.75rem; height: 2.75rem;
     }
-    .option-card.highlight-correct {
-      box-shadow: 0 0 16px rgba(34, 197, 94, 0.6), 0 0 32px rgba(34, 197, 94, 0.25);
-      border-color: rgba(34, 197, 94, 0.7);
+    .cube-icon { position: absolute; inset: 0; }
+    .cube-num {
+      position: relative; z-index: 1;
+      color: #94a3b8; font-size: 0.8rem; font-weight: 700;
+      margin-top: 0.15rem;
     }
 
-    /* Projection grid inside option cards */
-    .projection-grid {
-      display: grid; gap: 1px;
-      width: 100%; height: 100%;
-      aspect-ratio: 1;
-      max-width: 100%; max-height: 100%;
+    .color-dot {
+      width: 2rem; height: 2rem; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      min-width: 44px; min-height: 44px;
     }
-    .projection-cell {
-      border-radius: 1px;
-      border: 0.5px solid rgba(255, 255, 255, 0.06);
+    .color-dot.selected { border-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.5); }
+
+    /* Solved overlay */
+    .solved-overlay {
+      position: absolute; inset: 0; z-index: 20;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(15,15,26,0.7); backdrop-filter: blur(4px);
     }
+    .solved-text { font-size: 4rem; color: #22c55e; }
+    .solved-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+
+    /* Comparison split */
+    .comparison-split {
+      flex: 1; display: flex; gap: 2px; min-height: 0;
+    }
+    @media (orientation: portrait) {
+      .comparison-split { flex-direction: column; }
+    }
+    .split-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+    .split-label {
+      text-align: center; color: #94a3b8; font-size: 0.7rem;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.25rem 0;
+    }
+    .split-canvas { flex: 1; }
+
   `],
 })
 export class GameBoardComponent implements OnDestroy {
-  private readonly game = inject(GameService);
+  readonly game = inject(GameService);
   private readonly threeScene = inject(ThreeSceneService);
+  private readonly gameInfo = inject(GameInfoService);
+  // Second scene service for comparison side-by-side (original shape)
+  private compOriginalScene = new ThreeSceneService();
 
-  @ViewChild('threeCanvas') threeCanvasRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('feedbackCanvas') feedbackCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('studyCanvas') studyCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('buildCanvas') buildCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('compOriginalCanvas') compOriginalCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('compBuildCanvas') compBuildCanvasRef?: ElementRef<HTMLCanvasElement>;
 
   readonly stage = this.game.stage;
-  readonly currentIndex = this.game.currentTrialIndex;
-  readonly totalTrials = computed(() => this.game.trials().length);
+  readonly interactionMode = this.game.interactionMode;
+  readonly selectedColor = this.game.selectedColor;
+  readonly cubeCount = computed(() => this.game.playerBuild().length);
+  readonly showColorPicker = computed(() => this.game.isMultiColor() && this.game.interactionMode() === 'build');
+  readonly hasStudyTimer = computed(() => this.game.getEffectiveStudyTimeSec() !== null);
+  readonly studyTimerPercent = signal<number>(100);
+  readonly colors = computed(() => VOXEL_COLORS.slice(0, this.game.config().colorCount));
 
-  readonly trial = this.game.currentTrial;
-  readonly askedDirection = computed(() => this.trial()?.askedDirection ?? '');
-  readonly options = computed(() => this.trial()?.options ?? []);
-  readonly correctIndex = computed(() => this.trial()?.correctIndex ?? -1);
-
-  readonly hasMemorizationTimer = computed(() => this.game.difficultyParams().memorizationTimeSec !== null);
-  readonly hasResponseTimer = computed(() => this.game.difficultyParams().responseWindowMs !== null);
-
-  readonly feedbackState = signal<FeedbackState>(null);
-  readonly selectedIndex = signal<number>(-1);
-  readonly memTimerPercent = signal<number>(100);
-  readonly memTimerDisplay = signal<number>(0);
-  readonly responseTimerPercent = signal<number>(100);
-  readonly showFeedback3D = signal<boolean>(false);
-
-  private memStartTime = 0;
-  private questionStartTime = 0;
-  private feedbackActive = false;
-
-  private memTimerIntervalId: ReturnType<typeof setInterval> | null = null;
-  private responseTimerIntervalId: ReturnType<typeof setInterval> | null = null;
-  private feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private advanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private feedback3DTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
+  private studyStartTime = 0;
+  private studyTimerIntervalId: ReturnType<typeof setInterval> | null = null;
   private threeInitialized = false;
   private previousStage: VoxelStage | null = null;
+  private readonly injector = inject(Injector);
 
   constructor() {
     effect(() => {
       const currentStage = this.game.stage();
-      this.game.currentTrial(); // track trial changes to re-trigger effect
-      const prevStage = this.previousStage;
+      this.game.currentTrial();
+      const prev = this.previousStage;
       this.previousStage = currentStage;
 
-      if (currentStage === 'memorizing' && prevStage !== 'memorizing') {
-        // Use queueMicrotask to ensure ViewChild is available after template renders
-        queueMicrotask(() => this.initMemorizing());
+      if (currentStage === 'studying' && prev !== 'studying') {
+        afterNextRender(() => this.initStudyPhase(), { injector: this.injector });
       }
-
-      if (currentStage === 'questioning' && prevStage === 'memorizing') {
-        this.cleanupThreeScene();
-        this.initQuestioning();
+      if (currentStage === 'building' && prev !== 'building') {
+        this.cleanupAll();
+        afterNextRender(() => this.initBuildPhase(), { injector: this.injector });
+      }
+      if (currentStage === 'comparison' && prev !== 'comparison') {
+        this.cleanupAll();
+        afterNextRender(() => this.initComparisonPhase(), { injector: this.injector });
       }
     });
   }
 
   ngOnDestroy(): void {
-    this.clearAllTimers();
-    this.cleanupThreeScene();
+    this.clearStudyTimer();
+    this.cleanupAll();
   }
 
   onReady(): void {
-    const elapsed = Date.now() - this.memStartTime;
-    this.clearMemTimer();
-    this.game.endMemorization(elapsed);
+    this.clearStudyTimer();
+    this.game.endStudy(Date.now() - this.studyStartTime);
   }
 
-  onOptionTap(index: number): void {
-    if (this.feedbackActive) return;
-    if (this.feedbackState()) return;
+  onModeChange(mode: InteractionMode): void {
+    this.game.setInteractionMode(mode);
+    this.threeScene.setInteractionMode(mode);
+  }
 
-    const trial = this.trial();
-    if (!trial) return;
+  onColorSelect(color: VoxelColor): void { this.game.setSelectedColor(color); }
 
-    this.feedbackActive = true;
-    const responseTimeMs = Date.now() - this.questionStartTime;
-    this.selectedIndex.set(index);
-    this.clearResponseTimer();
+  onPointerDown(event: PointerEvent): void { this.threeScene.recordPointerDown(event); }
 
-    const correct = index === trial.correctIndex;
-    this.game.recordResponse(index, responseTimeMs);
+  onPointerUp(event: PointerEvent): void {
+    const mode = this.game.interactionMode();
+    if (this.game.solved()) return;
+    if (!this.threeScene.isTap(event)) return;
 
-    if (correct) {
-      this.feedbackState.set('correct');
-      this.scheduleAdvance();
-    } else {
-      this.feedbackState.set('incorrect');
-      this.showIncorrectFeedback();
+    if (mode === 'build') {
+      const result = this.threeScene.getClickedFace(event);
+      if (result) {
+        const color = this.game.isMultiColor() ? this.game.selectedColor() : undefined;
+        this.game.addCube({ x: result.position[0], y: result.position[1], z: result.position[2] }, color);
+        this.threeScene.addCubeToScene(result.position, color);
+      }
+    } else if (mode === 'remove') {
+      const pos = this.threeScene.getClickedCube(event);
+      if (pos && !(pos[0] === 0 && pos[1] === 0 && pos[2] === 0)) {
+        this.game.removeCube({ x: pos[0], y: pos[1], z: pos[2] });
+        this.threeScene.removeCubeFromScene(pos);
+      }
     }
   }
 
-  onAbort(): void {
-    this.clearAllTimers();
-    this.cleanupThreeScene();
-    this.game.abortSession();
+  onPointerMove(event: PointerEvent): void {
+    const mode = this.game.interactionMode();
+    if (mode === 'build') {
+      const r = this.threeScene.getClickedFace(event);
+      this.threeScene.setHoverPreview(r?.position ?? null, this.game.isMultiColor() ? this.game.selectedColor() : undefined);
+    } else if (mode === 'remove') {
+      const p = this.threeScene.getClickedCube(event);
+      this.threeScene.setHoverHighlight(p);
+    }
   }
 
-  getRowIndices(proj: Projection): number[] {
-    return Array.from({ length: proj.height }, (_, i) => i);
-  }
+  onGiveUp(): void { this.game.giveUp(); }
+  onAbort(): void { this.cleanupAll(); this.game.abortSession(); }
+  onOpenInfo(): void { this.gameInfo.open('voxel', 'Voxel', 'assets/icons/voxel-icon.png'); }
+  onNextRound(): void { this.game.nextRound(); }
+  onEnd(): void { this.cleanupAll(); this.game.endSession(); }
 
-  getColIndices(proj: Projection): number[] {
-    return Array.from({ length: proj.width }, (_, i) => i);
-  }
+  // ── Phase init ──
 
-  getCellColor(cell: ProjectionCell): string {
-    if (cell === null) return 'transparent';
-    if (cell === 'filled') return '#6366f1';
-    return cell; // VoxelColor hex string
-  }
+  private initStudyPhase(): void {
+    this.studyStartTime = Date.now();
+    const trial = this.game.currentTrial();
+    const canvas = this.studyCanvasRef?.nativeElement;
+    if (!trial || !canvas) return;
 
-  // ── Memorizing stage ──
-
-  private initMemorizing(): void {
-    this.feedbackState.set(null);
-    this.selectedIndex.set(-1);
-    this.feedbackActive = false;
-    this.showFeedback3D.set(false);
-    this.memStartTime = Date.now();
-
-    const trial = this.trial();
-    if (!trial) return;
-
-    const canvas = this.threeCanvasRef?.nativeElement;
-    if (!canvas) return;
-
-    const colorMode = this.game.config().multiColorMode;
     this.threeScene.dispose();
-    this.threeScene.init(canvas, trial.shape, colorMode);
+    this.threeScene.init(canvas, trial.shape, this.game.isMultiColor());
     this.threeScene.startAnimationLoop();
     this.threeInitialized = true;
 
-    // Start memorization timer if finite
-    const memTimeSec = this.game.difficultyParams().memorizationTimeSec;
-    if (memTimeSec !== null) {
-      this.memTimerDisplay.set(memTimeSec);
-      this.memTimerPercent.set(100);
-      this.startMemTimer(memTimeSec);
+    const sec = this.game.getEffectiveStudyTimeSec();
+    if (sec !== null) {
+      this.studyTimerPercent.set(100);
+      this.startStudyTimer(sec);
     }
   }
 
-  private startMemTimer(totalSec: number): void {
+  private startStudyTimer(totalSec: number): void {
     const totalMs = totalSec * 1000;
-    const startTime = Date.now();
-
-    this.memTimerIntervalId = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, 100 - (elapsed / totalMs) * 100);
-      this.memTimerPercent.set(remaining);
-      this.memTimerDisplay.set(Math.max(0, Math.ceil((totalMs - elapsed) / 1000)));
-
-      if (remaining <= 0) {
-        this.clearMemTimer();
-        this.game.endMemorization(totalMs);
-      }
+    const start = Date.now();
+    this.studyTimerIntervalId = setInterval(() => {
+      const pct = Math.max(0, 100 - ((Date.now() - start) / totalMs) * 100);
+      this.studyTimerPercent.set(pct);
+      if (pct <= 0) { this.clearStudyTimer(); this.game.endStudy(totalMs); }
     }, 50);
   }
 
-  // ── Questioning stage ──
+  private initBuildPhase(): void {
+    const canvas = this.buildCanvasRef?.nativeElement;
+    if (!canvas) return;
+    this.threeScene.dispose();
+    this.threeScene.initBuildScene(canvas, [0, 0, 0], this.game.isMultiColor());
+    this.threeScene.startAnimationLoop();
+    this.threeInitialized = true;
+  }
 
-  private initQuestioning(): void {
-    this.questionStartTime = Date.now();
-    this.responseTimerPercent.set(100);
+  private initComparisonPhase(): void {
+    const trial = this.game.currentTrial();
+    const result = this.game.lastTrialResult();
+    if (!trial || !result) return;
 
-    const responseWindowMs = this.game.difficultyParams().responseWindowMs;
-    if (responseWindowMs !== null) {
-      this.startResponseTimer(responseWindowMs);
+    // Left pane: original shape
+    const origCanvas = this.compOriginalCanvasRef?.nativeElement;
+    if (origCanvas) {
+      this.compOriginalScene.dispose();
+      this.compOriginalScene.init(origCanvas, trial.shape, this.game.isMultiColor());
+      this.compOriginalScene.startAnimationLoop();
     }
-  }
 
-  private startResponseTimer(windowMs: number): void {
-    const startTime = Date.now();
-
-    this.responseTimerIntervalId = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, 100 - (elapsed / windowMs) * 100);
-      this.responseTimerPercent.set(remaining);
-
-      if (remaining <= 0) {
-        this.onTimeout();
-      }
-    }, 50);
-  }
-
-  private onTimeout(): void {
-    if (this.feedbackActive) return;
-    this.feedbackActive = true;
-    this.clearResponseTimer();
-
-    this.game.recordTimeout();
-    this.feedbackState.set('timeout');
-    this.selectedIndex.set(-1);
-
-    this.showIncorrectFeedback();
-  }
-
-  // ── Feedback ──
-
-  private showIncorrectFeedback(): void {
-    const trial = this.trial();
-    if (!trial) { this.scheduleAdvance(); return; }
-
-    // Show 3D shape rotated to correct angle for 1500ms
-    this.showFeedback3D.set(true);
-
-    queueMicrotask(() => {
-      const canvas = this.feedbackCanvasRef?.nativeElement;
-      if (canvas) {
-        const colorMode = this.game.config().multiColorMode;
-        this.threeScene.dispose();
-        this.threeScene.init(canvas, trial.shape, colorMode);
-        this.threeScene.rotateTo(trial.askedDirection);
-        this.threeScene.startAnimationLoop();
-        this.threeInitialized = true;
-      }
-
-      this.feedback3DTimeoutId = setTimeout(() => {
-        this.cleanupThreeScene();
-        this.showFeedback3D.set(false);
-        this.scheduleAdvance();
-      }, 1500);
-    });
-  }
-
-  private scheduleAdvance(): void {
-    const config = this.game.config();
-    const delay = SPEED_MODE_DELAYS[config.speedMode];
-
-    this.advanceTimeoutId = setTimeout(() => {
-      this.game.advanceTrialOrEnd();
-    }, delay);
-  }
-
-  // ── Cleanup ──
-
-  private cleanupThreeScene(): void {
-    if (this.threeInitialized) {
-      this.threeScene.stopAnimationLoop();
+    // Right pane: player build as a VoxelShape
+    const buildCanvas = this.compBuildCanvasRef?.nativeElement;
+    if (buildCanvas) {
+      const buildShape = this.buildToVoxelShape(result.playerBuild);
       this.threeScene.dispose();
-      this.threeInitialized = false;
+      this.threeScene.init(buildCanvas, buildShape, this.game.isMultiColor());
+      this.threeScene.startAnimationLoop();
+      this.threeInitialized = true;
     }
   }
 
-  private clearMemTimer(): void {
-    if (this.memTimerIntervalId !== null) {
-      clearInterval(this.memTimerIntervalId);
-      this.memTimerIntervalId = null;
+  private buildToVoxelShape(build: import('../../models/game.models').VoxelPosition[]): import('../../models/game.models').VoxelShape {
+    let minX = Infinity, minY = Infinity, minZ = Infinity;
+    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    for (const v of build) {
+      minX = Math.min(minX, v.x); minY = Math.min(minY, v.y); minZ = Math.min(minZ, v.z);
+      maxX = Math.max(maxX, v.x); maxY = Math.max(maxY, v.y); maxZ = Math.max(maxZ, v.z);
     }
+    return {
+      voxels: build.map(v => ({ position: [v.x, v.y, v.z] as [number,number,number], color: v.color })),
+      boundingBox: {
+        min: [build.length ? minX : 0, build.length ? minY : 0, build.length ? minZ : 0],
+        max: [build.length ? maxX : 0, build.length ? maxY : 0, build.length ? maxZ : 0],
+      },
+    };
   }
 
-  private clearResponseTimer(): void {
-    if (this.responseTimerIntervalId !== null) {
-      clearInterval(this.responseTimerIntervalId);
-      this.responseTimerIntervalId = null;
-    }
+  private cleanupAll(): void {
+    if (this.threeInitialized) { this.threeScene.stopAnimationLoop(); this.threeScene.dispose(); this.threeInitialized = false; }
+    this.compOriginalScene.stopAnimationLoop();
+    this.compOriginalScene.dispose();
   }
 
-  private clearAllTimers(): void {
-    this.clearMemTimer();
-    this.clearResponseTimer();
-    if (this.feedbackTimeoutId !== null) {
-      clearTimeout(this.feedbackTimeoutId);
-      this.feedbackTimeoutId = null;
-    }
-    if (this.advanceTimeoutId !== null) {
-      clearTimeout(this.advanceTimeoutId);
-      this.advanceTimeoutId = null;
-    }
-    if (this.feedback3DTimeoutId !== null) {
-      clearTimeout(this.feedback3DTimeoutId);
-      this.feedback3DTimeoutId = null;
-    }
+  private clearStudyTimer(): void {
+    if (this.studyTimerIntervalId !== null) { clearInterval(this.studyTimerIntervalId); this.studyTimerIntervalId = null; }
   }
 }

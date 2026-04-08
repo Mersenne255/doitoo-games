@@ -2,7 +2,6 @@ import { Component, ChangeDetectionStrategy, HostListener, inject, OnInit, OnDes
 import { GameService } from './services/game.service';
 import { StorageService } from './services/storage.service';
 import { ConfigPanelComponent } from './components/config-panel/config-panel.component';
-import { CountdownComponent } from '../../shared/components/countdown/countdown.component';
 import { GameBoardComponent } from './components/game-board/game-board.component';
 import { SummaryComponent } from './components/summary/summary.component';
 import { NavService } from '../../shared/services/nav.service';
@@ -10,28 +9,20 @@ import { NavService } from '../../shared/services/nav.service';
 @Component({
   selector: 'app-voxel-game',
   standalone: true,
-  imports: [ConfigPanelComponent, CountdownComponent, GameBoardComponent, SummaryComponent],
+  imports: [ConfigPanelComponent, GameBoardComponent, SummaryComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (game.stage() === 'idle') {
       <app-config-panel />
     }
-    @if (game.stage() === 'countdown') {
-      <app-countdown [stepTimings]="[350, 700, 1050, 1400]" (done)="game.onCountdownDone()" />
-    }
-    @if (game.stage() === 'memorizing' || game.stage() === 'questioning') {
+    @if (game.stage() === 'studying' || game.stage() === 'building' || game.stage() === 'comparison') {
       <app-game-board />
     }
     @if (game.stage() === 'summary') {
       <app-summary />
     }
   `,
-  styles: [`
-    :host {
-      display: block;
-      height: 100%;
-    }
-  `],
+  styles: [`:host { display: block; height: 100%; }`],
 })
 export class VoxelGameComponent implements OnInit, OnDestroy {
   readonly game = inject(GameService);
@@ -41,17 +32,12 @@ export class VoxelGameComponent implements OnInit, OnDestroy {
   constructor() {
     effect(() => {
       const stage = this.game.stage();
-      if (stage === 'idle') {
-        this.nav.show();
-      } else {
-        this.nav.hide();
-      }
+      stage === 'idle' ? this.nav.show() : this.nav.hide();
     });
   }
 
   ngOnInit(): void {
-    const saved = this.storage.loadConfig();
-    this.game.updateConfig(saved);
+    this.game.updateConfig(this.storage.loadConfig());
   }
 
   ngOnDestroy(): void {
@@ -62,7 +48,7 @@ export class VoxelGameComponent implements OnInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
     const stage = this.game.stage();
-    if ((stage === 'memorizing' || stage === 'questioning') && event.key === 'Escape') {
+    if (['studying', 'building', 'comparison'].includes(stage) && event.key === 'Escape') {
       this.game.abortSession();
     } else if (stage === 'idle' && event.key === 'Enter') {
       this.game.startSession();

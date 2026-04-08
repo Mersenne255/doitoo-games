@@ -1,38 +1,37 @@
 // ── game.models.ts ──
 
-// ── Stage Type (Voxel-specific, extends shared pattern) ──
-export type VoxelStage = 'idle' | 'countdown' | 'memorizing' | 'questioning' | 'summary';
+// ── Stage Type (6-stage lifecycle) ──
+export type VoxelStage = 'idle' | 'countdown' | 'studying' | 'building' | 'comparison' | 'summary';
 
-// ── View Directions ──
-export const VIEW_DIRECTIONS = ['front', 'back', 'left', 'right', 'top', 'bottom'] as const;
-export type ViewDirection = typeof VIEW_DIRECTIONS[number];
+// ── Interaction Mode ──
+export type InteractionMode = 'build' | 'remove';
 
-// ── Color Palette ──
+// ── Color Palette (9 vivid colors from visual config) ──
 export const VOXEL_COLORS = [
-  '#6366f1', // indigo
-  '#06b6d4', // cyan
-  '#ec4899', // pink
-  '#22c55e', // green
-  '#f59e0b', // amber
-  '#a855f7', // purple
-  '#ef4444', // red
-  '#3b82f6', // blue
+  '#ff0000', // red
+  '#ff6a00', // orange
+  '#fff200', // yellow
+  '#11ff00', // green
+  '#4acce1', // cyan
+  '#0800ff', // blue
+  '#6f00d8', // purple
+  '#ff89c2', // pink
+  '#f1f5f9', // white
 ] as const;
 export type VoxelColor = typeof VOXEL_COLORS[number];
 
-// ── Speed Mode ──
-export type SpeedMode = 'relaxed' | 'standard' | 'intense';
+// ── Voxel Position (used for player build and shape comparison) ──
+export interface VoxelPosition {
+  x: number;
+  y: number;
+  z: number;
+  color: VoxelColor;
+}
 
-export const SPEED_MODE_DELAYS: Record<SpeedMode, number> = {
-  relaxed: 1000,
-  standard: 500,
-  intense: 250,
-};
-
-// ── Voxel and Shape ──
+// ── Voxel and Shape (compatible with shape-generator) ──
 export interface Voxel {
-  position: [number, number, number]; // [x, y, z] integer coordinates
-  color: VoxelColor;                  // assigned color (used in multi-color mode)
+  position: [number, number, number];
+  color: VoxelColor;
 }
 
 export interface VoxelShape {
@@ -43,85 +42,71 @@ export interface VoxelShape {
   };
 }
 
-// ── Projection ──
-export type ProjectionCell = VoxelColor | 'filled' | null; // color (multi-color), 'filled' (standard), null (empty)
-
-export interface Projection {
-  grid: ProjectionCell[][];  // grid[row][col]
-  width: number;
-  height: number;
+// ── Shape Diff ──
+export interface ShapeDiff {
+  correct: VoxelPosition[];
+  missing: VoxelPosition[];
+  extra: VoxelPosition[];
 }
 
 // ── Trial ──
 export interface Trial {
   shape: VoxelShape;
-  askedDirection: ViewDirection;
-  correctProjection: Projection;
-  options: Projection[];           // 4 options: 1 correct + 3 distractors
-  correctIndex: number;            // index of correct option in options array
-  seed: number;                    // generation seed for this trial
+  studyTimeSec: number | null;
+  seed: number;
 }
 
 // ── Trial Result ──
 export interface TrialResult {
   trial: Trial;
-  selectedIndex: number | null;    // null if timed out
-  correct: boolean;
-  responseTimeMs: number | null;   // null if timed out
-  memorizationTimeMs: number;      // time spent in memorization phase
-}
-
-// ── Difficulty Params ──
-export interface DifficultyParams {
-  complexityRange: { min: number; max: number }; // voxel count range
-  memorizationTimeSec: number | null;             // null = unlimited
-  enabledDirections: ViewDirection[];
-  nearMissRatio: number;                          // 0.0–1.0, ratio of near-miss distractors
-  responseWindowMs: number | null;                // null = unlimited
-  symmetric: boolean;                             // whether shapes must be symmetric
+  playerBuild: VoxelPosition[];
+  shapeDiff: ShapeDiff;
+  accuracyScore: number;
+  precisionScore: number;
+  combinedScore: number;
+  buildTimeMs: number;
+  studyTimeMs: number;
+  perfect: boolean;
 }
 
 // ── Configuration ──
 export interface VoxelConfig {
-  difficulty: number;          // 1–100
-  trialCount: number;          // 5–20, step 5
-  speedMode: SpeedMode;
-  multiColorMode: boolean;
+  cubeCount: number;       // 3–30
+  colorCount: number;      // 1–9 (number of distinct colors used)
 }
 
 export const DEFAULT_CONFIG: VoxelConfig = {
-  difficulty: 1,
-  trialCount: 10,
-  speedMode: 'standard',
-  multiColorMode: false,
+  cubeCount: 4,
+  colorCount: 1,
 };
 
 // ── Scoring State ──
 export interface ScoringState {
   currentStreak: number;
   longestStreak: number;
-  correctCount: number;
-  incorrectCount: number;
-  timedOutCount: number;
-  totalResponseTimeMs: number;
-  respondedCount: number;
-  totalMemorizationTimeMs: number;
+  totalCorrectCubes: number;
+  totalMissingCubes: number;
+  totalExtraCubes: number;
+  totalTargetCubes: number;
+  totalPlacedCubes: number;
+  totalAccuracy: number;
+  totalPrecision: number;
+  totalCombined: number;
+  totalBuildTimeMs: number;
+  totalStudyTimeMs: number;
   trialCount: number;
-  totalScore: number;
 }
 
 // ── Round Result ──
 export interface RoundResult {
-  accuracy: number;                // 0–100
-  correctCount: number;
-  incorrectCount: number;
-  timedOutCount: number;
-  averageResponseTimeMs: number;
-  averageMemorizationTimeSec: number;
+  averageAccuracy: number;
+  averagePrecision: number;
+  averageCombined: number;
+  totalCorrectCubes: number;
+  totalMissingCubes: number;
+  totalExtraCubes: number;
   longestStreak: number;
-  totalScore: number;
-  difficulty: number;
-  trialCount: number;
-  speedMode: SpeedMode;
-  multiColorMode: boolean;
+  averageBuildTimeSec: number;
+  cubeCount: number;
+  colorCount: number;
 }

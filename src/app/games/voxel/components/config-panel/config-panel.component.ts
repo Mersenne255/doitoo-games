@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
-import { SpeedMode } from '../../models/game.models';
+import { VOXEL_COLORS } from '../../models/game.models';
 
 @Component({
   selector: 'app-config-panel',
@@ -11,44 +11,32 @@ import { SpeedMode } from '../../models/game.models';
     <div class="config-container">
       <div class="config-card">
         <div class="config-row">
-          <label class="section-label">Difficulty</label>
+          <label class="section-label">Cube Count</label>
           <div class="slider-row">
-            <input type="range" min="1" max="100" step="1"
-              [value]="game.config().difficulty"
-              (input)="onDifficulty($event)"
-              aria-label="Difficulty" />
-            <span class="range-value">{{ game.config().difficulty }}</span>
-          </div>
-        </div>
-
-        <div class="config-row">
-          <label class="section-label">Trials</label>
-          <div class="slider-row">
-            <input type="range" min="5" max="20" step="5"
-              [value]="game.config().trialCount"
-              (input)="onTrialCount($event)"
-              aria-label="Trials" />
-            <span class="range-value">{{ game.config().trialCount }}</span>
-          </div>
-        </div>
-
-        <div class="config-row">
-          <label class="section-label">Speed</label>
-          <div class="button-group">
-            @for (s of speeds; track s) {
-              <button [class.active]="game.config().speedMode === s"
-                (click)="onSpeed(s)">{{ s }}</button>
-            }
+            <input type="range" min="3" max="50" step="1"
+              [value]="game.config().cubeCount"
+              (input)="onCubeCount($event)"
+              aria-label="Cube count" />
+            <span class="range-value">{{ game.config().cubeCount }}</span>
           </div>
         </div>
 
         <div class="config-row">
           <label class="section-label">Colors</label>
-          <button class="toggle-btn" [class.active]="game.config().multiColorMode"
-            (click)="onToggleMultiColor()"
-            aria-label="Multi-color mode">
-            {{ game.config().multiColorMode ? 'On' : 'Off' }}
-          </button>
+          <div class="slider-row">
+            <input type="range" min="1" max="9" step="1"
+              [value]="game.config().colorCount"
+              (input)="onColorCount($event)"
+              aria-label="Color count" />
+            <span class="range-value">{{ game.config().colorCount }}</span>
+          </div>
+          <div class="color-preview">
+            @if (game.config().colorCount > 1) {
+              @for (c of activeColors(); track c) {
+                <span class="color-dot" [style.background-color]="c"></span>
+              }
+            }
+          </div>
         </div>
       </div>
 
@@ -121,57 +109,18 @@ import { SpeedMode } from '../../models/game.models';
       color: #a5b4fc;
     }
 
-    .button-group {
+    .color-preview {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.3rem;
       justify-content: center;
-
-      button {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.06);
-        color: #94a3b8;
-        padding: 0.4rem 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 0.5rem;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.8rem;
-        text-transform: capitalize;
-        transition: all 0.15s ease;
-        outline: none;
-
-        &:hover { background: rgba(255, 255, 255, 0.1); }
-
-        &.active {
-          background: linear-gradient(135deg, #6366f1, #3b82f6);
-          color: white;
-          border-color: transparent;
-          box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
-        }
-      }
+      padding: 0.25rem 0;
     }
 
-    .toggle-btn {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      color: #94a3b8;
-      padding: 0.4rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.8rem;
-      transition: all 0.15s ease;
-      outline: none;
-
-      &:hover { background: rgba(255, 255, 255, 0.1); }
-
-      &.active {
-        background: linear-gradient(135deg, #6366f1, #3b82f6);
-        color: white;
-        border-color: transparent;
-        box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
-      }
+    .color-dot {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .start-btn {
@@ -193,27 +142,18 @@ import { SpeedMode } from '../../models/game.models';
 export class ConfigPanelComponent {
   readonly game = inject(GameService);
   private readonly storage = inject(StorageService);
-  readonly speeds: SpeedMode[] = ['relaxed', 'standard', 'intense'];
 
-  onDifficulty(event: Event): void {
+  readonly activeColors = () => VOXEL_COLORS.slice(0, this.game.config().colorCount);
+
+  onCubeCount(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
-    this.game.updateConfig({ difficulty: value });
+    this.game.updateConfig({ cubeCount: value });
     this.storage.saveConfig(this.game.config());
   }
 
-  onTrialCount(event: Event): void {
+  onColorCount(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
-    this.game.updateConfig({ trialCount: value });
-    this.storage.saveConfig(this.game.config());
-  }
-
-  onSpeed(speed: SpeedMode): void {
-    this.game.updateConfig({ speedMode: speed });
-    this.storage.saveConfig(this.game.config());
-  }
-
-  onToggleMultiColor(): void {
-    this.game.updateConfig({ multiColorMode: !this.game.config().multiColorMode });
+    this.game.updateConfig({ colorCount: value });
     this.storage.saveConfig(this.game.config());
   }
 

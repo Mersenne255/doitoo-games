@@ -12,38 +12,46 @@ import { GameService } from '../../services/game.service';
       <h2>Round Complete</h2>
 
       @if (result(); as r) {
-        <div class="accuracy">{{ r.accuracy | number:'1.0-0' }}%</div>
-        <div class="accuracy-label">Accuracy</div>
+        <div class="hero-score">{{ r.averageCombined | number:'1.0-0' }}%</div>
+        <div class="hero-label">Combined Score</div>
 
-        <div class="slots">
-          <div class="slot-result">
-            <span class="slot-title correct">✓ {{ r.correctCount }}</span>
-            <span class="slot-label">Correct</span>
+        <div class="score-pair">
+          <div class="score-item">
+            <span class="score-value">{{ r.averageAccuracy | number:'1.0-0' }}%</span>
+            <span class="score-label">Accuracy</span>
           </div>
-          <div class="slot-result">
-            <span class="slot-title incorrect">✗ {{ r.incorrectCount }}</span>
-            <span class="slot-label">Incorrect</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title">{{ r.averageResponseTimeMs | number:'1.0-0' }}ms</span>
-            <span class="slot-label">Avg Response</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title streak">{{ r.longestStreak }}</span>
-            <span class="slot-label">Longest Streak</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title study">{{ r.averageMemorizationTimeSec | number:'1.1-1' }}s</span>
-            <span class="slot-label">Avg. Study Time</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title">{{ r.difficulty }}</span>
-            <span class="slot-label">Difficulty</span>
+          <div class="score-item">
+            <span class="score-value">{{ r.averagePrecision | number:'1.0-0' }}%</span>
+            <span class="score-label">Precision</span>
           </div>
         </div>
 
-        <div class="total">{{ r.totalScore | number:'1.0-0' }}</div>
-        <div class="total-label">Total Score</div>
+        <div class="slots">
+          <div class="slot-result">
+            <span class="slot-title correct">{{ r.totalCorrectCubes }}</span>
+            <span class="slot-label">Correct</span>
+          </div>
+          <div class="slot-result">
+            <span class="slot-title missing">{{ r.totalMissingCubes }}</span>
+            <span class="slot-label">Missing</span>
+          </div>
+          <div class="slot-result">
+            <span class="slot-title extra">{{ r.totalExtraCubes }}</span>
+            <span class="slot-label">Extra</span>
+          </div>
+          <div class="slot-result">
+            <span class="slot-title streak">{{ r.longestStreak }}</span>
+            <span class="slot-label">Streak</span>
+          </div>
+          <div class="slot-result">
+            <span class="slot-title build">{{ r.averageBuildTimeSec | number:'1.1-1' }}s</span>
+            <span class="slot-label">Avg Build</span>
+          </div>
+          <div class="slot-result">
+            <span class="slot-title">{{ r.cubeCount }}</span>
+            <span class="slot-label">Cubes</span>
+          </div>
+        </div>
       }
 
       <div class="actions">
@@ -80,19 +88,43 @@ import { GameService } from '../../services/game.service';
       color: #a5b4fc;
     }
 
-    .accuracy {
+    .hero-score {
       font-size: 2.5rem;
       font-weight: 900;
       color: #e2e8f0;
       line-height: 1;
     }
 
-    .accuracy-label {
+    .hero-label {
       font-size: 0.6rem;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       margin-top: -1rem;
+    }
+
+    .score-pair {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .score-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .score-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #e2e8f0;
+    }
+
+    .score-label {
+      font-size: 0.6rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .slots {
@@ -119,30 +151,16 @@ import { GameService } from '../../services/game.service';
     }
 
     .slot-title.correct { color: #86efac; }
-    .slot-title.incorrect { color: #fca5a5; }
+    .slot-title.missing { color: #fca5a5; }
+    .slot-title.extra { color: #fbbf24; }
     .slot-title.streak { color: #fde68a; }
-    .slot-title.study { color: #a5b4fc; }
+    .slot-title.build { color: #a5b4fc; }
 
     .slot-label {
       font-size: 0.6rem;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-    }
-
-    .total {
-      font-size: 2rem;
-      font-weight: 900;
-      color: #e2e8f0;
-      line-height: 1;
-    }
-
-    .total-label {
-      font-size: 0.6rem;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-top: -1rem;
     }
 
     .actions {

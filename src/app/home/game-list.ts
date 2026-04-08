@@ -15,7 +15,7 @@ export const GAME_LIST: GameEntry[] = [
   // { route: '/synapsort', name: 'SynapSort', label: 'Cognitive flexibility', description: 'The rules just changed. Again. Keep up.', icon: 'assets/icons/synapsort-icon.png' },
   // { route: '/focusforge', name: 'FocusForge', label: 'Selective attention', description: 'It\'s right there. You just can\'t see it. Yet.', icon: 'assets/icons/focusforge-icon.png' },
   // { route: '/ciphergrid', name: 'CipherGrid', label: 'TODO', description: 'TODO', icon: 'assets/icons/ciphergrid-icon.png' },
-  { route: '/voxel', name: 'Voxel', label: 'TODO', description: 'TODO', icon: 'assets/icons/ciphergrid-icon.png' },
+  { route: '/voxel', name: 'Voxel', label: 'TODO', description: 'TODO', icon: 'assets/icons/voxel-icon.png' },
 
 ];
 
