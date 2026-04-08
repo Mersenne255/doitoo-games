@@ -48,6 +48,13 @@ export class GameService {
     () => `${this.currentStepIndex() + 1} / ${this.config().stepCount}`,
   );
 
+  /** Number of warmup steps remaining before matching is possible. 0 = ready. */
+  readonly warmupStepsLeft = computed(() => {
+    const idx = this.currentStepIndex();
+    const n = this.config().nLevel;
+    return Math.max(0, n - idx);
+  });
+
   // ── Private state ──
   private sequence: GeneratedSequence | null = null;
   private stepClassifications = new Map<number, Map<ModalityType, ResponseClass>>();
@@ -120,6 +127,7 @@ export class GameService {
   /** Record a match button press for the given modality (idempotent per step). */
   pressMatch(modality: ModalityType): void {
     if (this.stage() !== 'playing') return;
+    if (this.warmupStepsLeft() > 0) return;
 
     const current = this.pressedThisStep();
     if (current.has(modality)) return;

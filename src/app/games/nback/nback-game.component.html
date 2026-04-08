@@ -17,12 +17,18 @@
   <!-- Playing state: match buttons + progress + abort -->
   @if (game.stage() === 'playing') {
     <div class="progress">{{ game.progress() }}</div>
-    <app-match-buttons
-      [modalities]="game.config().activeModalities"
-      [disabled]="false"
-      [pressedThisStep]="game.pressedThisStep()"
-      [feedback]="game.stepFeedback()"
-      (matchPress)="game.pressMatch($event)" />
+    <div class="match-buttons-wrapper">
+      <app-match-buttons
+        [modalities]="game.config().activeModalities"
+        [disabled]="game.warmupStepsLeft() > 0"
+        [pressedThisStep]="game.pressedThisStep()"
+        [feedback]="game.stepFeedback()"
+        [class.warmup]="game.warmupStepsLeft() > 0"
+        (matchPress)="game.pressMatch($event)" />
+      @if (game.warmupStepsLeft() > 0) {
+        <div class="warmup-hint">Matching starts in {{ game.warmupStepsLeft() }} {{ game.warmupStepsLeft() === 1 ? 'step' : 'steps' }}</div>
+      }
+    </div>
     <button class="abort-btn" (click)="game.abortSession()">Abort</button>
   }
 
