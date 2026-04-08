@@ -5,16 +5,15 @@
  */
 
 export const SYMBOLS = [
-  { name: 'triangle',  display: '△' },
-  { name: 'star',      display: '★' },
-  { name: 'diamond',   display: '◇' },
-  { name: 'circle',    display: '●' },
-  { name: 'hexagon',   display: '⬡' },
+  { name: 'triangle',  display: '▲' },
+  { name: 'star',      display: '✸' },
+  { name: 'diamond',   display: '◆' },
+  { name: 'hexagon',   display: '☯' },
   { name: 'cross',     display: '✚' },
-  { name: 'crescent',  display: '☽' },
-  { name: 'arrow',     display: '↗' },
+  { name: 'crescent',  display: '☻' },
+  { name: 'arrow',     display: '♞' },
   { name: 'heart',     display: '♥' },
-  { name: 'bolt',      display: '⚡' },
+  { name: 'bolt',      display: '☮' },
   { name: 'square',    display: '■' },
   { name: 'spade',     display: '♠' },
 ] as const;
@@ -23,13 +22,13 @@ export type VisualSymbolName = typeof SYMBOLS[number]['name'];
 
 export const COLORS = [
   { name: 'red',    hex: '#ff0000' },
-  { name: 'blue',   hex: '#0800ff' },
-  { name: 'cyan',   hex: '#4acce1' },
-  { name: 'purple', hex: '#a855f7' },
-  { name: 'pink',   hex: '#ec4899' },
-  { name: 'green',  hex: '#11ff00' },
+  { name: 'orange', hex: '#ff6a00' },
   { name: 'yellow', hex: '#fff200' },
-  { name: 'orange', hex: '#f97316' },
+  { name: 'green',  hex: '#11ff00' },
+  { name: 'cyan',   hex: '#4acce1' },
+  { name: 'blue',   hex: '#0800ff' },
+  { name: 'purple', hex: '#6f00d8' },
+  { name: 'pink',   hex: '#ff89c2' },
   { name: 'white',  hex: '#f1f5f9' },
 ] as const;
 

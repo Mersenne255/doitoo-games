@@ -12,20 +12,11 @@ import { MAX_SYMBOL_COUNT } from '../../models/game.models';
       <div class="config-card">
         <label class="section-label">Symbols</label>
         <div class="slider-row">
-          <input type="range" min="2" [max]="maxSymbols" step="1"
+          <input type="range" min="3" [max]="maxSymbols" step="1"
             [value]="game.config().symbolCount"
             (input)="onSymbolCount($event)"
             aria-label="Symbol count" />
           <span class="range-value">{{ game.config().symbolCount }}</span>
-        </div>
-
-        <label class="section-label">Announcement Speed</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="10" step="1"
-            [value]="game.config().announcementDurationS"
-            (input)="onAnnouncementDuration($event)"
-            aria-label="Announcement speed in seconds" />
-          <span class="range-value">{{ game.config().announcementDurationS }}s</span>
         </div>
       </div>
 
@@ -105,12 +96,6 @@ export class ConfigPanelComponent {
   onSymbolCount(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
     this.game.updateConfig({ symbolCount: value });
-    this.storage.saveConfig(this.game.config());
-  }
-
-  onAnnouncementDuration(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
-    this.game.updateConfig({ announcementDurationS: value });
     this.storage.saveConfig(this.game.config());
   }
 }

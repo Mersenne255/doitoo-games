@@ -27,7 +27,8 @@ export class GameService {
   readonly roundStructure: WritableSignal<RoundStructure | null> = signal<RoundStructure | null>(null);
   readonly currentTrialIndex: WritableSignal<number> = signal<number>(0);
   readonly currentBindingMap: WritableSignal<BindingMap> = signal<BindingMap>({} as BindingMap);
-  readonly pendingAnnouncement: WritableSignal<BindingChangeEvent | null> = signal<BindingChangeEvent | null>(null);
+  /** Binding change that just happened — shown inline while the next trial is active */
+  readonly lastBindingChange: WritableSignal<BindingChangeEvent | null> = signal<BindingChangeEvent | null>(null);
   readonly scoringState: WritableSignal<ScoringState> = signal<ScoringState>(initialScoringState());
   readonly roundResult: WritableSignal<RoundResult | null> = signal<RoundResult | null>(null);
 
@@ -40,8 +41,7 @@ export class GameService {
   updateConfig(partial: Partial<PhantomLinkConfig>): void {
     const current = this.config();
     this.config.set({
-      symbolCount: clamp(partial.symbolCount ?? current.symbolCount, 2, MAX_SYMBOL_COUNT),
-      announcementDurationS: clamp(partial.announcementDurationS ?? current.announcementDurationS, 1, 10),
+      symbolCount: clamp(partial.symbolCount ?? current.symbolCount, 3, MAX_SYMBOL_COUNT),
     });
   }
 
@@ -52,6 +52,8 @@ export class GameService {
     this.scoringState.set(initialScoringState());
     this.currentTrialIndex.set(0);
     this.currentBindingMap.set({ ...round.initialBindingMap } as BindingMap);
+    this.lastBindingChange.set(null);
+    this.roundResult.set(null);
     this.stage.set('playing');
     this.playPhase.set('learning');
   }
@@ -93,24 +95,26 @@ export class GameService {
       return;
     }
 
+    // Apply binding change immediately and expose it for inline display
     const changeEvent = rs.bindingChanges.find(e => e.beforeTrialIndex === nextIndex);
     if (changeEvent) {
-      this.pendingAnnouncement.set(changeEvent);
+      this.applyBindingChange(changeEvent);
+      this.lastBindingChange.set(changeEvent);
+    } else {
+      this.lastBindingChange.set(null);
     }
 
     this.currentTrialIndex.set(nextIndex);
   }
 
-  onAnnouncementDone(): void {
-    const pending = this.pendingAnnouncement();
-    if (pending) {
-      this.applyBindingChange(pending);
-      this.pendingAnnouncement.set(null);
-    }
+  abortSession(): void {
+    this.lastBindingChange.set(null);
+    this.stage.set('idle');
   }
-
-  abortSession(): void { this.stage.set('idle'); }
-  goToIdle(): void { this.stage.set('idle'); }
+  goToIdle(): void {
+    this.lastBindingChange.set(null);
+    this.stage.set('idle');
+  }
 
   private applyBindingChange(event: BindingChangeEvent): void {
     const map = { ...this.currentBindingMap() };

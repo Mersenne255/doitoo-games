@@ -193,7 +193,6 @@ describe('processTrialResult', () => {
 describe('calculateRoundResult', () => {
   const config: PhantomLinkConfig = {
     symbolCount: 3,
-    announcementDurationS: 5,
   };
 
   it('computes phantom resistance rate correctly', () => {

@@ -12,8 +12,10 @@ import {
   ColorName,
   SymbolName,
   SYMBOL_NAMES,
+  COLOR_NAMES,
   COLOR_HEX,
   SYMBOL_DISPLAY,
+  BindingChange,
 } from '../../models/game.models';
 
 type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
@@ -31,41 +33,22 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
         </div>
         <div class="learning-content">
           <div class="learning-label">Memorize the bindings</div>
-        <div class="learning-grid">
-          @for (entry of bindingEntries(); track entry.symbol) {
-            <div class="binding-card">
-              <span class="binding-symbol">{{ symbolChar(entry.symbol) }}</span>
-              <span class="binding-swatch" [style.background-color]="getHex(entry.color)"></span>
-            </div>
-          }
-        </div>
-        <button class="ready-btn" (click)="onReady()">Ready</button>
-        </div>
-      </div>
-    }
-
-    <!-- BINDING CHANGE ANNOUNCEMENT -->
-    @if (game.playPhase() === 'trial' && game.pendingAnnouncement()) {
-      <div class="board announcement-board">
-        <div class="announcement-overlay">
-          <div class="announcement-timer-track">
-            <div class="announcement-timer-fill" [style.width.%]="announcementPercent()"></div>
+          <div class="learning-grid">
+            @for (entry of bindingEntries(); track entry.symbol) {
+              <div class="binding-card">
+                <span class="binding-symbol">{{ symbolChar(entry.symbol) }}</span>
+                <span class="binding-swatch" [style.background-color]="getHex(entry.color)"></span>
+              </div>
+            }
           </div>
-          @for (change of game.pendingAnnouncement()!.changes; track change.symbol) {
-            <div class="announcement-column">
-              <span class="announcement-label">New color</span>
-              <span class="announcement-symbol">{{ symbolChar(change.symbol) }}</span>
-              <span class="swatch-circle" [style.background-color]="getHex(change.newColor)"></span>
-            </div>
-          }
+          <button class="ready-btn" (click)="onReady()">Ready</button>
         </div>
       </div>
     }
 
     <!-- TRIAL PHASE -->
-    @if (game.playPhase() === 'trial' && !game.pendingAnnouncement()) {
+    @if (game.playPhase() === 'trial') {
       <div class="board trial-board">
-        <!-- Top bar: correct count left, abort right -->
         <div class="top-bar">
           <span class="progress correct-counter">✓ {{ game.scoringState().correctCount }}</span>
           <button class="abort-btn" (click)="onAbort()" aria-label="Abort">✕</button>
@@ -73,6 +56,16 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
 
         <!-- Stimulus area -->
         <div class="stimulus-area">
+          <!-- Inline binding change: previous symbol floats up and shrinks -->
+          @if (inlineChange(); as ch) {
+            <div class="inline-change" [class.animate-up]="inlineChangeAnimating()">
+              <span class="inline-change-symbol">{{ symbolChar(ch.symbol) }}</span>
+              <span class="inline-change-label">New color</span>
+              <span class="inline-change-swatch" [style.background-color]="getHex(ch.newColor)"></span>
+            </div>
+          }
+
+          <!-- Current trial symbol -->
           @if (game.currentTrial(); as t) {
             <div class="stimulus-symbol"
                  [class.shine-correct]="feedbackState() === 'correct'"
@@ -88,7 +81,7 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
         <!-- Option buttons -->
         <div class="options">
           @if (game.currentTrial(); as t) {
-            @for (option of t.options; track option) {
+            @for (option of sortedOptions(t.options); track option) {
               <button class="option-btn"
                       [style.background-color]="getHex(option)"
                       [class.correct-highlight]="feedbackState() && option === t.correctColor"
@@ -121,9 +114,7 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
     }
 
     /* ── Learning Phase ── */
-    .learning-board {
-      position: relative;
-    }
+    .learning-board { position: relative; }
 
     .learning-top-bar {
       display: flex;
@@ -194,78 +185,10 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
       margin-top: 0.5rem;
     }
 
-    .ready-btn:hover {
-      background: rgba(34, 197, 94, 0.35);
-    }
-
-    /* ── Announcement Overlay ── */
-    .announcement-board {
-      align-items: center;
-      justify-content: center;
-    }
-
-    .announcement-overlay {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.25rem;
-      padding: 2rem;
-      background: rgba(99, 102, 241, 0.08);
-      border: 2px solid rgba(129, 140, 248, 0.4);
-      border-radius: 1rem;
-      backdrop-filter: blur(10px);
-      min-width: 280px;
-    }
-
-    .announcement-timer-track {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .announcement-timer-fill {
-      height: 100%;
-      background: #818cf8;
-      border-radius: 2px;
-      transition: width 50ms linear;
-    }
-
-    .announcement-column {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .announcement-label {
-      color: #94a3b8;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .announcement-symbol {
-      font-size: 3rem;
-      color: #e2e8f0;
-      user-select: none;
-      line-height: 1;
-    }
-
-    .swatch-circle {
-      display: inline-block;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.15);
-    }
+    .ready-btn:hover { background: rgba(34, 197, 94, 0.35); }
 
     /* ── Trial Phase ── */
-    .trial-board {
-      gap: 0;
-    }
+    .trial-board { gap: 0; }
 
     .top-bar {
       display: flex;
@@ -279,9 +202,7 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
       font-weight: 600;
     }
 
-    .correct-counter {
-      color: #86efac;
-    }
+    .correct-counter { color: #86efac; }
 
     .abort-btn {
       width: 2rem;
@@ -312,11 +233,11 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      transition: box-shadow 0.15s ease;
+      position: relative;
     }
 
     .stimulus-symbol {
-      font-size: 4rem;
+      font-size: 7.8rem;
       color: #e2e8f0;
       user-select: none;
       line-height: 1;
@@ -358,6 +279,83 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
       100% { opacity: 1; transform: scale(1); }
     }
 
+    /* ── Inline binding change ── */
+    .inline-change {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      pointer-events: none;
+      z-index: 1;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -160%);
+      opacity: 0;
+    }
+
+    .inline-change.animate-up {
+      animation: slideUpSettle 0.4s ease-out forwards;
+    }
+
+    .inline-change-symbol {
+      font-size: 3.5rem;
+      color: #e2e8f0;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .inline-change-label {
+      color: #94a3b8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .inline-change-swatch {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    @keyframes slideUpSettle {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -100%);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -160%);
+      }
+    }
+
+    /* Landscape: move inline change to the left instead of above */
+    @media (orientation: landscape) {
+      .inline-change {
+        top: 50%;
+        left: 50%;
+        transform: translate(-250%, -50%);
+      }
+
+      .inline-change.animate-up {
+        animation: slideLeftSettle 0.4s ease-out forwards;
+      }
+    }
+
+    @keyframes slideLeftSettle {
+      0% {
+        opacity: 0;
+        transform: translate(-150%, -50%);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-250%, -50%);
+      }
+    }
+
     .options {
       display: flex;
       flex-direction: row;
@@ -368,8 +366,8 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
     }
 
     .option-btn {
-      width: 48px;
-      height: 48px;
+      width: 55px;
+      height: 55px;
       border-radius: 50%;
       border: 2px solid transparent;
       cursor: pointer;
@@ -377,14 +375,8 @@ type FeedbackState = 'correct' | 'incorrect' | 'phantom' | null;
       outline: none;
     }
 
-    .option-btn:hover:not(:disabled) {
-      transform: scale(1.08);
-    }
-
-    .option-btn:disabled {
-      cursor: default;
-      opacity: 0.7;
-    }
+    .option-btn:hover:not(:disabled) { transform: scale(1.08); }
+    .option-btn:disabled { cursor: default; opacity: 0.7; }
 
     .option-btn.correct-highlight {
       box-shadow: 0 0 16px rgba(34, 197, 94, 0.7), 0 0 32px rgba(34, 197, 94, 0.3);
@@ -397,7 +389,10 @@ export class GameBoardComponent implements OnDestroy {
   readonly game = inject(GameService);
 
   readonly feedbackState = signal<FeedbackState>(null);
-  readonly announcementPercent = signal<number>(100);
+  /** The single binding change to show inline (first change in the event) */
+  readonly inlineChange = signal<BindingChange | null>(null);
+  /** Triggers the CSS animation class */
+  readonly inlineChangeAnimating = signal<boolean>(false);
 
   readonly bindingEntries = computed(() => {
     const map = this.game.currentBindingMap();
@@ -410,26 +405,25 @@ export class GameBoardComponent implements OnDestroy {
   private trialStartTime = 0;
   private feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private advanceTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private announcementTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private announcementIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    // Watch for trial index changes to reset feedback
     effect(() => {
-      this.game.currentTrialIndex(); // track signal
+      this.game.currentTrialIndex();
       const stage = this.game.stage();
       const phase = this.game.playPhase();
-      if (stage === 'playing' && phase === 'trial' && !this.game.pendingAnnouncement()) {
+      if (stage === 'playing' && phase === 'trial') {
         this.resetForNewTrial();
       }
     });
 
-    // Watch for pending announcement to start announcement timer
+    // When a binding change happens, show it inline; when null, clear it
     effect(() => {
-      const pending = this.game.pendingAnnouncement();
-      const stage = this.game.stage();
-      if (stage === 'playing' && pending) {
-        this.startAnnouncementTimer();
+      const change = this.game.lastBindingChange();
+      if (change && change.changes.length > 0) {
+        this.showInlineChange(change.changes[0]);
+      } else {
+        this.inlineChange.set(null);
+        this.inlineChangeAnimating.set(false);
       }
     });
   }
@@ -444,6 +438,12 @@ export class GameBoardComponent implements OnDestroy {
 
   getHex(color: ColorName): string {
     return COLOR_HEX[color];
+  }
+
+  sortedOptions(options: ColorName[]): ColorName[] {
+    return [...options].sort(
+      (a, b) => COLOR_NAMES.indexOf(a) - COLOR_NAMES.indexOf(b),
+    );
   }
 
   onOptionTap(color: ColorName): void {
@@ -471,53 +471,38 @@ export class GameBoardComponent implements OnDestroy {
     this.game.onLearningDone();
   }
 
-  // ── Announcement Timer ──
+  // ── Inline change display ──
 
-  private startAnnouncementTimer(): void {
-    this.clearAnnouncementTimer();
-    const durationMs = this.game.config().announcementDurationS * 1000;
-    const startTime = Date.now();
-    this.announcementPercent.set(100);
-
-    this.announcementIntervalId = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      this.announcementPercent.set(Math.max(0, 100 - (elapsed / durationMs) * 100));
-    }, 50);
-
-    this.announcementTimeoutId = setTimeout(() => {
-      if (this.game.stage() === 'playing' && this.game.pendingAnnouncement()) {
-        this.game.onAnnouncementDone();
-      }
-    }, durationMs);
-  }
-
-  private clearAnnouncementTimer(): void {
-    if (this.announcementTimeoutId !== null) {
-      clearTimeout(this.announcementTimeoutId);
-      this.announcementTimeoutId = null;
-    }
-    if (this.announcementIntervalId !== null) {
-      clearInterval(this.announcementIntervalId);
-      this.announcementIntervalId = null;
-    }
+  private showInlineChange(change: BindingChange): void {
+    this.inlineChange.set(change);
+    this.inlineChangeAnimating.set(false);
+    // Trigger animation on next frame
+    requestAnimationFrame(() => {
+      this.inlineChangeAnimating.set(true);
+    });
   }
 
   // ── Trial management ──
 
   private resetForNewTrial(): void {
-    this.clearAllTimers();
+    if (this.feedbackTimeoutId !== null) {
+      clearTimeout(this.feedbackTimeoutId);
+      this.feedbackTimeoutId = null;
+    }
+    if (this.advanceTimeoutId !== null) {
+      clearTimeout(this.advanceTimeoutId);
+      this.advanceTimeoutId = null;
+    }
     this.feedbackState.set(null);
     this.trialStartTime = Date.now();
   }
 
   private scheduleAdvance(): void {
-    this.feedbackTimeoutId = setTimeout(() => {
-      this.advanceTimeoutId = setTimeout(() => {
-        if (this.game.stage() === 'playing') {
-          this.game.advanceTrialOrEnd();
-        }
-      }, 400);
-    }, 500);
+    this.advanceTimeoutId = setTimeout(() => {
+      if (this.game.stage() === 'playing') {
+        this.game.advanceTrialOrEnd();
+      }
+    }, 100);
   }
 
   private clearAllTimers(): void {
@@ -529,6 +514,5 @@ export class GameBoardComponent implements OnDestroy {
       clearTimeout(this.advanceTimeoutId);
       this.advanceTimeoutId = null;
     }
-    this.clearAnnouncementTimer();
   }
 }

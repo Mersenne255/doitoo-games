@@ -22,13 +22,11 @@ export const COLOR_NAMES = COLORS.map(c => c.name) as unknown as readonly ColorN
 
 // ── Configuration ──
 export interface PhantomLinkConfig {
-  symbolCount: number;             // 2–MAX_SYMBOL_COUNT
-  announcementDurationS: number;   // 1–10 seconds
+  symbolCount: number;             // 3–MAX_SYMBOL_COUNT
 }
 
 export const DEFAULT_CONFIG: PhantomLinkConfig = {
-  symbolCount: 2,
-  announcementDurationS: 5,
+  symbolCount: 3,
 };
 
 // ── Binding Map ──

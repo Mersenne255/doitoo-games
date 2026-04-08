@@ -32,7 +32,7 @@ describe('PhantomLink round-generator', () => {
 
   describe('initial binding map', () => {
     it('assigns unique colors to each symbol (no two symbols share a color)', () => {
-      for (let symCount = 2; symCount <= MAX_SYMBOL_COUNT; symCount++) {
+      for (let symCount = 3; symCount <= MAX_SYMBOL_COUNT; symCount++) {
         for (let seed = 0; seed < 50; seed++) {
           const round = generateRound(20, symCount, seed);
           const colors = Object.values(round.initialBindingMap);
@@ -42,7 +42,7 @@ describe('PhantomLink round-generator', () => {
     });
 
     it('uses exactly symbolCount symbols', () => {
-      for (let symCount = 2; symCount <= MAX_SYMBOL_COUNT; symCount++) {
+      for (let symCount = 3; symCount <= MAX_SYMBOL_COUNT; symCount++) {
         const round = generateRound(20, symCount, 42);
         expect(Object.keys(round.initialBindingMap).length).toBe(symCount);
       }
@@ -65,7 +65,7 @@ describe('PhantomLink round-generator', () => {
 
   describe('binding changes — no color conflicts', () => {
     it('new color differs from old color in every change', () => {
-      for (let symCount = 2; symCount <= MAX_SYMBOL_COUNT; symCount++) {
+      for (let symCount = 3; symCount <= MAX_SYMBOL_COUNT; symCount++) {
         for (let seed = 0; seed < 50; seed++) {
           const round = generateRound(30, symCount, seed);
           for (const evt of round.bindingChanges) {
@@ -78,7 +78,7 @@ describe('PhantomLink round-generator', () => {
     });
 
     it('new color is not used by any other symbol at the time of change', () => {
-      for (let symCount = 2; symCount <= MAX_SYMBOL_COUNT; symCount++) {
+      for (let symCount = 3; symCount <= MAX_SYMBOL_COUNT; symCount++) {
         for (let seed = 0; seed < 50; seed++) {
           const round = generateRound(30, symCount, seed);
           // Replay binding state
@@ -104,7 +104,7 @@ describe('PhantomLink round-generator', () => {
     });
 
     it('after every change, all bound colors remain unique', () => {
-      for (let symCount = 2; symCount <= MAX_SYMBOL_COUNT; symCount++) {
+      for (let symCount = 3; symCount <= MAX_SYMBOL_COUNT; symCount++) {
         for (let seed = 0; seed < 50; seed++) {
           const round = generateRound(30, symCount, seed);
           const bindings: Record<string, string> = { ...round.initialBindingMap };
@@ -211,9 +211,9 @@ describe('PhantomLink round-generator', () => {
   });
 
   describe('resilience to config changes', () => {
-    it('at minimum config (2 symbols), color uniqueness holds across 100 seeds', () => {
+    it('at minimum config (3 symbols), color uniqueness holds across 100 seeds', () => {
       for (let seed = 0; seed < 100; seed++) {
-        const round = generateRound(50, 2, seed);
+        const round = generateRound(50, 3, seed);
         const bindings: Record<string, string> = { ...round.initialBindingMap };
         for (const evt of round.bindingChanges) {
           for (const change of evt.changes) {
@@ -244,13 +244,13 @@ describe('PhantomLink round-generator', () => {
       expect(Object.keys(round.initialBindingMap).length).toBe(MAX_SYMBOL_COUNT);
     });
 
-    it('symbolCount is clamped to 2 even if requested lower', () => {
+    it('symbolCount is clamped to 3 even if requested lower', () => {
       const round = generateRound(20, 0, 42);
-      expect(Object.keys(round.initialBindingMap).length).toBe(2);
+      expect(Object.keys(round.initialBindingMap).length).toBe(3);
     });
 
     it('spare color always exists: COLORS.length > symbolCount for all valid counts', () => {
-      for (let symCount = 2; symCount <= MAX_SYMBOL_COUNT; symCount++) {
+      for (let symCount = 3; symCount <= MAX_SYMBOL_COUNT; symCount++) {
         expect(COLORS.length, `symCount=${symCount}`).toBeGreaterThan(symCount);
       }
     });

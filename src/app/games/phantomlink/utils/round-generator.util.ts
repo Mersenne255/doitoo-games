@@ -70,7 +70,7 @@ export function generateRound(
 ): RoundStructure {
   const rng = mulberry32(seed);
   const count = Math.max(10, trialCount);
-  const symCount = Math.max(2, Math.min(MAX_SYMBOL_COUNT, symbolCount));
+  const symCount = Math.max(3, Math.min(MAX_SYMBOL_COUNT, symbolCount));
 
   // Pick random symbols and assign unique colors
   const shuffledSymbols = shuffle([...(SYMBOL_NAMES as readonly SymbolName[])], rng);
@@ -93,8 +93,15 @@ export function generateRound(
   }
 
   for (let i = 0; i < count; i++) {
-    // Pick a random symbol for this trial
-    const chosenSymbol = pickRandom(symbols, rng);
+    // Pick a random symbol, but never the same as the previous trial
+    let chosenSymbol: SymbolName;
+    if (i > 0 && symbols.length > 1) {
+      const prev = trials[i - 1].symbol;
+      const candidates = symbols.filter(s => s !== prev);
+      chosenSymbol = pickRandom(candidates, rng);
+    } else {
+      chosenSymbol = pickRandom(symbols, rng);
+    }
     const correctColor = currentBindings[chosenSymbol];
     const phantomColor = phantomBindings[chosenSymbol] ?? null;
     const isPostChange = phantomColor !== null;

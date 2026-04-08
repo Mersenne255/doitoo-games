@@ -20,7 +20,6 @@ export class StorageService {
       const parsed = JSON.parse(raw);
       return {
         symbolCount: clamp(Number(parsed.symbolCount) || DEFAULT_CONFIG.symbolCount, 2, 8),
-        announcementDurationS: clamp(Number(parsed.announcementDurationS) || DEFAULT_CONFIG.announcementDurationS, 1, 10),
       };
     } catch {
       return { ...DEFAULT_CONFIG };
