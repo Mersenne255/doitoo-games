@@ -39,10 +39,10 @@ import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../mod
         <!-- Solved overlay -->
         @if (game.solved()) {
           <div class="solved-overlay">
-            <div class="solved-text">✓</div>
+            <div class="solved-glow">Correct!</div>
             <div class="solved-actions">
-              <button class="ctrl-btn next-btn" (click)="onNextRound()" aria-label="Next round">→</button>
-              <button class="ctrl-btn end-btn" (click)="onEnd()" aria-label="End session">⏹</button>
+              <button class="solved-btn back" (click)="onAbort()">Back</button>
+              <button class="solved-btn again" (click)="onNextRound()">Again</button>
             </div>
           </div>
         }
@@ -86,23 +86,22 @@ import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../mod
       @if (stage() === 'comparison') {
         <div class="comparison-split">
           <div class="split-pane">
-            <div class="split-label">Original</div>
+            <div class="split-label-overlay">Original</div>
             <div class="canvas-wrapper split-canvas">
               <canvas #compOriginalCanvas class="three-canvas"></canvas>
             </div>
           </div>
+          <div class="split-divider"></div>
           <div class="split-pane">
-            <div class="split-label">Your build</div>
+            <div class="split-label-overlay">Your build</div>
             <div class="canvas-wrapper split-canvas">
               <canvas #compBuildCanvas class="three-canvas"></canvas>
             </div>
           </div>
         </div>
-        <div class="overlay-controls">
-          <div class="ctrl-row">
-            <button class="ctrl-btn next-btn" (click)="onNextRound()" aria-label="Next round">→</button>
-            <button class="ctrl-btn end-btn" (click)="onEnd()" aria-label="End session">⏹</button>
-          </div>
+        <div class="comparison-actions">
+          <button class="comp-btn back" (click)="onAbort()">Back</button>
+          <button class="comp-btn again" (click)="onNextRound()">Again</button>
         </div>
       }
 
@@ -213,25 +212,72 @@ import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../mod
     .solved-overlay {
       position: absolute; inset: 0; z-index: 20;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(15,15,26,0.7); backdrop-filter: blur(4px);
+      background: rgba(15,15,26,0.75); backdrop-filter: blur(6px);
     }
-    .solved-text { font-size: 4rem; color: #22c55e; }
-    .solved-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+    .solved-glow {
+      font-size: 2.5rem; font-weight: 900; color: #22c55e;
+      text-shadow: 0 0 20px rgba(34,197,94,0.6), 0 0 40px rgba(34,197,94,0.3), 0 0 60px rgba(34,197,94,0.15);
+      letter-spacing: 0.02em;
+    }
+    .solved-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+    .solved-btn {
+      padding: 0.6rem 2rem; border-radius: 0.6rem;
+      font-weight: 700; font-size: 0.95rem; cursor: pointer;
+      min-height: 44px; min-width: 100px;
+      transition: background 0.2s;
+    }
+    .solved-btn.back {
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06); color: #94a3b8;
+    }
+    .solved-btn.back:hover { background: rgba(255,255,255,0.12); }
+    .solved-btn.again {
+      border: 1px solid rgba(34,197,94,0.5);
+      background: rgba(34,197,94,0.2); color: #86efac;
+    }
+    .solved-btn.again:hover { background: rgba(34,197,94,0.35); }
 
-    /* Comparison split */
     .comparison-split {
-      flex: 1; display: flex; gap: 2px; min-height: 0;
+      flex: 1; display: flex; gap: 0; min-height: 0;
     }
     @media (orientation: portrait) {
       .comparison-split { flex-direction: column; }
+      .split-divider { height: 1px; width: 100%; background: rgba(255,255,255,0.12); }
     }
-    .split-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-    .split-label {
-      text-align: center; color: #94a3b8; font-size: 0.7rem;
-      font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-      padding: 0.25rem 0;
+    @media (orientation: landscape) {
+      .split-divider { width: 1px; height: 100%; background: rgba(255,255,255,0.12); }
+    }
+    .split-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0; position: relative; }
+    .split-label-overlay {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      text-align: center; color: rgba(255,255,255,0.5); font-size: 0.65rem;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0.35rem 0;
+      background: linear-gradient(rgba(15,15,26,0.7), transparent);
+      pointer-events: none;
     }
     .split-canvas { flex: 1; }
+
+    .comparison-actions {
+      display: flex; gap: 0.75rem; justify-content: center;
+      padding: 0.6rem 1rem;
+    }
+    .comp-btn {
+      padding: 0.55rem 2rem; border-radius: 0.6rem;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      min-height: 44px; min-width: 100px;
+      transition: background 0.2s;
+    }
+    .comp-btn.back {
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06); color: #94a3b8;
+    }
+    .comp-btn.back:hover { background: rgba(255,255,255,0.12); }
+    .comp-btn.again {
+      border: 1px solid rgba(34,197,94,0.5);
+      background: rgba(34,197,94,0.2); color: #86efac;
+    }
+    .comp-btn.again:hover { background: rgba(34,197,94,0.35); }
 
   `],
 })
@@ -261,6 +307,7 @@ export class GameBoardComponent implements OnDestroy {
   private threeInitialized = false;
   private previousStage: VoxelStage | null = null;
   private readonly injector = inject(Injector);
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor() {
     effect(() => {
@@ -286,6 +333,7 @@ export class GameBoardComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.clearStudyTimer();
     this.cleanupAll();
+    this.destroyResizeObserver();
   }
 
   onReady(): void {
@@ -352,6 +400,7 @@ export class GameBoardComponent implements OnDestroy {
     this.threeScene.init(canvas, trial.shape, this.game.isMultiColor());
     this.threeScene.startAnimationLoop();
     this.threeInitialized = true;
+    this.setupResizeObserver(canvas);
 
     const sec = this.game.getEffectiveStudyTimeSec();
     if (sec !== null) {
@@ -377,6 +426,7 @@ export class GameBoardComponent implements OnDestroy {
     this.threeScene.initBuildScene(canvas, [0, 0, 0], this.game.isMultiColor());
     this.threeScene.startAnimationLoop();
     this.threeInitialized = true;
+    this.setupResizeObserver(canvas);
   }
 
   private initComparisonPhase(): void {
@@ -390,6 +440,7 @@ export class GameBoardComponent implements OnDestroy {
       this.compOriginalScene.dispose();
       this.compOriginalScene.init(origCanvas, trial.shape, this.game.isMultiColor());
       this.compOriginalScene.startAnimationLoop();
+      this.setupResizeObserver(origCanvas);
     }
 
     // Right pane: player build as a VoxelShape
@@ -420,6 +471,7 @@ export class GameBoardComponent implements OnDestroy {
   }
 
   private cleanupAll(): void {
+    this.destroyResizeObserver();
     if (this.threeInitialized) { this.threeScene.stopAnimationLoop(); this.threeScene.dispose(); this.threeInitialized = false; }
     this.compOriginalScene.stopAnimationLoop();
     this.compOriginalScene.dispose();
@@ -427,5 +479,23 @@ export class GameBoardComponent implements OnDestroy {
 
   private clearStudyTimer(): void {
     if (this.studyTimerIntervalId !== null) { clearInterval(this.studyTimerIntervalId); this.studyTimerIntervalId = null; }
+  }
+
+  private setupResizeObserver(canvas: HTMLCanvasElement): void {
+    this.destroyResizeObserver();
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    this.resizeObserver = new ResizeObserver(() => {
+      this.threeScene.resize();
+      this.compOriginalScene.resize();
+    });
+    this.resizeObserver.observe(parent);
+  }
+
+  private destroyResizeObserver(): void {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   }
 }

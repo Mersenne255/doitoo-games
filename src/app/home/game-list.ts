@@ -10,12 +10,13 @@ export const GAME_LIST: GameEntry[] = [
   { route: '/nback', name: 'Dual N-Back', label: 'Working memory', description: 'Designed by science. Tested by millions. Conquered by you.', icon: 'assets/icons/nback-icon.png' },
   { route: '/multitask', name: 'Splittention', label: 'Multitasking', description: 'Three tasks, one brain. Let\'s see how long the juggling act lasts.', icon: 'assets/icons/multitask-icon.png' },
   { route: '/mindflow', name: 'MindFlow', label: 'Executive function', description: 'Track positions and movements to the edge of sanity.', icon: 'assets/icons/mindflow-icon.png' },
-  { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'You\'re forgetting where you put your keys. Time to fix that.', icon: 'assets/icons/numbers-icon.png' },
+  { route: '/voxel', name: 'Voxel', label: 'Spatial memory', description: 'Minecraft was the tutorial. This is the exam.', icon: 'assets/icons/voxel-icon.png' },
   { route: '/phantomlink', name: 'PhantomLink', label: 'Memory updating', description: 'You memorize, we change. Over and over again.', icon: 'assets/icons/phantom-icon.png' },
+  { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'Numbers go in. Will they come out?', icon: 'assets/icons/numbers-icon.png' },
   // { route: '/synapsort', name: 'SynapSort', label: 'Cognitive flexibility', description: 'The rules just changed. Again. Keep up.', icon: 'assets/icons/synapsort-icon.png' },
   // { route: '/focusforge', name: 'FocusForge', label: 'Selective attention', description: 'It\'s right there. You just can\'t see it. Yet.', icon: 'assets/icons/focusforge-icon.png' },
   // { route: '/ciphergrid', name: 'CipherGrid', label: 'TODO', description: 'TODO', icon: 'assets/icons/ciphergrid-icon.png' },
-  { route: '/voxel', name: 'Voxel', label: 'TODO', description: 'TODO', icon: 'assets/icons/voxel-icon.png' },
+
 
 ];
 
