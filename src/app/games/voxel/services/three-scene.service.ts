@@ -521,6 +521,7 @@ export class ThreeSceneService {
     ctx.fillText(symbol, size / 2, size / 2);
 
     const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
     return texture;
   }
