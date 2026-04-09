@@ -9,7 +9,9 @@
     "preserve": "node scripts/generate-build-info.js",
     "start": "ng serve",
     "serve": "ng serve",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "build:extension": "node scripts/build-extension.js",
+    "watch:extension": "node scripts/watch-extension.js"
   },
   "dependencies": {
     "@angular/common": "^21.2.0",

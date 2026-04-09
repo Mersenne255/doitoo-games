@@ -39,3 +39,10 @@ body {
   --color-warning: #fde68a;
   --nav-height: 48px;
 }
+
+/* Chrome extension popup constraints */
+body.extension-mode {
+  width: 380px;
+  height: 540px;
+  overflow: hidden;
+}

@@ -217,6 +217,13 @@ export class AppComponent {
   private readonly gameIcon = signal('');
 
   constructor() {
+    // Detect Chrome extension mode and constrain popup dimensions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chr = (window as any)['chrome'];
+    if (chr?.runtime?.id) {
+      document.body.classList.add('extension-mode');
+    }
+
     const sub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
