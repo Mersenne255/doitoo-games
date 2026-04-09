@@ -187,7 +187,7 @@ export class ThreeSceneService {
 
     // Correct cubes — green solid
     for (const v of shapeDiff.correct) {
-      const mat = new THREE.MeshStandardMaterial({ color: CORRECT_COLOR });
+      const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHex(CORRECT_COLOR, THREE.SRGBColorSpace) });
       const mesh = new THREE.Mesh(this.boxGeo, mat);
       mesh.position.set(v.x, v.y, v.z);
       this.scene.add(mesh);
@@ -200,7 +200,7 @@ export class ThreeSceneService {
     // Missing cubes — red wireframe/ghost
     for (const v of shapeDiff.missing) {
       const fillMat = new THREE.MeshStandardMaterial({
-        color: MISSING_COLOR,
+        color: new THREE.Color().setHex(MISSING_COLOR, THREE.SRGBColorSpace),
         transparent: true,
         opacity: 0.15,
       });
@@ -215,7 +215,7 @@ export class ThreeSceneService {
 
     // Extra cubes — orange solid
     for (const v of shapeDiff.extra) {
-      const mat = new THREE.MeshStandardMaterial({ color: EXTRA_COLOR });
+      const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHex(EXTRA_COLOR, THREE.SRGBColorSpace) });
       const mesh = new THREE.Mesh(this.boxGeo, mat);
       mesh.position.set(v.x, v.y, v.z);
       this.scene.add(mesh);
@@ -389,9 +389,10 @@ export class ThreeSceneService {
     }
 
     if (position) {
-      const hexColor = color ? parseInt(color.replace('#', ''), 16) : STANDARD_COLOR;
+      const bgColor = color ?? `#${STANDARD_COLOR.toString(16).padStart(6, '0')}`;
+      const texture = this.createSolidTexture(bgColor);
       const mat = new THREE.MeshStandardMaterial({
-        color: hexColor,
+        map: texture,
         transparent: true,
         opacity: 0.4,
       });
@@ -555,16 +556,30 @@ export class ThreeSceneService {
     return texture;
   }
 
+  private createSolidTexture(bgColor: string): THREE.CanvasTexture {
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+  }
+
   private createCubeMaterial(color: string | number, symbol: VoxelSymbol | null): THREE.Material | THREE.Material[] {
-    const hexColor = typeof color === 'string' ? parseInt(color.replace('#', ''), 16) : color;
     const bgColor = typeof color === 'string' ? color : `#${color.toString(16).padStart(6, '0')}`;
 
     if (symbol) {
       const texture = this.createSymbolTexture(symbol, bgColor);
-      // Apply symbol texture to all 6 faces
       return Array.from({ length: 6 }, () => new THREE.MeshStandardMaterial({ map: texture }));
     }
-    return new THREE.MeshStandardMaterial({ color: hexColor });
+    // Use a canvas texture for solid colors too, to ensure correct sRGB color rendering
+    const texture = this.createSolidTexture(bgColor);
+    return new THREE.MeshStandardMaterial({ map: texture });
   }
 
   private setupControls(canvas: HTMLCanvasElement): void {
@@ -591,7 +606,7 @@ export class ThreeSceneService {
 
   private addLighting(): void {
     if (!this.scene) return;
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
     this.scene.add(ambientLight);
   }
 
