@@ -126,9 +126,24 @@ function shapeKey(positions: [number, number, number][]): string {
 }
 
 /**
+ * Creates a canonical key for a voxel including position, color, and symbol.
+ */
+function voxelKey(x: number, y: number, z: number, color: string, symbol: string | null): string {
+  return `${x},${y},${z}:${color}:${symbol ?? ''}`;
+}
+
+/**
+ * Creates a canonical sorted key for a set of voxels (position + color + symbol).
+ */
+function fullShapeKey(positions: [number, number, number][], voxels: VoxelPosition[]): string {
+  const entries = positions.map((p, i) => voxelKey(p[0], p[1], p[2], voxels[i].color, voxels[i].symbol));
+  return entries.sort().join('|');
+}
+
+/**
  * Checks if two shapes match under any of the 24 cube rotations.
- * Ignores color — purely structural comparison.
- * Returns true if any rotation of `build` matches `target`.
+ * The first cube in `build` (index 0) is the anchor/wildcard — it matches any target cube.
+ * All other cubes must match both position AND color/symbol.
  */
 export function shapesMatchRotationInvariant(
   target: VoxelPosition[],
@@ -137,20 +152,43 @@ export function shapesMatchRotationInvariant(
   if (target.length !== build.length) return false;
   if (target.length === 0) return true;
 
-  // Normalize target positions
+  // Build target lookup: normalized position → {color, symbol}
   const targetPositions: [number, number, number][] = target.map(v => [v.x, v.y, v.z]);
-  const normalizedTarget = normalize(targetPositions);
-  const targetKey = shapeKey(normalizedTarget);
+  const normTarget = normalize(targetPositions);
+  const targetMap = new Map<string, { color: string; symbol: string | null }>();
+  for (let i = 0; i < normTarget.length; i++) {
+    const [x, y, z] = normTarget[i];
+    targetMap.set(`${x},${y},${z}`, { color: target[i].color, symbol: target[i].symbol });
+  }
 
-  // Try all 24 rotations of the build
   const buildPositions: [number, number, number][] = build.map(v => [v.x, v.y, v.z]);
 
   for (const rot of ALL_ROTATIONS) {
     const rotated = buildPositions.map(([x, y, z]) => applyRotation(rot, x, y, z));
-    const normalizedRotated = normalize(rotated);
-    if (shapeKey(normalizedRotated) === targetKey) {
-      return true;
+    const normRotated = normalize(rotated);
+
+    let match = true;
+    for (let i = 0; i < normRotated.length; i++) {
+      const [x, y, z] = normRotated[i];
+      const key = `${x},${y},${z}`;
+      const targetVoxel = targetMap.get(key);
+
+      if (!targetVoxel) {
+        match = false;
+        break;
+      }
+
+      // Index 0 is the anchor/wildcard — skip attribute check
+      if (i === 0) continue;
+
+      // Check color and symbol match
+      if (build[i].color !== targetVoxel.color || build[i].symbol !== targetVoxel.symbol) {
+        match = false;
+        break;
+      }
     }
+
+    if (match) return true;
   }
 
   return false;

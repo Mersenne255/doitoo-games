@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
-import { VOXEL_COLORS } from '../../models/game.models';
+import { VOXEL_COLORS, VOXEL_SYMBOLS } from '../../models/game.models';
 
 @Component({
   selector: 'app-config-panel',
@@ -34,6 +34,24 @@ import { VOXEL_COLORS } from '../../models/game.models';
             @if (game.config().colorCount > 1) {
               @for (c of activeColors(); track c) {
                 <span class="color-dot" [style.background-color]="c"></span>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="config-row">
+          <label class="section-label">Symbols</label>
+          <div class="slider-row">
+            <input type="range" min="1" max="9" step="1"
+              [value]="game.config().symbolCount"
+              (input)="onSymbolCount($event)"
+              aria-label="Symbol count" />
+            <span class="range-value">{{ game.config().symbolCount === 1 ? '—' : game.config().symbolCount }}</span>
+          </div>
+          <div class="symbol-preview">
+            @if (game.config().symbolCount > 1) {
+              @for (s of activeSymbols(); track s) {
+                <span class="symbol-chip">{{ s }}</span>
               }
             }
           </div>
@@ -123,6 +141,26 @@ import { VOXEL_COLORS } from '../../models/game.models';
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+    .symbol-preview {
+      display: flex;
+      gap: 0.3rem;
+      justify-content: center;
+      padding: 0.25rem 0;
+    }
+
+    .symbol-chip {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 0.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
     .start-btn {
       width: 100%;
       padding: 0.75rem 3rem;
@@ -144,6 +182,7 @@ export class ConfigPanelComponent {
   private readonly storage = inject(StorageService);
 
   readonly activeColors = () => VOXEL_COLORS.slice(0, this.game.config().colorCount);
+  readonly activeSymbols = () => VOXEL_SYMBOLS.slice(0, this.game.config().symbolCount);
 
   onCubeCount(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
@@ -154,6 +193,12 @@ export class ConfigPanelComponent {
   onColorCount(event: Event): void {
     const value = +(event.target as HTMLInputElement).value;
     this.game.updateConfig({ colorCount: value });
+    this.storage.saveConfig(this.game.config());
+  }
+
+  onSymbolCount(event: Event): void {
+    const value = +(event.target as HTMLInputElement).value;
+    this.game.updateConfig({ symbolCount: value });
     this.storage.saveConfig(this.game.config());
   }
 

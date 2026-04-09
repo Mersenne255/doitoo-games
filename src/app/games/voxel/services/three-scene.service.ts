@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { InteractionMode, ShapeDiff, VoxelColor, VoxelShape, VOXEL_COLORS } from '../models/game.models';
+import { InteractionMode, ShapeDiff, VoxelColor, VoxelShape, VoxelSymbol, VOXEL_COLORS } from '../models/game.models';
 
 const BACKGROUND_COLOR = 0x0f0f1a;
 const STANDARD_COLOR = 0x6366f1;
@@ -80,9 +80,10 @@ export class ThreeSceneService {
     const edgeMat = new THREE.LineBasicMaterial({ color: EDGE_COLOR, transparent: true, opacity: EDGE_OPACITY });
 
     for (const voxel of shape.voxels) {
-      const mat = new THREE.MeshStandardMaterial({
-        color: colorMode ? voxel.color : STANDARD_COLOR,
-      });
+      const mat = this.createCubeMaterial(
+        colorMode ? voxel.color : `#${STANDARD_COLOR.toString(16).padStart(6, '0')}`,
+        voxel.symbol,
+      );
       const mesh = new THREE.Mesh(this.boxGeo, mat);
       mesh.position.set(...voxel.position);
       this.scene.add(mesh);
@@ -293,21 +294,27 @@ export class ThreeSceneService {
 
   // ── Build scene cube management ──
 
-  addCubeToScene(position: [number, number, number], color?: VoxelColor, isAnchor = false): void {
+  addCubeToScene(position: [number, number, number], color?: VoxelColor, isAnchor = false, symbol?: VoxelSymbol | null): void {
     if (!this.scene) return;
     const key = `${position[0]},${position[1]},${position[2]}`;
     if (this.cubeMeshes.has(key)) return;
 
-    const hexColor = color ? parseInt(color.replace('#', ''), 16) : STANDARD_COLOR;
-    const mat = new THREE.MeshStandardMaterial({ color: hexColor });
+    let mat: THREE.Material | THREE.Material[];
+    if (isAnchor) {
+      mat = this.createAnchorMaterial();
+    } else {
+      const colorStr = color ?? `#${STANDARD_COLOR.toString(16).padStart(6, '0')}`;
+      mat = this.createCubeMaterial(colorStr, symbol ?? null);
+    }
     const mesh = new THREE.Mesh(this.boxGeo, mat);
     mesh.position.set(...position);
     this.scene.add(mesh);
     this.cubeMeshes.set(key, mesh);
 
     const edgeColor = isAnchor ? ANCHOR_EDGE_COLOR : EDGE_COLOR;
-    const edgeOpacity = isAnchor ? 0.9 : EDGE_OPACITY;
-    const edgeMat = new THREE.LineBasicMaterial({ color: edgeColor, transparent: true, opacity: edgeOpacity });
+    const edgeOpacity = isAnchor ? 1.0 : EDGE_OPACITY;
+    const lineWidth = 1;
+    const edgeMat = new THREE.LineBasicMaterial({ color: edgeColor, transparent: true, opacity: edgeOpacity, linewidth: lineWidth });
     const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
     edges.position.set(...position);
     this.scene.add(edges);
@@ -321,14 +328,22 @@ export class ThreeSceneService {
     const mesh = this.cubeMeshes.get(key);
     if (mesh) {
       this.scene.remove(mesh);
-      (mesh.material as THREE.Material).dispose();
+      if (Array.isArray(mesh.material)) {
+        mesh.material.forEach(m => m.dispose());
+      } else {
+        mesh.material.dispose();
+      }
       this.cubeMeshes.delete(key);
     }
 
     const edges = this.cubeEdges.get(key);
     if (edges) {
       this.scene.remove(edges);
-      (edges.material as THREE.Material).dispose();
+      if (Array.isArray(edges.material)) {
+        edges.material.forEach(m => m.dispose());
+      } else {
+        edges.material.dispose();
+      }
       this.cubeEdges.delete(key);
     }
   }
@@ -365,7 +380,10 @@ export class ThreeSceneService {
     if (this.highlightedCubeKey !== null && this.highlightedOriginalColor !== null) {
       const mesh = this.cubeMeshes.get(this.highlightedCubeKey);
       if (mesh) {
-        (mesh.material as THREE.MeshStandardMaterial).emissive.setHex(0x000000);
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (const m of mats) {
+          (m as THREE.MeshStandardMaterial).emissive.setHex(0x000000);
+        }
       }
       this.highlightedCubeKey = null;
       this.highlightedOriginalColor = null;
@@ -375,11 +393,13 @@ export class ThreeSceneService {
       const key = `${position[0]},${position[1]},${position[2]}`;
       const mesh = this.cubeMeshes.get(key);
       if (mesh) {
-        const mat = mesh.material as THREE.MeshStandardMaterial;
-        this.highlightedOriginalColor = mat.emissive.getHex();
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        this.highlightedOriginalColor = (mats[0] as THREE.MeshStandardMaterial).emissive.getHex();
         this.highlightedCubeKey = key;
-        mat.emissive.setHex(0xff0000);
-        mat.emissiveIntensity = 0.4;
+        for (const m of mats) {
+          (m as THREE.MeshStandardMaterial).emissive.setHex(0xff0000);
+          (m as THREE.MeshStandardMaterial).emissiveIntensity = 0.4;
+        }
       }
     }
   }
@@ -483,6 +503,73 @@ export class ThreeSceneService {
   }
 
   // ── Private helpers ──
+
+  private createSymbolTexture(symbol: string, bgColor: string): THREE.CanvasTexture {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = 'bold 72px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(symbol, size / 2, size / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }
+
+  private createAnchorMaterial(): THREE.Material[] {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+
+    // Transparent background (hollow feel)
+    ctx.clearRect(0, 0, size, size);
+
+    // Subtle dark fill so the joker is readable
+    ctx.fillStyle = 'rgba(40, 40, 60, 0.5)';
+    ctx.fillRect(0, 0, size, size);
+
+    // Joker symbol centered — bright white
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 72px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🃏', size / 2, size / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    return Array.from({ length: 6 }, () =>
+      new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.75,
+        side: THREE.DoubleSide,
+      })
+    );
+  }
+
+  private createCubeMaterial(color: string | number, symbol: VoxelSymbol | null): THREE.Material | THREE.Material[] {
+    const hexColor = typeof color === 'string' ? parseInt(color.replace('#', ''), 16) : color;
+    const bgColor = typeof color === 'string' ? color : `#${color.toString(16).padStart(6, '0')}`;
+
+    if (symbol) {
+      const texture = this.createSymbolTexture(symbol, bgColor);
+      // Apply symbol texture to all 6 faces
+      return Array.from({ length: 6 }, () => new THREE.MeshStandardMaterial({ map: texture }));
+    }
+    return new THREE.MeshStandardMaterial({ color: hexColor });
+  }
 
   private setupControls(canvas: HTMLCanvasElement): void {
     if (!this.camera) return;

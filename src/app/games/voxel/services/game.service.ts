@@ -1,7 +1,7 @@
 import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import {
   DEFAULT_CONFIG, InteractionMode, RoundResult, ScoringState, Trial, TrialResult,
-  VoxelColor, VoxelConfig, VoxelPosition, VoxelStage, VOXEL_COLORS,
+  VoxelColor, VoxelConfig, VoxelPosition, VoxelStage, VoxelSymbol, VOXEL_COLORS, VOXEL_SYMBOLS,
 } from '../models/game.models';
 import { generateShape } from '../utils/shape-generator.util';
 import { compareShapes, shapesMatchRotationInvariant } from '../utils/shape-comparator.util';
@@ -18,6 +18,7 @@ export class GameService {
   readonly playerBuild: WritableSignal<VoxelPosition[]> = signal<VoxelPosition[]>([]);
   readonly interactionMode: WritableSignal<InteractionMode> = signal<InteractionMode>('build');
   readonly selectedColor: WritableSignal<VoxelColor> = signal<VoxelColor>(VOXEL_COLORS[0]);
+  readonly selectedSymbol: WritableSignal<VoxelSymbol | null> = signal<VoxelSymbol | null>(null);
   readonly scoringState: WritableSignal<ScoringState> = signal<ScoringState>(initialScoringState());
   readonly roundResult: WritableSignal<RoundResult | null> = signal<RoundResult | null>(null);
   readonly lastTrialResult: WritableSignal<TrialResult | null> = signal<TrialResult | null>(null);
@@ -27,12 +28,14 @@ export class GameService {
   private currentStudyTimeMs = 0;
 
   readonly isMultiColor = computed(() => this.config().colorCount > 1);
+  readonly isMultiSymbol = computed(() => this.config().symbolCount > 1);
 
   updateConfig(partial: Partial<VoxelConfig>): void {
     const c = this.config();
     this.config.set({
       cubeCount: clamp(partial.cubeCount ?? c.cubeCount, 3, 50),
       colorCount: clamp(partial.colorCount ?? c.colorCount, 1, 9),
+      symbolCount: clamp(partial.symbolCount ?? c.symbolCount, 1, 9),
     });
   }
 
@@ -50,18 +53,23 @@ export class GameService {
 
   endStudy(studyTimeMs: number): void {
     this.currentStudyTimeMs = studyTimeMs;
-    this.playerBuild.set([{ x: 0, y: 0, z: 0, color: VOXEL_COLORS[0] }]);
+    this.playerBuild.set([{ x: 0, y: 0, z: 0, color: VOXEL_COLORS[0], symbol: null }]);
     this.interactionMode.set('build');
     this.selectedColor.set(VOXEL_COLORS[0]);
+    this.selectedSymbol.set(this.config().symbolCount > 1 ? VOXEL_SYMBOLS[0] : null);
     this.solved.set(false);
     this.buildStartTime = Date.now();
     this.stage.set('building');
   }
 
-  addCube(pos: { x: number; y: number; z: number }, color?: VoxelColor): void {
+  addCube(pos: { x: number; y: number; z: number }, color?: VoxelColor, symbol?: VoxelSymbol | null): void {
     const b = this.playerBuild();
     if (b.some(v => v.x === pos.x && v.y === pos.y && v.z === pos.z)) return;
-    const nb = [...b, { x: pos.x, y: pos.y, z: pos.z, color: color ?? this.selectedColor() }];
+    const nb = [...b, {
+      x: pos.x, y: pos.y, z: pos.z,
+      color: color ?? this.selectedColor(),
+      symbol: symbol !== undefined ? symbol : this.selectedSymbol(),
+    }];
     this.playerBuild.set(nb);
     this.checkSolved(nb);
   }
@@ -79,6 +87,10 @@ export class GameService {
 
   setSelectedColor(color: VoxelColor): void {
     this.selectedColor.set(color);
+  }
+
+  setSelectedSymbol(symbol: VoxelSymbol | null): void {
+    this.selectedSymbol.set(symbol);
   }
 
   giveUp(): void {
@@ -111,7 +123,7 @@ export class GameService {
     if (!trial) return;
     const build = this.playerBuild();
     const target: VoxelPosition[] = trial.shape.voxels.map(v => ({
-      x: v.position[0], y: v.position[1], z: v.position[2], color: v.color,
+      x: v.position[0], y: v.position[1], z: v.position[2], color: v.color, symbol: v.symbol,
     }));
     const diff = compareShapes(target, build, false);
     const acc = gaveUp ? calculateAccuracy(diff.correct.length, target.length) : 100;
@@ -135,7 +147,7 @@ export class GameService {
     const trial = this.currentTrial();
     if (!trial) return;
     const target: VoxelPosition[] = trial.shape.voxels.map(v => ({
-      x: v.position[0], y: v.position[1], z: v.position[2], color: v.color,
+      x: v.position[0], y: v.position[1], z: v.position[2], color: v.color, symbol: v.symbol,
     }));
     if (shapesMatchRotationInvariant(target, build)) {
       this.solved.set(true);
@@ -152,6 +164,12 @@ export class GameService {
       shape.voxels = shape.voxels.map((v, i) => ({ ...v, color: ac[i % ac.length] }));
     } else {
       shape.voxels = shape.voxels.map(v => ({ ...v, color: VOXEL_COLORS[0] }));
+    }
+    if (cfg.symbolCount > 1) {
+      const as = VOXEL_SYMBOLS.slice(0, cfg.symbolCount);
+      shape.voxels = shape.voxels.map((v, i) => ({ ...v, symbol: as[i % as.length] }));
+    } else {
+      shape.voxels = shape.voxels.map(v => ({ ...v, symbol: null }));
     }
     this.currentTrial.set({ shape, studyTimeSec: this.getEffectiveStudyTimeSec(), seed });
   }

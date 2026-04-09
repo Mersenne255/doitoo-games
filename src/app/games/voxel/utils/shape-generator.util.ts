@@ -132,6 +132,7 @@ export function generateShape(seed: number, complexity: number, symmetric: boole
   const voxels: Voxel[] = positions.map(([x, y, z], i) => ({
     position: [x - minX, y - minY, z - minZ] as [number, number, number],
     color: VOXEL_COLORS[i % VOXEL_COLORS.length] as VoxelColor,
+    symbol: null,
   }));
 
   return {

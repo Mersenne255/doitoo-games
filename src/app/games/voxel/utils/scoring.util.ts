@@ -75,5 +75,6 @@ export function calculateRoundResult(state: ScoringState, config: VoxelConfig): 
     averageBuildTimeSec: (state.totalBuildTimeMs / n) / 1000,
     cubeCount: config.cubeCount,
     colorCount: config.colorCount,
+    symbolCount: config.symbolCount,
   };
 }

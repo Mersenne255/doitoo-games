@@ -1,17 +1,25 @@
 import {
-  Component, ChangeDetectionStrategy, OnDestroy, inject,
-  signal, effect, computed, ViewChild, ElementRef, afterNextRender, Injector,
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  OnDestroy,
+  signal,
+  ViewChild,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
-import { GameService } from '../../services/game.service';
-import { ThreeSceneService } from '../../services/three-scene.service';
-import { GameInfoService } from '../../../../shared/services/game-info.service';
-import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../models/game.models';
+import {GameService} from '../../services/game.service';
+import {ThreeSceneService} from '../../services/three-scene.service';
+import {GameInfoService} from '../../../../shared/services/game-info.service';
+import {InteractionMode, VOXEL_COLORS, VOXEL_SYMBOLS, VoxelColor, VoxelStage, VoxelSymbol} from '../../models/game.models';
 
 @Component({
   selector: 'app-game-board',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="board">
@@ -56,6 +64,15 @@ import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../mod
                   [style.background-color]="c"
                   [class.selected]="selectedColor() === c"
                   (click)="onColorSelect(c)"></button>
+              }
+            </div>
+          }
+          @if (showSymbolPicker()) {
+            <div class="symbol-row">
+              @for (s of symbols(); track s) {
+                <button class="symbol-btn"
+                  [class.selected]="selectedSymbol() === s"
+                  (click)="onSymbolSelect(s)">{{ s }}</button>
               }
             </div>
           }
@@ -208,6 +225,23 @@ import { InteractionMode, VoxelColor, VoxelStage, VOXEL_COLORS } from '../../mod
     }
     .color-dot.selected { border-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.5); }
 
+    .symbol-row {
+      display: flex; gap: 0.3rem; justify-content: center;
+    }
+    .symbol-btn {
+      width: 2rem; height: 2rem; border-radius: 0.4rem;
+      border: 2px solid transparent; cursor: pointer;
+      min-width: 44px; min-height: 44px;
+      background: rgba(255,255,255,0.08);
+      color: #e2e8f0; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .symbol-btn.selected {
+      border-color: white;
+      box-shadow: 0 0 8px rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.18);
+    }
+
     /* Solved overlay */
     .solved-overlay {
       position: absolute; inset: 0; z-index: 20;
@@ -298,9 +332,12 @@ export class GameBoardComponent implements OnDestroy {
   readonly selectedColor = this.game.selectedColor;
   readonly cubeCount = computed(() => this.game.playerBuild().length);
   readonly showColorPicker = computed(() => this.game.isMultiColor() && this.game.interactionMode() === 'build');
+  readonly showSymbolPicker = computed(() => this.game.isMultiSymbol() && this.game.interactionMode() === 'build');
   readonly hasStudyTimer = computed(() => this.game.getEffectiveStudyTimeSec() !== null);
   readonly studyTimerPercent = signal<number>(100);
   readonly colors = computed(() => VOXEL_COLORS.slice(0, this.game.config().colorCount));
+  readonly symbols = computed(() => VOXEL_SYMBOLS.slice(0, this.game.config().symbolCount));
+  readonly selectedSymbol = this.game.selectedSymbol;
 
   private studyStartTime = 0;
   private studyTimerIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -347,6 +384,7 @@ export class GameBoardComponent implements OnDestroy {
   }
 
   onColorSelect(color: VoxelColor): void { this.game.setSelectedColor(color); }
+  onSymbolSelect(symbol: VoxelSymbol): void { this.game.setSelectedSymbol(symbol); }
 
   onPointerDown(event: PointerEvent): void { this.threeScene.recordPointerDown(event); }
 
@@ -359,8 +397,9 @@ export class GameBoardComponent implements OnDestroy {
       const result = this.threeScene.getClickedFace(event);
       if (result) {
         const color = this.game.isMultiColor() ? this.game.selectedColor() : undefined;
-        this.game.addCube({ x: result.position[0], y: result.position[1], z: result.position[2] }, color);
-        this.threeScene.addCubeToScene(result.position, color);
+        const symbol = this.game.isMultiSymbol() ? this.game.selectedSymbol() : null;
+        this.game.addCube({ x: result.position[0], y: result.position[1], z: result.position[2] }, color, symbol);
+        this.threeScene.addCubeToScene(result.position, color, false, symbol);
       }
     } else if (mode === 'remove') {
       const pos = this.threeScene.getClickedCube(event);
@@ -443,12 +482,21 @@ export class GameBoardComponent implements OnDestroy {
       this.setupResizeObserver(origCanvas);
     }
 
-    // Right pane: player build as a VoxelShape
+    // Right pane: player build with anchor shown as joker
     const buildCanvas = this.compBuildCanvasRef?.nativeElement;
     if (buildCanvas) {
-      const buildShape = this.buildToVoxelShape(result.playerBuild);
       this.threeScene.dispose();
-      this.threeScene.init(buildCanvas, buildShape, this.game.isMultiColor());
+      this.threeScene.initBuildScene(buildCanvas, [0, 0, 0], this.game.isMultiColor());
+      // Add remaining cubes (skip index 0 which is the anchor already added by initBuildScene)
+      for (let i = 1; i < result.playerBuild.length; i++) {
+        const v = result.playerBuild[i];
+        this.threeScene.addCubeToScene(
+          [v.x, v.y, v.z],
+          this.game.isMultiColor() ? v.color : undefined,
+          false,
+          v.symbol,
+        );
+      }
       this.threeScene.startAnimationLoop();
       this.threeInitialized = true;
     }
@@ -462,7 +510,7 @@ export class GameBoardComponent implements OnDestroy {
       maxX = Math.max(maxX, v.x); maxY = Math.max(maxY, v.y); maxZ = Math.max(maxZ, v.z);
     }
     return {
-      voxels: build.map(v => ({ position: [v.x, v.y, v.z] as [number,number,number], color: v.color })),
+      voxels: build.map(v => ({ position: [v.x, v.y, v.z] as [number,number,number], color: v.color, symbol: v.symbol })),
       boundingBox: {
         min: [build.length ? minX : 0, build.length ? minY : 0, build.length ? minZ : 0],
         max: [build.length ? maxX : 0, build.length ? maxY : 0, build.length ? maxZ : 0],

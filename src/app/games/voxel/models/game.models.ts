@@ -6,19 +6,23 @@ export type VoxelStage = 'idle' | 'countdown' | 'studying' | 'building' | 'compa
 // ── Interaction Mode ──
 export type InteractionMode = 'build' | 'remove';
 
-// ── Color Palette (9 vivid colors from visual config) ──
+// ── Color Palette (9 vivid colors, ordered for maximal distinction) ──
 export const VOXEL_COLORS = [
   '#ff0000', // red
-  '#ff6a00', // orange
-  '#fff200', // yellow
-  '#11ff00', // green
-  '#4acce1', // cyan
   '#0800ff', // blue
+  '#11ff00', // green
+  '#ff6a00', // orange
   '#6f00d8', // purple
+  '#4acce1', // cyan
+  '#fff200', // yellow
   '#ff89c2', // pink
   '#f1f5f9', // white
 ] as const;
 export type VoxelColor = typeof VOXEL_COLORS[number];
+
+// ── Symbol Palette (9 distinct symbols for cube faces) ──
+export const VOXEL_SYMBOLS = ['★', '●', '▲', '■', '♦', '♠', '♣', '♥', '✦'] as const;
+export type VoxelSymbol = typeof VOXEL_SYMBOLS[number];
 
 // ── Voxel Position (used for player build and shape comparison) ──
 export interface VoxelPosition {
@@ -26,12 +30,14 @@ export interface VoxelPosition {
   y: number;
   z: number;
   color: VoxelColor;
+  symbol: VoxelSymbol | null;
 }
 
 // ── Voxel and Shape (compatible with shape-generator) ──
 export interface Voxel {
   position: [number, number, number];
   color: VoxelColor;
+  symbol: VoxelSymbol | null;
 }
 
 export interface VoxelShape {
@@ -71,13 +77,15 @@ export interface TrialResult {
 
 // ── Configuration ──
 export interface VoxelConfig {
-  cubeCount: number;       // 3–30
+  cubeCount: number;       // 3–50
   colorCount: number;      // 1–9 (number of distinct colors used)
+  symbolCount: number;     // 1–9, where 1 means no symbols shown
 }
 
 export const DEFAULT_CONFIG: VoxelConfig = {
   cubeCount: 4,
   colorCount: 1,
+  symbolCount: 1,
 };
 
 // ── Scoring State ──
@@ -109,4 +117,5 @@ export interface RoundResult {
   averageBuildTimeSec: number;
   cubeCount: number;
   colorCount: number;
+  symbolCount: number;
 }

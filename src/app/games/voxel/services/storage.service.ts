@@ -22,8 +22,9 @@ export class StorageService {
 
       const cubeCount = clamp(Number(parsed.cubeCount) || DEFAULT_CONFIG.cubeCount, 3, 50);
       const colorCount = clamp(Number(parsed.colorCount) || DEFAULT_CONFIG.colorCount, 1, 9);
+      const symbolCount = clamp(Number(parsed.symbolCount) || DEFAULT_CONFIG.symbolCount, 1, 9);
 
-      return { cubeCount, colorCount };
+      return { cubeCount, colorCount, symbolCount };
     } catch {
       return { ...DEFAULT_CONFIG };
     }
