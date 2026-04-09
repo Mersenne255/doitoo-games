@@ -57,23 +57,27 @@ import {InteractionMode, VOXEL_COLORS, VOXEL_SYMBOLS, VoxelColor, VoxelStage, Vo
 
         <!-- Bottom overlay controls -->
         <div class="overlay-controls">
-          @if (showColorPicker()) {
-            <div class="color-row">
-              @for (c of colors(); track c) {
-                <button class="color-dot"
-                  [style.background-color]="c"
-                  [class.selected]="selectedColor() === c"
-                  (click)="onColorSelect(c)"></button>
-              }
+          @if (showSymbolPicker()) {
+            <div class="row-wrap">
+              <div class="select-row">
+                @for (s of symbols(); track s) {
+                  <button class="symbol-btn"
+                    [class.selected]="selectedSymbol() === s"
+                    (click)="onSymbolSelect(s)">{{ s }}</button>
+                }
+              </div>
             </div>
           }
-          @if (showSymbolPicker()) {
-            <div class="symbol-row">
-              @for (s of symbols(); track s) {
-                <button class="symbol-btn"
-                  [class.selected]="selectedSymbol() === s"
-                  (click)="onSymbolSelect(s)">{{ s }}</button>
-              }
+          @if (showColorPicker()) {
+            <div class="row-wrap">
+              <div class="select-row">
+                @for (c of colors(); track c) {
+                  <button class="color-dot"
+                    [style.background-color]="c"
+                    [class.selected]="selectedColor() === c"
+                    (click)="onColorSelect(c)"></button>
+                }
+              </div>
             </div>
           }
           <div class="ctrl-row">
@@ -171,10 +175,6 @@ import {InteractionMode, VOXEL_COLORS, VOXEL_SYMBOLS, VoxelColor, VoxelStage, Vo
     .right-group { display: flex; gap: 0.3rem; justify-self: end; }
     .cube-label { justify-self: start; }
 
-    .color-row {
-      display: flex; gap: 0.3rem; justify-content: center;
-    }
-
     .ctrl-btn {
       width: 2.75rem; height: 2.75rem; border-radius: 0.6rem;
       border: 1px solid rgba(255,255,255,0.12);
@@ -221,17 +221,29 @@ import {InteractionMode, VOXEL_COLORS, VOXEL_SYMBOLS, VoxelColor, VoxelStage, Vo
     .color-dot {
       width: 2rem; height: 2rem; border-radius: 50%;
       border: 2px solid transparent; cursor: pointer;
-      min-width: 44px; min-height: 44px;
+      min-width: 44px; min-height: 44px; flex-shrink: 0;
     }
     .color-dot.selected { border-color: white; box-shadow: 0 0 8px rgba(255,255,255,0.5); }
 
-    .symbol-row {
-      display: flex; gap: 0.3rem; justify-content: center;
+    .row-wrap{
+      width: 100%;
+      overflow-x: auto;
     }
+
+    .select-row {
+      width: fit-content; 
+      margin: 0 auto; 
+      gap: 0.5rem; 
+      flex-wrap: nowrap;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: auto; /* or fixed size */
+    }
+    
     .symbol-btn {
       width: 2rem; height: 2rem; border-radius: 0.4rem;
       border: 2px solid transparent; cursor: pointer;
-      min-width: 44px; min-height: 44px;
+      min-width: 44px; min-height: 44px; flex-shrink: 0;
       background: rgba(255,255,255,0.08);
       color: #e2e8f0; font-size: 1rem;
       display: flex; align-items: center; justify-content: center;

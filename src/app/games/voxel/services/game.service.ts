@@ -2,6 +2,7 @@ import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import {
   DEFAULT_CONFIG, InteractionMode, RoundResult, ScoringState, Trial, TrialResult,
   VoxelColor, VoxelConfig, VoxelPosition, VoxelStage, VoxelSymbol, VOXEL_COLORS, VOXEL_SYMBOLS,
+  MAX_COLORS, MAX_SYMBOLS,
 } from '../models/game.models';
 import { generateShape } from '../utils/shape-generator.util';
 import { compareShapes, shapesMatchRotationInvariant } from '../utils/shape-comparator.util';
@@ -34,8 +35,8 @@ export class GameService {
     const c = this.config();
     this.config.set({
       cubeCount: clamp(partial.cubeCount ?? c.cubeCount, 3, 50),
-      colorCount: clamp(partial.colorCount ?? c.colorCount, 1, 9),
-      symbolCount: clamp(partial.symbolCount ?? c.symbolCount, 1, 9),
+      colorCount: clamp(partial.colorCount ?? c.colorCount, 1, MAX_COLORS),
+      symbolCount: clamp(partial.symbolCount ?? c.symbolCount, 1, MAX_SYMBOLS),
     });
   }
 
@@ -159,18 +160,27 @@ export class GameService {
     const cfg = this.config();
     const seed = Date.now() + Math.floor(Math.random() * 100000);
     const shape = generateShape(seed, cfg.cubeCount, cfg.cubeCount <= 5);
+
+    // Simple seeded RNG for random assignment
+    let s = seed;
+    const rng = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+
+    // Assign colors — random per cube from active palette
     if (cfg.colorCount > 1) {
       const ac = VOXEL_COLORS.slice(0, cfg.colorCount);
-      shape.voxels = shape.voxels.map((v, i) => ({ ...v, color: ac[i % ac.length] }));
+      shape.voxels = shape.voxels.map(v => ({ ...v, color: ac[Math.floor(rng() * ac.length)] }));
     } else {
       shape.voxels = shape.voxels.map(v => ({ ...v, color: VOXEL_COLORS[0] }));
     }
+
+    // Assign symbols — random per cube, independent from colors
     if (cfg.symbolCount > 1) {
       const as = VOXEL_SYMBOLS.slice(0, cfg.symbolCount);
-      shape.voxels = shape.voxels.map((v, i) => ({ ...v, symbol: as[i % as.length] }));
+      shape.voxels = shape.voxels.map(v => ({ ...v, symbol: as[Math.floor(rng() * as.length)] }));
     } else {
       shape.voxels = shape.voxels.map(v => ({ ...v, symbol: null }));
     }
+
     this.currentTrial.set({ shape, studyTimeSec: this.getEffectiveStudyTimeSec(), seed });
   }
 }

@@ -533,30 +533,22 @@ export class ThreeSceneService {
     canvas.height = size;
     const ctx = canvas.getContext('2d')!;
 
-    // Transparent background (hollow feel)
-    ctx.clearRect(0, 0, size, size);
-
-    // Subtle dark fill so the joker is readable
-    ctx.fillStyle = 'rgba(40, 40, 60, 0.5)';
+    // Solid white background
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, size, size);
 
-    // Joker symbol centered — bright white
-    ctx.fillStyle = '#ffffff';
+    // Joker symbol centered
     ctx.font = 'bold 72px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('🃏', size / 2, size / 2);
 
     const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
 
     return Array.from({ length: 6 }, () =>
-      new THREE.MeshStandardMaterial({
-        map: texture,
-        transparent: true,
-        opacity: 0.75,
-        side: THREE.DoubleSide,
-      })
+      new THREE.MeshStandardMaterial({ map: texture })
     );
   }
 
@@ -596,10 +588,7 @@ export class ThreeSceneService {
 
   private addLighting(): void {
     if (!this.scene) return;
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(5, 5, 5);
-    this.scene.add(dirLight);
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     this.scene.add(ambientLight);
   }
 

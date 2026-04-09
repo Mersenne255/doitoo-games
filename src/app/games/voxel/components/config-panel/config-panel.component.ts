@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
-import { VOXEL_COLORS, VOXEL_SYMBOLS } from '../../models/game.models';
+import { VOXEL_COLORS, VOXEL_SYMBOLS, MAX_COLORS, MAX_SYMBOLS } from '../../models/game.models';
 
 @Component({
   selector: 'app-config-panel',
@@ -24,7 +24,7 @@ import { VOXEL_COLORS, VOXEL_SYMBOLS } from '../../models/game.models';
         <div class="config-row">
           <label class="section-label">Colors</label>
           <div class="slider-row">
-            <input type="range" min="1" max="9" step="1"
+            <input type="range" min="1" [max]="maxColors" step="1"
               [value]="game.config().colorCount"
               (input)="onColorCount($event)"
               aria-label="Color count" />
@@ -42,7 +42,7 @@ import { VOXEL_COLORS, VOXEL_SYMBOLS } from '../../models/game.models';
         <div class="config-row">
           <label class="section-label">Symbols</label>
           <div class="slider-row">
-            <input type="range" min="1" max="9" step="1"
+            <input type="range" min="1" [max]="maxSymbols" step="1"
               [value]="game.config().symbolCount"
               (input)="onSymbolCount($event)"
               aria-label="Symbol count" />
@@ -180,6 +180,8 @@ import { VOXEL_COLORS, VOXEL_SYMBOLS } from '../../models/game.models';
 export class ConfigPanelComponent {
   readonly game = inject(GameService);
   private readonly storage = inject(StorageService);
+  readonly maxColors = MAX_COLORS;
+  readonly maxSymbols = MAX_SYMBOLS;
 
   readonly activeColors = () => VOXEL_COLORS.slice(0, this.game.config().colorCount);
   readonly activeSymbols = () => VOXEL_SYMBOLS.slice(0, this.game.config().symbolCount);

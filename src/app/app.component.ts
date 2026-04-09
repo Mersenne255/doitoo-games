@@ -53,6 +53,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
       flex-direction: column;
       height: 100vh;
       height: 100dvh;
+      overflow: hidden;
     }
 
     main {

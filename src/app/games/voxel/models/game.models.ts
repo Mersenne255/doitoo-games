@@ -16,13 +16,14 @@ export const VOXEL_COLORS = [
   '#4acce1', // cyan
   '#fff200', // yellow
   '#ff89c2', // pink
-  '#f1f5f9', // white
 ] as const;
 export type VoxelColor = typeof VOXEL_COLORS[number];
+export const MAX_COLORS = VOXEL_COLORS.length;
 
 // ── Symbol Palette (9 distinct symbols for cube faces) ──
-export const VOXEL_SYMBOLS = ['★', '●', '▲', '■', '♦', '♠', '♣', '♥', '✦'] as const;
+export const VOXEL_SYMBOLS = ['★', '●', '▲', '■', '♦', '♠', '♣', '♥'] as const;
 export type VoxelSymbol = typeof VOXEL_SYMBOLS[number];
+export const MAX_SYMBOLS = VOXEL_SYMBOLS.length;
 
 // ── Voxel Position (used for player build and shape comparison) ──
 export interface VoxelPosition {

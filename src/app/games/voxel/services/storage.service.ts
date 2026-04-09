@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DEFAULT_CONFIG, VoxelConfig } from '../models/game.models';
+import { DEFAULT_CONFIG, VoxelConfig, MAX_COLORS, MAX_SYMBOLS } from '../models/game.models';
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
@@ -21,8 +21,8 @@ export class StorageService {
       const parsed = JSON.parse(raw);
 
       const cubeCount = clamp(Number(parsed.cubeCount) || DEFAULT_CONFIG.cubeCount, 3, 50);
-      const colorCount = clamp(Number(parsed.colorCount) || DEFAULT_CONFIG.colorCount, 1, 9);
-      const symbolCount = clamp(Number(parsed.symbolCount) || DEFAULT_CONFIG.symbolCount, 1, 9);
+      const colorCount = clamp(Number(parsed.colorCount) || DEFAULT_CONFIG.colorCount, 1, MAX_COLORS);
+      const symbolCount = clamp(Number(parsed.symbolCount) || DEFAULT_CONFIG.symbolCount, 1, MAX_SYMBOLS);
 
       return { cubeCount, colorCount, symbolCount };
     } catch {
