@@ -8,14 +8,14 @@ export type InteractionMode = 'build' | 'remove';
 
 // ── Color Palette (9 vivid colors, ordered for maximal distinction) ──
 export const VOXEL_COLORS = [
-  '#ff0000', // red
-  '#0800ff', // blue
-  '#11ff00', // green
+  '#b40000ff', // red
+  '#0600c0ff', // blue
+  '#0a9100ff', // green
   '#ff6a00', // orange
   '#6f00d8', // purple
   '#4acce1', // cyan
-  '#fff200', // yellow
-  '#ff89c2', // pink
+  '#e0d500ff', // yellow
+  '#d63c87ff', // pink
 ] as const;
 export type VoxelColor = typeof VOXEL_COLORS[number];
 export const MAX_COLORS = VOXEL_COLORS.length;

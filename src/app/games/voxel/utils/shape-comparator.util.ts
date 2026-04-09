@@ -142,8 +142,7 @@ function fullShapeKey(positions: [number, number, number][], voxels: VoxelPositi
 
 /**
  * Checks if two shapes match under any of the 24 cube rotations.
- * The first cube in `build` (index 0) is the anchor/wildcard — it matches any target cube.
- * All other cubes must match both position AND color/symbol.
+ * All cubes must match both position AND color/symbol.
  */
 export function shapesMatchRotationInvariant(
   target: VoxelPosition[],
@@ -177,9 +176,6 @@ export function shapesMatchRotationInvariant(
         match = false;
         break;
       }
-
-      // Index 0 is the anchor/wildcard — skip attribute check
-      if (i === 0) continue;
 
       // Check color and symbol match
       if (build[i].color !== targetVoxel.color || build[i].symbol !== targetVoxel.symbol) {

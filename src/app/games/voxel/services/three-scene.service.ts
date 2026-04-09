@@ -10,7 +10,6 @@ const EDGE_OPACITY = 0.5;
 const CORRECT_COLOR = 0x22c55e;
 const MISSING_COLOR = 0xef4444;
 const EXTRA_COLOR = 0xf59e0b;
-const ANCHOR_EDGE_COLOR = 0xfde68a;
 
 @Injectable({ providedIn: 'root' })
 export class ThreeSceneService {
@@ -30,6 +29,7 @@ export class ThreeSceneService {
   private highlightedOriginalColor: number | null = null;
   private currentMode: InteractionMode = 'build';
   private colorMode = false;
+  private frameMesh: THREE.LineSegments | null = null;
 
   // Tap vs drag detection
   private pointerStartX = 0;
@@ -130,8 +130,8 @@ export class ThreeSceneService {
     this.setupControls(canvas);
     this.addLighting();
 
-    // Add anchor cube with distinct visual
-    this.addCubeToScene(anchorPosition, colorMode ? VOXEL_COLORS[0] : undefined, true);
+    // Add white wireframe as the starting frame
+    this.addFrame(anchorPosition);
   }
 
   // ── Comparison scene ──
@@ -226,6 +226,42 @@ export class ThreeSceneService {
     }
   }
 
+  // ── Frame management ──
+
+  private addFrame(position: [number, number, number]): void {
+    if (!this.scene) return;
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+    this.frameMesh = new THREE.LineSegments(this.edgesGeo, edgeMat);
+    this.frameMesh.position.set(...position);
+    this.scene.add(this.frameMesh);
+  }
+
+  /** Returns the frame position so the game board can place a cube there on click. */
+  getFramePosition(): [number, number, number] | null {
+    if (!this.frameMesh) return null;
+    const p = this.frameMesh.position;
+    return [Math.round(p.x), Math.round(p.y), Math.round(p.z)];
+  }
+
+  /** Check if a click/tap hits the frame wireframe (for placing the first cube). */
+  isClickOnFrame(event: MouseEvent | TouchEvent): boolean {
+    if (!this.camera || !this.scene || !this.renderer || !this.frameMesh) return false;
+    // If there's already a cube at the frame position, the frame is hidden behind it
+    const fp = this.getFramePosition();
+    if (fp && this.cubeMeshes.has(`${fp[0]},${fp[1]},${fp[2]}`)) return false;
+
+    const ndc = this.getNDC(event);
+    if (!ndc) return false;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, this.camera);
+
+    // Use a bounding box check since LineSegments raycasting is unreliable
+    const box = new THREE.Box3().setFromObject(this.frameMesh);
+    const ray = raycaster.ray;
+    return ray.intersectsBox(box);
+  }
+
   // ── Interaction mode ──
 
   setInteractionMode(mode: InteractionMode): void {
@@ -294,27 +330,19 @@ export class ThreeSceneService {
 
   // ── Build scene cube management ──
 
-  addCubeToScene(position: [number, number, number], color?: VoxelColor, isAnchor = false, symbol?: VoxelSymbol | null): void {
+  addCubeToScene(position: [number, number, number], color?: VoxelColor, _isAnchor = false, symbol?: VoxelSymbol | null): void {
     if (!this.scene) return;
     const key = `${position[0]},${position[1]},${position[2]}`;
     if (this.cubeMeshes.has(key)) return;
 
-    let mat: THREE.Material | THREE.Material[];
-    if (isAnchor) {
-      mat = this.createAnchorMaterial();
-    } else {
-      const colorStr = color ?? `#${STANDARD_COLOR.toString(16).padStart(6, '0')}`;
-      mat = this.createCubeMaterial(colorStr, symbol ?? null);
-    }
+    const colorStr = color ?? `#${STANDARD_COLOR.toString(16).padStart(6, '0')}`;
+    const mat = this.createCubeMaterial(colorStr, symbol ?? null);
     const mesh = new THREE.Mesh(this.boxGeo, mat);
     mesh.position.set(...position);
     this.scene.add(mesh);
     this.cubeMeshes.set(key, mesh);
 
-    const edgeColor = isAnchor ? ANCHOR_EDGE_COLOR : EDGE_COLOR;
-    const edgeOpacity = isAnchor ? 1.0 : EDGE_OPACITY;
-    const lineWidth = 1;
-    const edgeMat = new THREE.LineBasicMaterial({ color: edgeColor, transparent: true, opacity: edgeOpacity, linewidth: lineWidth });
+    const edgeMat = new THREE.LineBasicMaterial({ color: EDGE_COLOR, transparent: true, opacity: EDGE_OPACITY, linewidth: 1 });
     const edges = new THREE.LineSegments(this.edgesGeo, edgeMat);
     edges.position.set(...position);
     this.scene.add(edges);
@@ -500,6 +528,7 @@ export class ThreeSceneService {
     this.hoverMesh = null;
     this.highlightedCubeKey = null;
     this.highlightedOriginalColor = null;
+    this.frameMesh = null;
   }
 
   // ── Private helpers ──
@@ -524,32 +553,6 @@ export class ThreeSceneService {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
     return texture;
-  }
-
-  private createAnchorMaterial(): THREE.Material[] {
-    const size = 128;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-
-    // Solid white background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
-
-    // Joker symbol centered
-    ctx.font = 'bold 72px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🃏', size / 2, size / 2);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.needsUpdate = true;
-
-    return Array.from({ length: 6 }, () =>
-      new THREE.MeshStandardMaterial({ map: texture })
-    );
   }
 
   private createCubeMaterial(color: string | number, symbol: VoxelSymbol | null): THREE.Material | THREE.Material[] {

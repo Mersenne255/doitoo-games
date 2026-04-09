@@ -44,19 +44,37 @@ import {InteractionMode, VOXEL_COLORS, VOXEL_SYMBOLS, VoxelColor, VoxelStage, Vo
         </div>
         <button class="abort-float" (click)="onAbort()" aria-label="Close">✕</button>
 
-        <!-- Solved overlay -->
+        <!-- Solved toast -->
+        @if (game.solved() && showSolvedToast) {
+          <div class="solved-toast">Correct</div>
+        }
+
+        <!-- Solved bottom bar -->
         @if (game.solved()) {
-          <div class="solved-overlay">
-            <div class="solved-glow">Correct!</div>
-            <div class="solved-actions">
-              <button class="solved-btn back" (click)="onAbort()">Back</button>
-              <button class="solved-btn again" (click)="onNextRound()">Again</button>
-            </div>
+          <div class="summary-bar" [class.collapsed]="solvedBarCollapsed">
+            @if (!solvedBarCollapsed) {
+              <div class="summary-content">
+                <div class="summary-stats">
+                  <div class="stat">
+                    <span class="stat-label">Time</span>
+                    <span class="stat-value">{{ buildTimeSec() }}s</span>
+                  </div>
+                </div>
+                <div class="summary-actions">
+                  <button class="back-btn" (click)="onAbort()">Back</button>
+                  <button class="again-btn" (click)="onNextRound()">Again</button>
+                </div>
+              </div>
+            }
+            <button class="summary-toggle" (click)="solvedBarCollapsed = !solvedBarCollapsed"
+              [attr.title]="solvedBarCollapsed ? 'Show results' : 'Hide results'">
+              <span class="toggle-icon" [class.flipped]="solvedBarCollapsed">‹</span>
+            </button>
           </div>
         }
 
         <!-- Bottom overlay controls -->
-        <div class="overlay-controls">
+        <div class="overlay-controls" [class.hidden]="game.solved()">
           @if (showSymbolPicker()) {
             <div class="row-wrap">
               <div class="select-row">
@@ -254,34 +272,89 @@ import {InteractionMode, VOXEL_COLORS, VOXEL_SYMBOLS, VoxelColor, VoxelStage, Vo
       background: rgba(255,255,255,0.18);
     }
 
-    /* Solved overlay */
-    .solved-overlay {
-      position: absolute; inset: 0; z-index: 20;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(15,15,26,0.75); backdrop-filter: blur(6px);
+    .overlay-controls.hidden { display: none; }
+
+    /* Summary bar (solved) */
+    .summary-bar {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+      display: flex; flex-direction: row; align-items: stretch;
+      background: rgba(15, 15, 26, 0.94);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      transition: transform 0.25s ease;
     }
-    .solved-glow {
-      font-size: 2.5rem; font-weight: 900; color: #22c55e;
-      text-shadow: 0 0 20px rgba(34,197,94,0.6), 0 0 40px rgba(34,197,94,0.3), 0 0 60px rgba(34,197,94,0.15);
+    .summary-bar.collapsed { transform: translateY(100%); }
+
+    .summary-content {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 0.4rem; padding: 0.5rem;
+    }
+
+    .summary-toggle {
+      background: rgba(15, 15, 26, 0.94);
+      border: none; border-left: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer; color: #64748b; font-size: 1rem;
+      padding: 0 0.5rem; display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s;
+    }
+    .summary-bar.collapsed .summary-toggle {
+      position: absolute; bottom: 0; right: 0;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 0.4rem 0 0 0;
+      padding: 0.3rem 0.5rem;
+      backdrop-filter: blur(10px);
+    }
+    .summary-toggle:hover { color: #94a3b8; }
+    .toggle-icon { display: inline-block; transition: transform 0.25s; }
+    .toggle-icon.flipped { transform: rotate(180deg); }
+
+    .solved-toast {
+      position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      z-index: 25; pointer-events: none;
+      font-size: 2rem; font-weight: 900; color: #22c55e;
+      text-shadow: 0 0 20px rgba(34,197,94,0.6), 0 0 40px rgba(34,197,94,0.3);
       letter-spacing: 0.02em;
+      animation: toast-fade 1.8s ease-out forwards;
     }
-    .solved-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-    .solved-btn {
-      padding: 0.6rem 2rem; border-radius: 0.6rem;
-      font-weight: 700; font-size: 0.95rem; cursor: pointer;
-      min-height: 44px; min-width: 100px;
-      transition: background 0.2s;
+    @keyframes toast-fade {
+      0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      70% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-1.5rem); }
     }
-    .solved-btn.back {
+
+    .summary-stats {
+      display: flex; gap: 2rem; justify-content: center;
+    }
+    .stat {
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    }
+    .stat-label {
+      font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #64748b;
+    }
+    .stat-value {
+      font-size: 1.25rem; font-weight: 800; color: #e2e8f0;
+      letter-spacing: -0.02em;
+    }
+
+    .summary-actions {
+      display: flex; gap: 0.75rem; width: 100%; max-width: 20rem;
+    }
+    .back-btn, .again-btn {
+      flex: 1; padding: 0.6rem 1.5rem; border-radius: 0.5rem;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      transition: background 0.2s; outline: none; text-align: center;
+    }
+    .back-btn {
       border: 1px solid rgba(255,255,255,0.15);
       background: rgba(255,255,255,0.06); color: #94a3b8;
     }
-    .solved-btn.back:hover { background: rgba(255,255,255,0.12); }
-    .solved-btn.again {
+    .back-btn:hover { background: rgba(255,255,255,0.12); }
+    .again-btn {
       border: 1px solid rgba(34,197,94,0.5);
       background: rgba(34,197,94,0.2); color: #86efac;
     }
-    .solved-btn.again:hover { background: rgba(34,197,94,0.35); }
+    .again-btn:hover { background: rgba(34,197,94,0.35); }
 
     .comparison-split {
       flex: 1; display: flex; gap: 0; min-height: 0;
@@ -350,6 +423,14 @@ export class GameBoardComponent implements OnDestroy {
   readonly colors = computed(() => VOXEL_COLORS.slice(0, this.game.config().colorCount));
   readonly symbols = computed(() => VOXEL_SYMBOLS.slice(0, this.game.config().symbolCount));
   readonly selectedSymbol = this.game.selectedSymbol;
+  solvedBarCollapsed = false;
+  showSolvedToast = false;
+  private solvedToastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  readonly buildTimeSec = computed(() => {
+    const r = this.game.lastTrialResult();
+    return r ? (r.buildTimeMs / 1000).toFixed(1) : '—';
+  });
 
   private studyStartTime = 0;
   private studyTimerIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -377,10 +458,18 @@ export class GameBoardComponent implements OnDestroy {
         afterNextRender(() => this.initComparisonPhase(), { injector: this.injector });
       }
     });
+
+    effect(() => {
+      if (this.game.solved()) {
+        this.showSolvedToast = true;
+        this.solvedToastTimeout = setTimeout(() => { this.showSolvedToast = false; }, 1800);
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.clearStudyTimer();
+    this.clearSolvedToast();
     this.cleanupAll();
     this.destroyResizeObserver();
   }
@@ -402,10 +491,22 @@ export class GameBoardComponent implements OnDestroy {
 
   onPointerUp(event: PointerEvent): void {
     const mode = this.game.interactionMode();
-    if (this.game.solved()) return;
     if (!this.threeScene.isTap(event)) return;
+    // When solved, don't allow placing/removing cubes but orbit still works
+    if (this.game.solved()) return;
 
     if (mode === 'build') {
+      // Check if clicking on the empty frame to place the first cube
+      if (this.threeScene.isClickOnFrame(event)) {
+        const fp = this.threeScene.getFramePosition();
+        if (fp) {
+          const color = this.game.isMultiColor() ? this.game.selectedColor() : undefined;
+          const symbol = this.game.isMultiSymbol() ? this.game.selectedSymbol() : null;
+          this.game.addCube({ x: fp[0], y: fp[1], z: fp[2] }, color, symbol);
+          this.threeScene.addCubeToScene(fp, color, false, symbol);
+          return;
+        }
+      }
       const result = this.threeScene.getClickedFace(event);
       if (result) {
         const color = this.game.isMultiColor() ? this.game.selectedColor() : undefined;
@@ -415,7 +516,7 @@ export class GameBoardComponent implements OnDestroy {
       }
     } else if (mode === 'remove') {
       const pos = this.threeScene.getClickedCube(event);
-      if (pos && !(pos[0] === 0 && pos[1] === 0 && pos[2] === 0)) {
+      if (pos) {
         this.game.removeCube({ x: pos[0], y: pos[1], z: pos[2] });
         this.threeScene.removeCubeFromScene(pos);
       }
@@ -436,7 +537,7 @@ export class GameBoardComponent implements OnDestroy {
   onGiveUp(): void { this.game.giveUp(); }
   onAbort(): void { this.cleanupAll(); this.game.abortSession(); }
   onOpenInfo(): void { this.gameInfo.open('voxel', 'Voxel', 'assets/icons/voxel-icon.png'); }
-  onNextRound(): void { this.game.nextRound(); }
+  onNextRound(): void { this.solvedBarCollapsed = false; this.clearSolvedToast(); this.game.nextRound(); }
   onEnd(): void { this.cleanupAll(); this.game.endSession(); }
 
   // ── Phase init ──
@@ -494,21 +595,12 @@ export class GameBoardComponent implements OnDestroy {
       this.setupResizeObserver(origCanvas);
     }
 
-    // Right pane: player build with anchor shown as joker
+    // Right pane: player build
     const buildCanvas = this.compBuildCanvasRef?.nativeElement;
     if (buildCanvas) {
       this.threeScene.dispose();
-      this.threeScene.initBuildScene(buildCanvas, [0, 0, 0], this.game.isMultiColor());
-      // Add remaining cubes (skip index 0 which is the anchor already added by initBuildScene)
-      for (let i = 1; i < result.playerBuild.length; i++) {
-        const v = result.playerBuild[i];
-        this.threeScene.addCubeToScene(
-          [v.x, v.y, v.z],
-          this.game.isMultiColor() ? v.color : undefined,
-          false,
-          v.symbol,
-        );
-      }
+      const buildShape = this.buildToVoxelShape(result.playerBuild);
+      this.threeScene.init(buildCanvas, buildShape, this.game.isMultiColor());
       this.threeScene.startAnimationLoop();
       this.threeInitialized = true;
     }
@@ -539,6 +631,11 @@ export class GameBoardComponent implements OnDestroy {
 
   private clearStudyTimer(): void {
     if (this.studyTimerIntervalId !== null) { clearInterval(this.studyTimerIntervalId); this.studyTimerIntervalId = null; }
+  }
+
+  private clearSolvedToast(): void {
+    if (this.solvedToastTimeout !== null) { clearTimeout(this.solvedToastTimeout); this.solvedToastTimeout = null; }
+    this.showSolvedToast = false;
   }
 
   private setupResizeObserver(canvas: HTMLCanvasElement): void {

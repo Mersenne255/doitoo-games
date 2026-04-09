@@ -54,7 +54,7 @@ export class GameService {
 
   endStudy(studyTimeMs: number): void {
     this.currentStudyTimeMs = studyTimeMs;
-    this.playerBuild.set([{ x: 0, y: 0, z: 0, color: VOXEL_COLORS[0], symbol: null }]);
+    this.playerBuild.set([]);
     this.interactionMode.set('build');
     this.selectedColor.set(VOXEL_COLORS[0]);
     this.selectedSymbol.set(this.config().symbolCount > 1 ? VOXEL_SYMBOLS[0] : null);
@@ -76,7 +76,6 @@ export class GameService {
   }
 
   removeCube(pos: { x: number; y: number; z: number }): void {
-    if (pos.x === 0 && pos.y === 0 && pos.z === 0) return;
     const nb = this.playerBuild().filter(v => !(v.x === pos.x && v.y === pos.y && v.z === pos.z));
     this.playerBuild.set(nb);
     this.checkSolved(nb);
