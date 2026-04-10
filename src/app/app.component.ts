@@ -19,7 +19,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     <nav class="nav-bar" [class.nav-hidden]="nav.hidden()" role="navigation">
       <div class="nav-inner">
         @if (isGameRoute()) {
-          <a class="back-button" routerLink="/" aria-label="Back to game selector">
+          <a class="back-button" routerLink="/" (click)="clearLastRoute()" aria-label="Back to game selector">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5"/><path d="M19 9.5V19a1 1 0 0 1-1 1h-4v-5h-4v5H6a1 1 0 0 1-1-1V9.5"/></svg>
           </a>
         }
@@ -241,6 +241,11 @@ export class AppComponent {
         this.currentRoute.set(url);
         this.gameIcon.set(game?.icon ?? '');
 
+        // Persist last visited game route
+        if (game) {
+          try { localStorage.setItem('doitoo:last-route', url); } catch { /* ignore */ }
+        }
+
         // Always show nav on route change; games hide it themselves during gameplay
         this.nav.show();
 
@@ -265,5 +270,9 @@ export class AppComponent {
 
   openGameInfo(): void {
     this.gameInfo.open(routeToGameId(this.currentRoute()), this.gameTitle(), this.gameIcon());
+  }
+
+  clearLastRoute(): void {
+    try { localStorage.removeItem('doitoo:last-route'); } catch { /* ignore */ }
   }
 }

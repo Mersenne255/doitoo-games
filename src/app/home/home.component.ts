@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, OnInit } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { GAME_LIST, TAGLINES, GameEntry } from './game-list';
 import { GameInfoService, routeToGameId } from '../shared/services/game-info.service';
 
@@ -146,10 +146,20 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
     }
   `],
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   private readonly gameInfo = inject(GameInfoService);
+  private readonly router = inject(Router);
   readonly games = GAME_LIST;
   readonly tagline = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
+
+  ngOnInit(): void {
+    try {
+      const lastRoute = localStorage.getItem('doitoo:last-route');
+      if (lastRoute && lastRoute !== '/') {
+        this.router.navigateByUrl(lastRoute);
+      }
+    } catch { /* ignore */ }
+  }
 
   openInfo(event: Event, game: GameEntry): void {
     event.stopPropagation();
