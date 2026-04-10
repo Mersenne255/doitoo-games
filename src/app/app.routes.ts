@@ -14,5 +14,6 @@ export const routes: Routes = [
   { path: 'ciphergrid', loadComponent: () => import('./games/ciphergrid/ciphergrid-game.component').then(m => m.CiphergridGameComponent) },
   { path: 'voxel', loadComponent: () => import('./games/voxel/voxel-game.component').then(m => m.VoxelGameComponent) },
   { path: 'sudoku', loadComponent: () => import('./games/sudoku/sudoku-game.component').then(m => m.SudokuGameComponent) },
+  { path: 'polyomino', loadComponent: () => import('./games/polyomino/polyomino-game.component').then(m => m.PolyominoGameComponent) },
   { path: '**', redirectTo: '' },
 ];

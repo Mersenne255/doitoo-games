@@ -93,7 +93,6 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
     .card-icon {
       width: 48px;
       height: 48px;
-      object-fit: cover;
     }
 
     .card-name {
