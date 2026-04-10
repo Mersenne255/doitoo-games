@@ -4,6 +4,8 @@ import { filter } from 'rxjs/operators';
 import { NavService } from './shared/services/nav.service';
 import { GameInfoService, routeToGameId } from './shared/services/game-info.service';
 import { GameInfoPopupComponent } from './shared/components/game-info-popup/game-info-popup.component';
+import { ConfirmPopupComponent } from './shared/components/confirm-popup/confirm-popup.component';
+import { ConfirmService } from './shared/services/confirm.service';
 import { BUILD_INFO } from '../environments/build-info';
 import { GAME_LIST } from './home/game-list';
 
@@ -12,7 +14,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, GameInfoPopupComponent],
+  imports: [RouterOutlet, RouterLink, GameInfoPopupComponent, ConfirmPopupComponent],
   template: `
     <nav class="nav-bar" [class.nav-hidden]="nav.hidden()" role="navigation">
       <div class="nav-inner">
@@ -45,6 +47,9 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     }
     @if (gameInfo.isOpen()) {
       <app-game-info-popup />
+    }
+    @if (confirmSvc.isOpen()) {
+      <app-confirm-popup />
     }
   `,
   styles: [`
@@ -207,6 +212,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
 export class AppComponent {
   readonly nav = inject(NavService);
   readonly gameInfo = inject(GameInfoService);
+  readonly confirmSvc = inject(ConfirmService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 

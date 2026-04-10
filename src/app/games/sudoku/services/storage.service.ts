@@ -4,6 +4,16 @@ import { SudokuConfig, DEFAULT_CONFIG } from '../models/game.models';
 const GAME_ID = 'doitoo-sudoku';
 const PREFIX = GAME_ID + ':';
 const CONFIG_KEY = PREFIX + 'config';
+const STATE_KEY = PREFIX + 'state';
+
+export interface SavedGameState {
+  puzzle: { grid: number[][]; solution: number[][]; boxRows: number; boxCols: number };
+  playerGrid: { value: number; pencilMarks: number[]; isGiven: boolean }[][];
+  hintsUsed: number;
+  errorCount: number;
+  elapsedMs: number;
+  config: SudokuConfig;
+}
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {
@@ -28,5 +38,27 @@ export class StorageService {
     try {
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
     } catch { /* quota exceeded */ }
+  }
+
+  saveGameState(state: SavedGameState): void {
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    } catch { /* quota exceeded */ }
+  }
+
+  loadGameState(): SavedGameState | null {
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (raw === null) return null;
+      return JSON.parse(raw) as SavedGameState;
+    } catch {
+      return null;
+    }
+  }
+
+  clearGameState(): void {
+    try {
+      localStorage.removeItem(STATE_KEY);
+    } catch { /* ignore */ }
   }
 }

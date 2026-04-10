@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
-import { SpeedMode, BoxDimension, BOX_DIMENSIONS } from '../../models/game.models';
+import { BoxDimension } from '../../models/game.models';
 
 @Component({
   selector: 'app-config-panel',
@@ -19,37 +19,12 @@ import { SpeedMode, BoxDimension, BOX_DIMENSIONS } from '../../models/game.model
           <span class="range-value">{{ game.config().difficulty }}</span>
         </div>
 
-        <label class="section-label">Puzzles</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="10" step="1"
-            [value]="game.config().puzzleCount"
-            (input)="onPuzzleCount($event)"
-            aria-label="Puzzle count" />
-          <span class="range-value">{{ game.config().puzzleCount }}</span>
-        </div>
-
         <label class="section-label">Grid Size</label>
         <div class="button-group">
           @for (dim of boxDims; track dim.label) {
             <button [class.active]="isBoxDimActive(dim.value)"
               (click)="onBoxDim(dim.value)">{{ dim.label }}</button>
           }
-        </div>
-
-        <label class="section-label">Speed</label>
-        <div class="button-group">
-          @for (s of speeds; track s) {
-            <button [class.active]="game.config().speedMode === s"
-              (click)="onSpeed(s)">{{ s }}</button>
-          }
-        </div>
-
-        <div class="toggle-row">
-          <label class="section-label">Error Highlighting</label>
-          <button class="toggle-btn" [class.active]="game.config().errorHighlighting"
-            (click)="onToggleErrors()" aria-label="Toggle error highlighting">
-            {{ game.config().errorHighlighting ? 'ON' : 'OFF' }}
-          </button>
         </div>
       </div>
 
@@ -146,35 +121,6 @@ import { SpeedMode, BoxDimension, BOX_DIMENSIONS } from '../../models/game.model
       }
     }
 
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 0.25rem;
-    }
-
-    .toggle-btn {
-      background: rgba(255, 255, 255, 0.06);
-      color: #94a3b8;
-      padding: 0.3rem 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.75rem;
-      transition: all 0.15s ease;
-      outline: none;
-
-      &:hover { background: rgba(255, 255, 255, 0.1); }
-
-      &.active {
-        background: linear-gradient(135deg, #6366f1, #3b82f6);
-        color: white;
-        border-color: transparent;
-        box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
-      }
-    }
-
     .start-btn {
       width: 100%;
       padding: 0.75rem 3rem;
@@ -194,7 +140,6 @@ import { SpeedMode, BoxDimension, BOX_DIMENSIONS } from '../../models/game.model
 export class ConfigPanelComponent {
   readonly game = inject(GameService);
   private readonly storage = inject(StorageService);
-  readonly speeds: SpeedMode[] = ['relaxed', 'standard', 'intense'];
   readonly boxDims = [
     { label: '4×4', value: [2, 2] as BoxDimension },
     { label: '6×6', value: [2, 3] as BoxDimension },
@@ -211,20 +156,7 @@ export class ConfigPanelComponent {
     this.game.updateConfig({ difficulty: value });
   }
 
-  onPuzzleCount(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
-    this.game.updateConfig({ puzzleCount: value });
-  }
-
   onBoxDim(dim: BoxDimension): void {
     this.game.updateConfig({ boxDimension: dim });
-  }
-
-  onSpeed(speed: SpeedMode): void {
-    this.game.updateConfig({ speedMode: speed });
-  }
-
-  onToggleErrors(): void {
-    this.game.updateConfig({ errorHighlighting: !this.game.config().errorHighlighting });
   }
 }

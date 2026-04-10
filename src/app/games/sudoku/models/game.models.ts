@@ -88,10 +88,10 @@ export interface SudokuConfig {
 
 export const DEFAULT_CONFIG: SudokuConfig = {
   difficulty: 50,
-  puzzleCount: 3,
+  puzzleCount: 1,
   boxDimension: [3, 3],
-  speedMode: 'standard',
-  errorHighlighting: true,
+  speedMode: 'relaxed',
+  errorHighlighting: false,
 };
 
 // ── Completion Status ──

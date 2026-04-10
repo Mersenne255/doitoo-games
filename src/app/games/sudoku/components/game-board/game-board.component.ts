@@ -9,6 +9,8 @@ import {
   effect,
 } from '@angular/core';
 import { GameService } from '../../services/game.service';
+import { explain } from '../../utils/explainer.util';
+import { ConfirmService } from '../../../../shared/services/confirm.service';
 
 @Component({
   selector: 'app-game-board',
@@ -16,23 +18,15 @@ import { GameService } from '../../services/game.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="board">
-      <!-- Top bar -->
-      <div class="top-bar">
-        <span class="progress">Puzzle {{ game.currentPuzzleIndex() + 1 }} / {{ game.puzzles().length }}</span>
-        <span class="timer" [class.urgent]="timerUrgent()">{{ timerDisplay() }}</span>
-        <button class="abort-btn" (click)="game.abortSession()" aria-label="Abort">✕</button>
-      </div>
-
       @if (game.isWalkthrough()) {
-        <!-- Walkthrough view -->
         <div class="walkthrough">
           <div class="grid-container" [style.--grid-size]="gridSize()">
-            @for (row of gridRows(); track $index) {
-              @for (cell of row; track $index) {
+            @for (row of gridRows(); track rIdx; let rIdx = $index) {
+              @for (cell of row; track cIdx; let cIdx = $index) {
                 <div class="cell"
-                  [class.box-right]="isBoxRight($index, rowIdx()[$index])"
-                  [class.box-bottom]="isBoxBottom(rowIdx()[$index])"
-                  [class.wt-highlight]="isWtHighlight(rowIdx()[$index], $index)"
+                  [class.box-right]="isBoxRight(cIdx)"
+                  [class.box-bottom]="isBoxBottom(rIdx)"
+                  [class.wt-highlight]="isWtHighlight(rIdx, cIdx)"
                   [class.given]="cell.isGiven">
                   <span class="cell-value">{{ cell.value || '' }}</span>
                 </div>
@@ -56,27 +50,27 @@ import { GameService } from '../../services/game.service';
           </div>
         </div>
       } @else {
-        <!-- Normal play view -->
         <div class="play-area">
           <div class="grid-container" [style.--grid-size]="gridSize()">
             @for (row of gridRows(); track rIdx; let rIdx = $index) {
               @for (cell of row; track cIdx; let cIdx = $index) {
                 <div class="cell"
-                  [class.box-right]="isBoxRight(cIdx, rIdx)"
+                  [class.box-right]="isBoxRight(cIdx)"
                   [class.box-bottom]="isBoxBottom(rIdx)"
                   [class.selected]="isSelected(rIdx, cIdx)"
                   [class.same-unit]="isSameUnit(rIdx, cIdx)"
                   [class.same-digit]="isSameDigit(rIdx, cIdx)"
+                  [class.hint-highlight]="isHintHighlight(rIdx, cIdx)"
                   [class.given]="cell.isGiven"
                   [class.player]="!cell.isGiven && cell.value !== 0"
-                  [class.conflict]="isConflict(rIdx, cIdx)"
+                  [class.multi]="!cell.isGiven && cell.pencilMarks.size > 1"
                   (click)="game.selectCell(rIdx, cIdx)">
-                  @if (cell.value !== 0) {
+                  @if (cell.value !== 0 && cell.pencilMarks.size <= 1) {
                     <span class="cell-value">{{ cell.value }}</span>
                   } @else if (cell.pencilMarks.size > 0) {
-                    <div class="pencil-grid" [style.--pm-cols]="pmCols()">
-                      @for (d of digits(); track d) {
-                        <span class="pencil-mark">{{ cell.pencilMarks.has(d) ? d : '' }}</span>
+                    <div class="multi-digits">
+                      @for (d of sortedMarks(cell.pencilMarks); track d; let last = $last) {
+                        <span class="multi-num">{{ d }}</span>@if (!last) {<span class="multi-sep">,</span>}
                       }
                     </div>
                   }
@@ -85,37 +79,41 @@ import { GameService } from '../../services/game.service';
             }
           </div>
 
-          <!-- Controls -->
-          <div class="controls">
+          <div class="controls" [class.hidden]="game.solved()">
             <div class="number-pad">
               @for (d of digits(); track d) {
-                <button class="num-btn" (click)="onDigit(d)">{{ d }}</button>
+                <button class="num-btn" [class.active]="isDigitInCell(d)" (click)="onDigit(d)">{{ d }}</button>
               }
             </div>
 
             <div class="tool-bar">
-              <button class="tool-btn" [class.active]="game.pencilMode()"
-                (click)="game.togglePencilMode()" aria-label="Pencil mode">✏️ Pencil</button>
               <button class="tool-btn" [disabled]="game.undoStack().length === 0"
-                (click)="game.undo()" aria-label="Undo">↩ Undo</button>
+                (click)="game.undo()" aria-label="Undo">↩</button>
               <button class="tool-btn" [disabled]="game.redoStack().length === 0"
-                (click)="game.redo()" aria-label="Redo">↪ Redo</button>
-              @if (game.hintsRemaining() !== 0) {
-                <button class="tool-btn hint" (click)="onHint()" aria-label="Hint"
-                  [disabled]="game.hintsRemaining() !== null && game.hintsRemaining()! <= 0">
-                  💡 Hint
-                  @if (game.hintsRemaining() !== null) {
-                    <span class="hint-count">({{ game.hintsRemaining() }})</span>
-                  }
-                </button>
-              }
-              <button class="tool-btn erase" (click)="game.clearCell()" aria-label="Erase">⌫ Erase</button>
-            </div>
-
-            <div class="bottom-actions">
-              <button class="action-btn danger" (click)="onGiveUp()">Give Up</button>
+                (click)="game.redo()" aria-label="Redo">↪</button>
+              <button class="tool-btn hint" (click)="onHint()" aria-label="Hint">💡</button>
+              <button class="tool-btn give-up" (click)="onGiveUp()" aria-label="Give up">🏳️</button>
             </div>
           </div>
+
+          @if (showSolvedToast) {
+            <div class="solved-toast">Correct</div>
+          }
+
+          @if (game.solved()) {
+            <div class="summary-bar">
+              <div class="summary-content">
+                <div class="stat">
+                  <span class="stat-label">Time</span>
+                  <span class="stat-value">{{ game.solveTimeSec() }}s</span>
+                </div>
+                <div class="summary-actions">
+                  <button class="back-btn" (click)="game.abortSession()">Back</button>
+                  <button class="again-btn" (click)="game.startSession()">Again</button>
+                </div>
+              </div>
+            </div>
+          }
         </div>
       }
     </div>
@@ -128,61 +126,19 @@ import { GameService } from '../../services/game.service';
       flex-direction: column;
       height: 100vh;
       height: 100dvh;
-      padding: 0.5rem 0.75rem;
+      padding: 0;
       max-width: 600px;
       margin: 0 auto;
       box-sizing: border-box;
     }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 0.5rem;
-    }
-
-    .progress {
-      color: #94a3b8;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .timer {
-      color: #a5b4fc;
-      font-size: 0.9rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .timer.urgent { color: #ef4444; }
-
-    .abort-btn {
-      width: 2rem;
-      height: 2rem;
-      border-radius: 50%;
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      background: rgba(15, 15, 26, 0.85);
-      color: #fca5a5;
-      font-size: 0.875rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .abort-btn:hover {
-      background: rgba(239, 68, 68, 0.25);
-    }
-
-    /* Grid */
     .play-area {
       display: flex;
       flex-direction: column;
       flex: 1;
       gap: 0.5rem;
       overflow: hidden;
+      align-items: center;
     }
 
     .grid-container {
@@ -191,11 +147,10 @@ import { GameService } from '../../services/game.service';
       grid-template-rows: repeat(var(--grid-size), 1fr);
       aspect-ratio: 1;
       width: 100%;
-      max-height: 60vh;
-      max-width: 60vh;
-      margin: 0 auto;
+      max-width: 100vw;
       border: 2px solid rgba(255, 255, 255, 0.3);
       box-sizing: border-box;
+      container-type: inline-size;
     }
 
     .cell {
@@ -218,43 +173,134 @@ import { GameService } from '../../services/game.service';
     .cell.same-unit { background: rgba(99, 102, 241, 0.1); }
     .cell.same-digit { background: rgba(99, 102, 241, 0.15); }
     .cell.selected.same-digit { background: rgba(99, 102, 241, 0.3); }
+    .cell.hint-highlight { background: rgba(34, 197, 94, 0.3); }
 
-    .cell.given .cell-value { font-weight: 700; color: white; }
-    .cell.player .cell-value { font-weight: 400; color: #a5b4fc; }
-    .cell.conflict .cell-value { color: #ef4444 !important; }
+    .cell.given .cell-value { font-weight: 500; color: white; }
+    .cell.player .cell-value { font-weight: 300; color: #a5b4fc; }
 
     .cell-value {
-      font-size: clamp(0.9rem, 3.5vw, 1.5rem);
+      font-size: calc(50cqi / var(--grid-size));
+      font-weight: 300;
       line-height: 1;
     }
 
-    /* Pencil marks */
-    .pencil-grid {
-      display: grid;
-      grid-template-columns: repeat(var(--pm-cols), 1fr);
+    .cell.multi {
+      outline: 1px solid rgba(245, 158, 11, 0.6);
+      outline-offset: -1px;
+    }
+
+    .multi-digits {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
       width: 100%;
       height: 100%;
+      padding: 4%;
+      box-sizing: border-box;
+    }
+
+    .multi-num {
+      font-weight: 300;
+      color: #a5b4fc;
+      line-height: 1.1;
+      text-align: center;
+      font-size: calc(30cqi / var(--grid-size));
+    }
+
+    .multi-sep {
+      font-size: calc(22cqi / var(--grid-size));
+      color: #475569;
+      margin-right: 1px;
+    }
+
+    .cell.wt-highlight { background: rgba(34, 197, 94, 0.25); }
+
+    .controls.hidden { display: none; }
+
+    .solved-toast {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      pointer-events: none;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #86efac;
+      text-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
+      animation: toast-pop 1.8s ease forwards;
+    }
+
+    @keyframes toast-pop {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+      15% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+      30% { transform: translateX(-50%) scale(1); }
+      70% { opacity: 1; }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    }
+
+    .summary-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      background: rgba(15, 15, 26, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .summary-content {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
     }
 
-    .pencil-mark {
-      font-size: clamp(0.35rem, 1.2vw, 0.55rem);
+    .stat { display: flex; flex-direction: column; align-items: center; }
+    .stat-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat-value { font-size: 1.25rem; font-weight: 800; color: #e2e8f0; }
+
+    .summary-actions {
+      display: flex;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 20rem;
+    }
+
+    .back-btn, .again-btn {
+      flex: 1;
+      padding: 0.6rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+      text-align: center;
+    }
+
+    .back-btn {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
       color: #94a3b8;
-      line-height: 1;
     }
+    .back-btn:hover { background: rgba(255, 255, 255, 0.12); }
 
-    /* Walkthrough highlight */
-    .cell.wt-highlight {
-      background: rgba(34, 197, 94, 0.25);
+    .again-btn {
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
     }
+    .again-btn:hover { background: rgba(34, 197, 94, 0.35); }
 
-    /* Controls */
     .controls {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      padding-top: 0.25rem;
+      padding: 0.5rem 0.75rem;
     }
 
     .number-pad {
@@ -278,24 +324,32 @@ import { GameService } from '../../services/game.service';
     }
 
     .num-btn:hover { background: rgba(99, 102, 241, 0.25); }
+    .num-btn.active {
+      background: linear-gradient(135deg, #6366f1, #3b82f6);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+    }
 
     .tool-bar {
       display: flex;
-      gap: 0.35rem;
+      gap: 0.5rem;
       justify-content: center;
-      flex-wrap: wrap;
     }
 
     .tool-btn {
-      padding: 0.35rem 0.6rem;
-      border-radius: 0.4rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: rgba(255, 255, 255, 0.04);
       color: #94a3b8;
-      font-size: 0.7rem;
-      font-weight: 600;
+      font-size: 1rem;
       cursor: pointer;
       transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .tool-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
@@ -306,13 +360,12 @@ import { GameService } from '../../services/game.service';
       border-color: transparent;
     }
 
-    .hint-count { font-size: 0.65rem; opacity: 0.8; }
-
-    .bottom-actions {
-      display: flex;
-      justify-content: center;
-      padding-bottom: 0.5rem;
+    .tool-btn.give-up {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
     }
+    .tool-btn.give-up:hover { background: rgba(239, 68, 68, 0.25); }
 
     .action-btn {
       padding: 0.5rem 1.5rem;
@@ -324,14 +377,6 @@ import { GameService } from '../../services/game.service';
       outline: none;
     }
 
-    .action-btn.danger {
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      background: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
-    }
-
-    .action-btn.danger:hover { background: rgba(239, 68, 68, 0.3); }
-
     .action-btn.primary {
       border: 1px solid rgba(99, 102, 241, 0.5);
       background: rgba(99, 102, 241, 0.2);
@@ -340,7 +385,6 @@ import { GameService } from '../../services/game.service';
 
     .action-btn.primary:hover { background: rgba(99, 102, 241, 0.35); }
 
-    /* Walkthrough */
     .walkthrough {
       display: flex;
       flex-direction: column;
@@ -359,6 +403,7 @@ import { GameService } from '../../services/game.service';
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 0.5rem;
       max-width: 100%;
+      margin: 0 0.75rem;
     }
 
     .wt-technique {
@@ -380,38 +425,31 @@ import { GameService } from '../../services/game.service';
     }
 
     @media (min-width: 600px) {
-      .play-area {
-        flex-direction: row;
-        align-items: flex-start;
-      }
+      .board { padding: 0.5rem; }
 
       .grid-container {
-        max-height: 70vh;
-        flex: 1;
-      }
-
-      .controls {
-        width: 10rem;
-        padding-top: 0;
-        padding-left: 0.75rem;
-      }
-
-      .number-pad {
-        flex-direction: column;
-      }
-
-      .num-btn {
-        width: 100%;
+        max-width: 70vh;
       }
     }
   `],
 })
 export class GameBoardComponent implements OnDestroy {
   readonly game = inject(GameService);
+  private readonly confirmSvc = inject(ConfirmService);
 
-  private timerInterval: ReturnType<typeof setInterval> | null = null;
-  readonly elapsedSec = signal(0);
-  private giveUpPending = false;
+  // Hint state: first click highlights, second click fills
+  readonly hintCell = signal<{ row: number; col: number } | null>(null);
+  showSolvedToast = false;
+  private solvedToastTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    effect(() => {
+      if (this.game.solved()) {
+        this.showSolvedToast = true;
+        this.solvedToastTimeout = setTimeout(() => { this.showSolvedToast = false; }, 1800);
+      }
+    });
+  }
 
   readonly gridSize = this.game.gridSize;
   readonly gridRows = this.game.grid;
@@ -421,34 +459,8 @@ export class GameBoardComponent implements OnDestroy {
     return Array.from({ length: size }, (_, i) => i + 1);
   });
 
-  readonly pmCols = computed(() => {
-    const size = this.gridSize();
-    return size <= 4 ? 2 : size <= 6 ? 3 : 3;
-  });
-
   readonly boxRows = computed(() => this.game.config().boxDimension[0]);
   readonly boxCols = computed(() => this.game.config().boxDimension[1]);
-
-  readonly timerDisplay = computed(() => {
-    const limit = this.game.timeLimitSec();
-    const elapsed = this.elapsedSec();
-    if (limit !== null) {
-      const remaining = Math.max(0, Math.ceil(limit - elapsed));
-      const m = Math.floor(remaining / 60);
-      const s = remaining % 60;
-      return `${String(Math.min(m, 99)).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-    const m = Math.floor(elapsed / 60);
-    const s = Math.floor(elapsed % 60);
-    return `${String(Math.min(m, 99)).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  });
-
-  readonly timerUrgent = computed(() => {
-    const limit = this.game.timeLimitSec();
-    if (limit === null) return false;
-    const remaining = limit - this.elapsedSec();
-    return remaining < limit * 0.25;
-  });
 
   readonly currentWtStep = computed(() => {
     const steps = this.game.walkthroughSteps();
@@ -456,27 +468,11 @@ export class GameBoardComponent implements OnDestroy {
     return idx > 0 && idx <= steps.length ? steps[idx - 1] : steps[0] ?? null;
   });
 
-  constructor() {
-    effect(() => {
-      const stage = this.game.stage();
-      const idx = this.game.currentPuzzleIndex();
-      if (stage === 'playing') {
-        this.startTimer();
-      }
-    });
-  }
-
   ngOnDestroy(): void {
-    this.stopTimer();
+    if (this.solvedToastTimeout) { clearTimeout(this.solvedToastTimeout); }
   }
 
-  // ── Grid helpers ──
-
-  rowIdx(): number[] {
-    return Array.from({ length: this.gridSize() }, (_, i) => i);
-  }
-
-  isBoxRight(col: number, _row: number): boolean {
+  isBoxRight(col: number): boolean {
     return (col + 1) % this.boxCols() === 0 && col + 1 < this.gridSize();
   }
 
@@ -509,9 +505,9 @@ export class GameBoardComponent implements OnDestroy {
     return g[row]?.[col]?.value === selVal;
   }
 
-  isConflict(row: number, col: number): boolean {
-    if (!this.game.config().errorHighlighting) return false;
-    return this.game.conflicts().has(`${row},${col}`);
+  isHintHighlight(row: number, col: number): boolean {
+    const h = this.hintCell();
+    return h !== null && h.row === row && h.col === col;
   }
 
   isWtHighlight(row: number, col: number): boolean {
@@ -527,53 +523,68 @@ export class GameBoardComponent implements OnDestroy {
     return t.replace(/_/g, ' ');
   }
 
-  // ── Actions ──
+  sortedMarks(marks: Set<number>): number[] {
+    return [...marks].sort((a, b) => a - b);
+  }
+
+  isDigitInCell(d: number): boolean {
+    const sel = this.game.selection();
+    if (!sel) return false;
+    const g = this.game.grid();
+    const cell = g[sel.row]?.[sel.col];
+    if (!cell || cell.isGiven) return false;
+    return cell.pencilMarks.has(d) || cell.value === d;
+  }
 
   onDigit(d: number): void {
+    this.hintCell.set(null); // clear hint highlight on any action
     this.game.enterDigit(d);
     this.game.checkCompletion();
   }
 
   onHint(): void {
-    this.game.requestHint();
-    this.game.checkCompletion();
+    const current = this.hintCell();
+    if (current) {
+      // Second click — fill the hint cell (already highlighted, no confirm needed)
+      this.hintCell.set(null);
+      this.game.requestHint();
+      this.game.checkCompletion();
+    } else {
+      // First click — confirm, then highlight
+      this.confirmSvc.confirm({
+        message: 'Use a hint? The next solvable cell will be highlighted.',
+        confirmLabel: 'Show Hint',
+        cancelLabel: 'Cancel',
+        confirmColor: 'primary',
+      }).then(result => {
+        if (result !== 'confirm') return;
+        const gridValues = this.game.getGridValues();
+        const puzzle = this.game.currentPuzzle();
+        if (!puzzle) return;
+        const steps = explain(gridValues, puzzle.boxRows, puzzle.boxCols);
+        if (steps.length > 0 && steps[0].cells.length > 0) {
+          this.hintCell.set({ row: steps[0].cells[0].row, col: steps[0].cells[0].col });
+        }
+      });
+    }
   }
 
   onGiveUp(): void {
-    if (!this.giveUpPending) {
-      this.giveUpPending = true;
-      return;
-    }
-    this.giveUpPending = false;
-    this.game.giveUp();
-  }
-
-  // ── Timer ──
-
-  private startTimer(): void {
-    this.stopTimer();
-    this.elapsedSec.set(0);
-    this.timerInterval = setInterval(() => {
-      if (this.game.isPaused()) return;
-      const elapsed = (this.game.pausedElapsedMs + (Date.now() - this.game.timerStartMs)) / 1000;
-      this.elapsedSec.set(elapsed);
-
-      const limit = this.game.timeLimitSec();
-      if (limit !== null && elapsed >= limit) {
-        this.stopTimer();
-        this.game.onTimeout();
+    this.confirmSvc.confirm({
+      message: 'Give up on this puzzle?',
+      cancelLabel: 'Keep Trying',
+      confirmLabel: 'Show Solution',
+      confirmColor: 'danger',
+      secondaryLabel: 'Exit Game',
+      secondaryColor: 'danger',
+    }).then(result => {
+      if (result === 'confirm') {
+        this.game.giveUp();
+      } else if (result === 'secondary') {
+        this.game.abortSession();
       }
-    }, 250);
+    });
   }
-
-  private stopTimer(): void {
-    if (this.timerInterval !== null) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-  }
-
-  // ── Keyboard ──
 
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
@@ -581,7 +592,6 @@ export class GameBoardComponent implements OnDestroy {
 
     const key = event.key;
 
-    // Arrow keys
     if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
       event.preventDefault();
       const sel = this.game.selection();
@@ -596,41 +606,18 @@ export class GameBoardComponent implements OnDestroy {
       return;
     }
 
-    // Number keys
     const digit = parseInt(key, 10);
     if (digit >= 1 && digit <= this.gridSize()) {
       this.onDigit(digit);
       return;
     }
 
-    // Pencil toggle
-    if (key.toLowerCase() === 'p') {
-      this.game.togglePencilMode();
-      return;
-    }
-
-    // Erase
     if (key === 'Backspace' || key === 'Delete') {
       event.preventDefault();
       this.game.clearCell();
       return;
     }
 
-    // Undo
-    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && key.toLowerCase() === 'z') {
-      event.preventDefault();
-      this.game.undo();
-      return;
-    }
-
-    // Redo
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && key.toLowerCase() === 'z') {
-      event.preventDefault();
-      this.game.redo();
-      return;
-    }
-
-    // Hint
     if (key.toLowerCase() === 'h') {
       this.onHint();
       return;

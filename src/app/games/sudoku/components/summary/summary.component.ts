@@ -12,26 +12,13 @@ import { GameService } from '../../services/game.service';
       <h2>Round Complete</h2>
 
       @if (game.roundResult(); as r) {
+        <div class="hero-score">{{ r.averageSolveTimeSec | number:'1.1-1' }}s</div>
+        <div class="hero-label">Solve Time</div>
+
         <div class="slots">
           <div class="slot-result">
-            <span class="slot-title correct">{{ r.puzzlesSolved }} / {{ r.totalPuzzles }}</span>
-            <span class="slot-label">Puzzles Solved</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title">{{ r.averageSolveTimeSec | number:'1.1-1' }}s</span>
-            <span class="slot-label">Avg Solve Time</span>
-          </div>
-          <div class="slot-result">
             <span class="slot-title">{{ r.totalHintsUsed }}</span>
-            <span class="slot-label">Hints Used</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title streak">{{ r.longestNoHintStreak }}</span>
-            <span class="slot-label">No-Hint Streak</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title">{{ r.accuracy | number:'1.0-0' }}%</span>
-            <span class="slot-label">Accuracy</span>
+            <span class="slot-label">Hints</span>
           </div>
           <div class="slot-result">
             <span class="slot-title">{{ r.difficulty }}</span>
@@ -39,11 +26,7 @@ import { GameService } from '../../services/game.service';
           </div>
           <div class="slot-result">
             <span class="slot-title">{{ r.boxDimension[0] }}×{{ r.boxDimension[1] }}</span>
-            <span class="slot-label">Box Size</span>
-          </div>
-          <div class="slot-result">
-            <span class="slot-title">{{ r.speedMode }}</span>
-            <span class="slot-label">Speed</span>
+            <span class="slot-label">Grid</span>
           </div>
         </div>
       }
@@ -80,6 +63,21 @@ import { GameService } from '../../services/game.service';
       margin: 0;
       font-size: 1.25rem;
       color: #a5b4fc;
+    }
+
+    .hero-score {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #e2e8f0;
+      line-height: 1;
+    }
+
+    .hero-label {
+      font-size: 0.6rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: -1rem;
     }
 
     .slots {

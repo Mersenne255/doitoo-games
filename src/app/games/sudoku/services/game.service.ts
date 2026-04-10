@@ -16,7 +16,7 @@ import { generateRound } from '../utils/puzzle-generator.util';
 import { mapDifficultyToParams, getTimeLimitSec, getHintLimit } from '../utils/difficulty.util';
 import { initialScoringState, processPuzzleResult, calculateRoundResult } from '../utils/scoring.util';
 import { explain } from '../utils/explainer.util';
-import { StorageService } from './storage.service';
+import { StorageService, SavedGameState } from './storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class GameService {
@@ -41,6 +41,8 @@ export class GameService {
   readonly isPaused: WritableSignal<boolean> = signal(false);
   readonly scoringState: WritableSignal<ScoringState> = signal<ScoringState>(initialScoringState());
   readonly roundResult: WritableSignal<RoundResult | null> = signal<RoundResult | null>(null);
+  readonly solved: WritableSignal<boolean> = signal(false);
+  readonly solveTimeSec: WritableSignal<number> = signal(0);
 
   timerStartMs = 0;
   pausedElapsedMs = 0;
@@ -105,15 +107,15 @@ export class GameService {
     this.puzzles.set(generated);
     this.currentPuzzleIndex.set(0);
     this.roundResult.set(null);
-    this.stage.set('countdown');
-  }
-
-  onCountdownDone(): void {
     this.scoringState.set(initialScoringState());
-    this.currentPuzzleIndex.set(0);
     this.initCurrentPuzzle();
     this.stage.set('playing');
     this.startTimer();
+    this.persistState();
+  }
+
+  onCountdownDone(): void {
+    // No-op — countdown removed, kept for interface compatibility
   }
 
   selectCell(row: number, col: number): void {
@@ -130,48 +132,38 @@ export class GameService {
     const prevValue = cell.value;
     const prevMarks = [...cell.pencilMarks];
 
-    if (this.pencilMode()) {
-      // Toggle pencil mark
-      const newMarks = new Set(cell.pencilMarks);
-      if (newMarks.has(digit)) {
-        newMarks.delete(digit);
-      } else {
-        newMarks.add(digit);
-      }
-      const record: ActionRecord = {
-        cell: { row: sel.row, col: sel.col },
-        previousValue: prevValue,
-        previousPencilMarks: prevMarks,
-        newValue: prevValue,
-        newPencilMarks: [...newMarks],
-      };
-      this.pushAction(record);
-      this.updateCell(sel.row, sel.col, prevValue, newMarks);
+    // Toggle digit in the cell's marks
+    const newMarks = new Set(cell.pencilMarks);
+    if (newMarks.has(digit)) {
+      newMarks.delete(digit);
     } else {
-      // Place or toggle digit
-      const newValue = prevValue === digit ? 0 : digit;
-      const newMarks = new Set<number>(); // clear pencil marks on value entry
-      const record: ActionRecord = {
-        cell: { row: sel.row, col: sel.col },
-        previousValue: prevValue,
-        previousPencilMarks: prevMarks,
-        newValue,
-        newPencilMarks: [],
-      };
-      this.pushAction(record);
-      this.updateCell(sel.row, sel.col, newValue, newMarks);
+      newMarks.add(digit);
+    }
 
-      if (newValue !== 0) {
-        const [br, bc] = this.config().boxDimension;
-        this.autoCleanPencilMarks(sel.row, sel.col, newValue, br, bc);
+    // If exactly 1 mark remains, commit it as the value
+    const newValue = newMarks.size === 1 ? [...newMarks][0] : 0;
 
-        // Check if placement is wrong
-        const puzzle = this.currentPuzzle();
-        if (puzzle && puzzle.solution[sel.row][sel.col] !== newValue) {
-          this.errorCount.update(c => c + 1);
-        }
+    const record: ActionRecord = {
+      cell: { row: sel.row, col: sel.col },
+      previousValue: prevValue,
+      previousPencilMarks: prevMarks,
+      newValue,
+      newPencilMarks: [...newMarks],
+    };
+    this.pushAction(record);
+    this.updateCell(sel.row, sel.col, newValue, newMarks);
+
+    if (newValue !== 0) {
+      const [br, bc] = this.config().boxDimension;
+      this.autoCleanPencilMarks(sel.row, sel.col, newValue, br, bc);
+
+      // Check if placement is wrong
+      const puzzle = this.currentPuzzle();
+      if (puzzle && puzzle.solution[sel.row][sel.col] !== newValue) {
+        this.errorCount.update(c => c + 1);
       }
     }
+    this.persistState();
   }
 
   clearCell(): void {
@@ -190,6 +182,7 @@ export class GameService {
     };
     this.pushAction(record);
     this.updateCell(sel.row, sel.col, 0, new Set());
+    this.persistState();
   }
 
   togglePencilMode(): void {
@@ -208,6 +201,7 @@ export class GameService {
       action.previousValue,
       new Set(action.previousPencilMarks),
     );
+    this.persistState();
   }
 
   redo(): void {
@@ -222,6 +216,7 @@ export class GameService {
       action.newValue,
       new Set(action.newPencilMarks),
     );
+    this.persistState();
   }
 
   requestHint(): void {
@@ -254,9 +249,11 @@ export class GameService {
       }
     }
     this.hintsUsed.update(c => c + 1);
+    this.persistState();
   }
 
   giveUp(): void {
+    this.storage.clearGameState();
     const puzzle = this.currentPuzzle();
     if (!puzzle) return;
     const steps = explain(puzzle.grid, puzzle.boxRows, puzzle.boxCols);
@@ -324,14 +321,9 @@ export class GameService {
     if (!correct) return; // errors shown via conflict detection
 
     const elapsed = this.getElapsedSec();
-    const result: PuzzleResult = {
-      status: 'solved',
-      solveTimeSec: elapsed,
-      hintsUsed: this.hintsUsed(),
-      errorCount: this.errorCount(),
-    };
-    this.scoringState.update(s => processPuzzleResult(s, result));
-    this.advancePuzzleOrEnd();
+    this.solveTimeSec.set(Math.round(elapsed * 10) / 10);
+    this.solved.set(true);
+    this.storage.clearGameState();
   }
 
   onTimeout(): void {
@@ -349,6 +341,7 @@ export class GameService {
   abortSession(): void {
     this.stage.set('idle');
     this.resetPlayState();
+    this.storage.clearGameState();
   }
 
   goToIdle(): void {
@@ -382,6 +375,8 @@ export class GameService {
     this.walkthroughIndex.set(0);
     this.hintsUsed.set(0);
     this.errorCount.set(0);
+    this.solved.set(false);
+    this.solveTimeSec.set(0);
   }
 
   private startTimer(): void {
@@ -448,6 +443,7 @@ export class GameService {
     } else {
       this.roundResult.set(calculateRoundResult(this.scoringState(), this.config()));
       this.stage.set('summary');
+      this.storage.clearGameState();
     }
   }
 
@@ -467,6 +463,57 @@ export class GameService {
     this.isPaused.set(false);
     this.scoringState.set(initialScoringState());
     this.roundResult.set(null);
+  }
+
+  /** Persist current game state to localStorage. */
+  persistState(): void {
+    const puzzle = this.currentPuzzle();
+    if (!puzzle || this.solved()) return;
+    const g = this.grid();
+    const state: SavedGameState = {
+      puzzle: { grid: puzzle.grid, solution: puzzle.solution, boxRows: puzzle.boxRows, boxCols: puzzle.boxCols },
+      playerGrid: g.map(row => row.map(c => ({ value: c.value, pencilMarks: [...c.pencilMarks], isGiven: c.isGiven }))),
+      hintsUsed: this.hintsUsed(),
+      errorCount: this.errorCount(),
+      elapsedMs: this.pausedElapsedMs + (this.isPaused() ? 0 : Date.now() - this.timerStartMs),
+      config: this.config(),
+    };
+    this.storage.saveGameState(state);
+  }
+
+  /** Try to restore a saved game session. Returns true if restored. */
+  restoreSession(): boolean {
+    const saved = this.storage.loadGameState();
+    if (!saved) return false;
+
+    const puzzle: Puzzle = saved.puzzle;
+    this.config.set(saved.config);
+    this.puzzles.set([puzzle]);
+    this.currentPuzzleIndex.set(0);
+    this.grid.set(saved.playerGrid.map(row =>
+      row.map(c => ({ value: c.value, pencilMarks: new Set(c.pencilMarks), isGiven: c.isGiven })),
+    ));
+    this.selection.set(null);
+    this.pencilMode.set(false);
+    this.undoStack.set([]);
+    this.redoStack.set([]);
+    this.isWalkthrough.set(false);
+    this.walkthroughSteps.set([]);
+    this.walkthroughIndex.set(0);
+    this.hintsUsed.set(saved.hintsUsed);
+    this.errorCount.set(saved.errorCount);
+    this.solved.set(false);
+    this.solveTimeSec.set(0);
+    this.scoringState.set(initialScoringState());
+    this.roundResult.set(null);
+
+    // Restore timer from elapsed
+    this.pausedElapsedMs = saved.elapsedMs;
+    this.timerStartMs = Date.now();
+    this.isPaused.set(false);
+
+    this.stage.set('playing');
+    return true;
   }
 }
 

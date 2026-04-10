@@ -2,7 +2,6 @@ import { Component, ChangeDetectionStrategy, HostListener, inject, OnInit, OnDes
 import { GameService } from './services/game.service';
 import { StorageService } from './services/storage.service';
 import { ConfigPanelComponent } from './components/config-panel/config-panel.component';
-import { CountdownComponent } from '../../shared/components/countdown/countdown.component';
 import { GameBoardComponent } from './components/game-board/game-board.component';
 import { SummaryComponent } from './components/summary/summary.component';
 import { NavService } from '../../shared/services/nav.service';
@@ -10,14 +9,11 @@ import { NavService } from '../../shared/services/nav.service';
 @Component({
   selector: 'app-sudoku-game',
   standalone: true,
-  imports: [ConfigPanelComponent, CountdownComponent, GameBoardComponent, SummaryComponent],
+  imports: [ConfigPanelComponent, GameBoardComponent, SummaryComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (game.stage() === 'idle') {
       <app-config-panel />
-    }
-    @if (game.stage() === 'countdown') {
-      <app-countdown [stepTimings]="[350, 700, 1050, 1400]" (done)="game.onCountdownDone()" />
     }
     @if (game.stage() === 'playing') {
       <app-game-board />
@@ -50,12 +46,19 @@ export class SudokuGameComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const saved = this.storage.loadConfig();
-    this.game.updateConfig(saved);
+    // Try to restore a saved game first
+    if (!this.game.restoreSession()) {
+      const saved = this.storage.loadConfig();
+      this.game.updateConfig(saved);
+    }
   }
 
   ngOnDestroy(): void {
-    this.game.abortSession();
+    // Persist state if playing, then clean up
+    if (this.game.stage() === 'playing' && !this.game.solved()) {
+      this.game.persistState();
+    }
+    this.game.stage.set('idle');
     this.nav.show();
   }
 
