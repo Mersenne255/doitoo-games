@@ -75,6 +75,18 @@ html = html.replace(/<noscript><link rel="stylesheet" href="[^"]*"><\/noscript>/
 
 fs.writeFileSync(indexPath, html);
 
+// Patch main JS to disable service worker registration in extension context
+// The Angular SW module calls Pe("ngsw-worker.js", {enabled: !ge(), ...})
+// We replace `enabled:!ge()` (enabled: !isDevMode()) with `enabled:false`
+const mainJsFiles = fs.readdirSync(DIST_EXT).filter(f => f.startsWith('main-') && f.endsWith('.js'));
+for (const mainFile of mainJsFiles) {
+  const mainPath = path.join(DIST_EXT, mainFile);
+  let js = fs.readFileSync(mainPath, 'utf8');
+  // Match the ServiceWorker registration pattern and force enabled:false
+  js = js.replace(/Pe\("ngsw-worker\.js",\{enabled:!ge\(\)/g, 'Pe("ngsw-worker.js",{enabled:false');
+  fs.writeFileSync(mainPath, js);
+}
+
 console.log(`Done → ${DIST_EXT}`);
 
 function copyDir(src, dest) {
