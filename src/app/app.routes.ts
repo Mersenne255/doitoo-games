@@ -13,5 +13,6 @@ export const routes: Routes = [
   { path: 'focusforge', loadComponent: () => import('./games/focusforge/focusforge-game.component').then(m => m.FocusforgeGameComponent) },
   { path: 'ciphergrid', loadComponent: () => import('./games/ciphergrid/ciphergrid-game.component').then(m => m.CiphergridGameComponent) },
   { path: 'voxel', loadComponent: () => import('./games/voxel/voxel-game.component').then(m => m.VoxelGameComponent) },
+  { path: 'sudoku', loadComponent: () => import('./games/sudoku/sudoku-game.component').then(m => m.SudokuGameComponent) },
   { path: '**', redirectTo: '' },
 ];

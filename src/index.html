@@ -1,16 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doitoo Games</title>
-  <meta name="theme-color" content="#0f0f1a">
-  <meta name="description" content="Doitoo Games — cognitive training games.">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="icon" type="image/svg+xml" href="assets/icons/doitoo-logo.svg">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doitoo Games</title>
+    <meta name="theme-color" content="#0f0f1a">
+    <meta name="description" content="Doitoo Games — cognitive training games.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/doitoo-logo.svg">
 </head>
-<body>
-  <app-root></app-root>
+<body style="margin:0;min-height:100vh;background:#0f0f1a;background-image:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,0.15) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(59,130,246,0.1) 0%,transparent 50%),radial-gradient(ellipse at 50% 100%,rgba(139,92,246,0.08) 0%,transparent 50%);">
+<div id="splash"
+     style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity 0.5s ease,visibility 0.5s ease;">
+    <svg width="100" height="100" viewBox="0 0 100 100">
+        <g fill="#fff">
+
+            <!-- 1 -->
+            <path d="m11.49 57.6-1.8995-6.2136 4.0386-13.243 7.1948 22.047z">
+                <animateTransform attributeName="transform" type="translate"
+                                  values="0,0; 6,12; 0,0; 0,0"
+                                  keyTimes="0; 0.25; 0.5; 1"
+                                  dur="2.5s"
+                                  begin="0s"
+                                  repeatCount="indefinite"/>
+            </path>
+
+            <!-- 2 -->
+            <path d="m33.307 67.404-6.5309-6.329-9.1035-27.685 8.0447-5.6961 11.718 39.714z">
+                <animateTransform attributeName="transform" type="translate"
+                                  values="0,0; 6,12; 0,0; 0,0"
+                                  keyTimes="0; 0.25; 0.5; 1"
+                                  dur="2.5s"
+                                  begin="0.25s"
+                                  repeatCount="indefinite"/>
+            </path>
+
+            <!-- 3 -->
+            <path d="m43.261 67.356-12.904-41.762 8.6706-2.3869 13.545 44.187z">
+                <animateTransform attributeName="transform" type="translate"
+                                  values="0,0; 6,12; 0,0; 0,0"
+                                  keyTimes="0; 0.25; 0.5; 1"
+                                  dur="2.5s"
+                                  begin="0.5s"
+                                  repeatCount="indefinite"/>
+            </path>
+
+            <!-- 4 -->
+            <path d="m62.958 83.169s-14.392-44.612-18.873-60.984l8.7614-1.4199c4.6377 17.066 19.384 62.392 19.384 62.392z">
+                <animateTransform attributeName="transform" type="translate"
+                                  values="0,0; 6,12; 0,0; 0,0"
+                                  keyTimes="0; 0.25; 0.5; 1"
+                                  dur="2.5s"
+                                  begin="0.75s"
+                                  repeatCount="indefinite"/>
+            </path>
+
+            <!-- 5 -->
+            <path d="m73.185 71.003c-8.425-30.706-14.436-46.588-15.33-50.263l9.4719 0.76484 13.224 42.821-1.5154 6.6997z">
+                <animateTransform attributeName="transform" type="translate"
+                                  values="0,0; 6,12; 0,0; 0,0"
+                                  keyTimes="0; 0.25; 0.5; 1"
+                                  dur="2.5s"
+                                  begin="1s"
+                                  repeatCount="indefinite"/>
+            </path>
+
+            <!-- 6 -->
+            <path d="m72.679 23.292 9.9107 6.9342 8.4568 25.755-6.9763 3.6359z">
+                <animateTransform attributeName="transform" type="translate"
+                                  values="0,0; 6,12; 0,0; 0,0"
+                                  keyTimes="0; 0.25; 0.5; 1"
+                                  dur="2.5s"
+                                  begin="1.25s"
+                                  repeatCount="indefinite"/>
+            </path>
+
+        </g>
+    </svg></div>
+  <app-root style="opacity:0;transition:opacity 0.5s ease 0.2s;"></app-root>
 </body>
 </html>

@@ -224,6 +224,7 @@ export class AppComponent {
       document.body.classList.add('extension-mode');
     }
 
+    const splashStart = Date.now();
     const sub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
@@ -236,6 +237,21 @@ export class AppComponent {
 
         // Always show nav on route change; games hide it themselves during gameplay
         this.nav.show();
+
+        // Remove splash screen: show for at least 1s, then fade out and reveal content
+        const splash = document.getElementById('splash');
+        if (splash) {
+          const elapsed = Date.now() - splashStart;
+          const remaining = Math.max(0, 1000 - elapsed);
+          setTimeout(() => {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            // Reveal app content
+            const appRoot = document.querySelector('app-root') as HTMLElement;
+            if (appRoot) appRoot.style.opacity = '1';
+            setTimeout(() => splash.remove(), 500);
+          }, remaining);
+        }
       });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());

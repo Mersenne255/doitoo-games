@@ -13,6 +13,7 @@ export const GAME_LIST: GameEntry[] = [
   { route: '/voxel', name: 'Voxel', label: 'Spatial memory', description: 'Minecraft was the tutorial. This is the exam.', icon: 'assets/icons/voxel-icon.png' },
   { route: '/phantomlink', name: 'PhantomLink', label: 'Memory updating', description: 'You memorize, we change. Over and over again.', icon: 'assets/icons/phantom-icon.png' },
   { route: '/numbers', name: 'Recallc', label: 'Short-term memory', description: 'Numbers go in. Will they come out?', icon: 'assets/icons/numbers-icon.png' },
+  { route: '/sudoku', name: 'Sudoku', label: 'Logical deduction', description: 'Fill the grid. Trust the logic.', icon: 'assets/icons/sudoku-icon.png' },
   // { route: '/synapsort', name: 'SynapSort', label: 'Cognitive flexibility', description: 'The rules just changed. Again. Keep up.', icon: 'assets/icons/synapsort-icon.png' },
   // { route: '/focusforge', name: 'FocusForge', label: 'Selective attention', description: 'It\'s right there. You just can\'t see it. Yet.', icon: 'assets/icons/focusforge-icon.png' },
   // { route: '/ciphergrid', name: 'CipherGrid', label: 'TODO', description: 'TODO', icon: 'assets/icons/ciphergrid-icon.png' },
