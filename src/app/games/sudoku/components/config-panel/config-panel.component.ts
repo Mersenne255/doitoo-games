@@ -108,7 +108,6 @@ import { BoxDimension } from '../../models/game.models';
         font-size: 0.8rem;
         text-transform: capitalize;
         transition: all 0.15s ease;
-        outline: none;
 
         &:hover { background: rgba(255, 255, 255, 0.1); }
 

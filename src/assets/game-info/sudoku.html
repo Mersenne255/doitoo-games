@@ -20,12 +20,13 @@
   <h4>Tools</h4>
   <p><strong>↩ Undo / ↪ Redo</strong> — Step back and forward through your moves.</p>
   <p><strong>💡 Hint</strong> — First tap highlights the next solvable cell. Second tap fills it in.</p>
-  <p><strong>🏳️ Give Up</strong> — Shows the complete solution step by step, explaining each technique used. You can also exit the game from here.</p>
+  <p><strong>🏳️ Give Up</strong> — Opens a menu with three choices: <em>Keep Trying</em> to go back to the puzzle, <em>Go home</em> to save your progress and return to the game list, or <em>Show Solution</em> to see the step-by-step walkthrough.</p>
   <h4>Solution Walkthrough</h4>
-  <p>When you give up, the game walks you through the solution one step at a time. Each step highlights three types of cells:</p>
+  <p>When you choose Show Solution, the game walks you through the solution one step at a time. Each step highlights three types of cells:</p>
   <p><strong>Green</strong> — The cell being solved (the answer).</p>
   <p><strong>Amber</strong> — The cells that explain <em>why</em> the deduction works (the reason).</p>
   <p><strong>Red</strong> — Cells where candidates are eliminated (for advanced techniques).</p>
+  <p>Each step includes a detailed explanation with bullet points showing the reasoning. Advanced techniques (X-Wing, XY-Wing) are marked with a red badge. You can leave the walkthrough at any time.</p>
   <h4>Solving Techniques</h4>
   <p><strong>Naked Single</strong> — A cell has only one possible digit after elimination.</p>
   <p><strong>Hidden Single</strong> — A digit can only go in one cell within a row, column, or box.</p>
@@ -36,8 +37,10 @@
   <p><strong>Box Line Reduction</strong> — A candidate in a row or column is restricted to one box.</p>
   <p><strong>X-Wing</strong> <em>(Advanced)</em> — A digit appears in exactly two cells in two rows, sharing the same columns. Eliminates that digit from the rest of those columns.</p>
   <p><strong>XY-Wing</strong> <em>(Advanced)</em> — A pivot cell with two candidates connects to two wing cells, allowing elimination of a shared digit from cells that see both wings.</p>
+  <h4>Backtracking</h4>
+  <p>On rare occasions, especially at very high difficulty, no standard technique can make progress. When this happens, the solver tests a candidate digit in a cell and checks if it leads to a valid solution. In the walkthrough, these steps are marked with a red <em>Advanced</em> badge. This is not random guessing — it's systematic trial-and-error, the same approach used by competitive Sudoku solvers when logic alone isn't enough.</p>
   <h4>Difficulty</h4>
-  <p>Difficulty 1–100 controls the grid size, number of given cells, and which techniques are needed. Levels 1–15 use 4×4 grids with simple techniques. Levels 16–35 use 6×6 grids. Levels 36–100 use 9×9 grids with progressively fewer givens and more advanced techniques required.</p>
+  <p>Choose your grid size (4×4, 6×6, or 9×9) and difficulty (1–100) separately. Difficulty controls the number of given cells and which solving techniques are needed. Lower difficulty means more givens and simpler techniques. Higher difficulty means fewer givens and may require advanced techniques like X-Wing and XY-Wing.</p>
   <h4>Game State</h4>
   <p>Your progress is saved automatically. If you leave and come back, you'll pick up right where you left off.</p>
 </section>
@@ -47,5 +50,8 @@
     <li>Crook, J. F. (2009). A pencil-and-paper algorithm for solving Sudoku puzzles. <em>Notices of the AMS</em>, 56(4), 460–468.</li>
     <li>Lee, N. Y., Goodwin, G. P., & Johnson-Laird, P. N. (2008). The psychological puzzle of Sudoku. <em>Thinking & Reasoning</em>, 14(4), 342–364.</li>
     <li>Ericsson, K. A., & Kintsch, W. (1995). Long-term working memory. <em>Psychological Review</em>, 102(2), 211–245.</li>
+    <li>McGuire, G., Tugemann, B., & Civario, G. (2014). There is no 16-clue Sudoku: Solving the Sudoku minimum number of clues problem via hitting set enumeration. <em>Experimental Mathematics</em>, 23(2), 190–217.</li>
+    <li>Pelánek, R. (2014). Difficulty rating of Sudoku puzzles by a computational model. <em>Proceedings of the 27th International FLAIRS Conference</em>.</li>
+    <li>Ferreira, D., & Palhano-Fontes, F. (2014). Sudoku effects on brain activity: An fMRI study. <em>International Journal of Psychophysiology</em>, 94(2), 158.</li>
   </ol>
 </section>

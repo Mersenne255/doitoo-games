@@ -41,3 +41,13 @@ body.extension-mode {
   height: 540px;
   overflow: hidden;
 }
+
+/* Global keyboard focus indicator — only shows on Tab navigation, not mouse clicks */
+button:focus-visible:not(:disabled),
+a:focus-visible:not(:disabled),
+input:focus-visible:not(:disabled),
+select:focus-visible:not(:disabled),
+[tabindex]:focus-visible:not(:disabled) {
+  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline-offset: 2px;
+}

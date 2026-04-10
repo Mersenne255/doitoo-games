@@ -6,6 +6,7 @@ export interface ConfirmOptions {
   cancelLabel?: string;
   confirmColor?: 'danger' | 'primary';
   secondaryLabel?: string;
+  secondarySubLabel?: string;
   secondaryColor?: 'danger' | 'primary';
 }
 

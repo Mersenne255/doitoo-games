@@ -12,6 +12,7 @@ import { GameService } from '../../services/game.service';
 import { explain } from '../../utils/explainer.util';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { ADVANCED_TECHNIQUES } from '../../models/game.models';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-game-board',
@@ -80,6 +81,8 @@ import { ADVANCED_TECHNIQUES } from '../../models/game.models';
                   [class.given]="cell.isGiven"
                   [class.player]="!cell.isGiven && cell.value !== 0"
                   [class.multi]="!cell.isGiven && cell.pencilMarks.size > 1"
+                  [class.solved-ripple]="game.solved()"
+                  [style.--ripple-delay]="rippleDelay(rIdx, cIdx)"
                   (click)="game.selectCell(rIdx, cIdx)">
                   @if (cell.value !== 0 && cell.pencilMarks.size <= 1) {
                     <span class="cell-value">{{ cell.value }}</span>
@@ -191,6 +194,16 @@ import { ADVANCED_TECHNIQUES } from '../../models/game.models';
     .cell.selected.same-digit { background: rgba(99, 102, 241, 0.3); }
     .cell.hint-highlight { background: rgba(34, 197, 94, 0.3); }
 
+    .cell.solved-ripple {
+      animation: ripple-flash 0.8s ease var(--ripple-delay, 0s) both;
+    }
+
+    @keyframes ripple-flash {
+      0% { background: inherit; }
+      30% { background: rgba(34, 197, 94, 0.35); }
+      100% { background: rgba(34, 197, 94, 0.08); }
+    }
+
     .cell.given .cell-value { font-weight: 500; color: white; }
     .cell.player .cell-value { font-weight: 300; color: #a5b4fc; }
 
@@ -296,7 +309,6 @@ import { ADVANCED_TECHNIQUES } from '../../models/game.models';
       font-size: 0.9rem;
       cursor: pointer;
       transition: background 0.2s;
-      outline: none;
       text-align: center;
     }
 
@@ -392,7 +404,6 @@ import { ADVANCED_TECHNIQUES } from '../../models/game.models';
       font-size: 0.85rem;
       cursor: pointer;
       transition: background 0.2s;
-      outline: none;
     }
 
     .action-btn.primary {
@@ -489,6 +500,7 @@ import { ADVANCED_TECHNIQUES } from '../../models/game.models';
 export class GameBoardComponent implements OnDestroy {
   readonly game = inject(GameService);
   private readonly confirmSvc = inject(ConfirmService);
+  private readonly router = inject(Router);
 
   // Hint state: first click highlights, second click fills
   readonly hintCell = signal<{ row: number; col: number } | null>(null);
@@ -598,6 +610,14 @@ export class GameBoardComponent implements OnDestroy {
     return ADVANCED_TECHNIQUES.has(t as any);
   }
 
+  rippleDelay(row: number, col: number): string {
+    const size = this.gridSize();
+    const center = (size - 1) / 2;
+    const dist = Math.sqrt((row - center) ** 2 + (col - center) ** 2);
+    const maxDist = Math.sqrt(2) * center;
+    return (dist / maxDist * 0.6).toFixed(2) + 's';
+  }
+
   splitExplanation(text: string): string[] {
     return text.split('\n').filter(l => l.length > 0);
   }
@@ -654,13 +674,17 @@ export class GameBoardComponent implements OnDestroy {
       cancelLabel: 'Keep Trying',
       confirmLabel: 'Show Solution',
       confirmColor: 'danger',
-      secondaryLabel: 'Exit Game',
-      secondaryColor: 'danger',
+      secondaryLabel: 'Go home',
+      secondarySubLabel: 'Progress saved',
+      secondaryColor: 'primary',
     }).then(result => {
       if (result === 'confirm') {
         this.game.giveUp();
       } else if (result === 'secondary') {
-        this.game.abortSession();
+        this.game.persistState();
+        this.game.stage.set('idle');
+        try { localStorage.removeItem('doitoo:last-route'); } catch { /* ignore */ }
+        this.router.navigateByUrl('/');
       }
     });
   }

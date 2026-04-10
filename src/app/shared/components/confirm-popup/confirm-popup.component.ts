@@ -1,4 +1,13 @@
-import { Component, inject, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  HostListener,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  afterNextRender,
+  viewChild,
+} from '@angular/core';
 import { ConfirmService } from '../../services/confirm.service';
 
 @Component({
@@ -6,21 +15,21 @@ import { ConfirmService } from '../../services/confirm.service';
   standalone: true,
   template: `
     <div class="backdrop" (click)="onBackdrop($event)" role="dialog" aria-modal="true">
-      <div class="panel">
+      <div class="panel" #panel>
         <p class="message">{{ svc.options().message }}</p>
         <div class="actions">
           <button class="btn cancel" (click)="svc.dismiss()">
             {{ svc.options().cancelLabel || 'Cancel' }}
           </button>
           @if (svc.options().secondaryLabel) {
-            <button class="btn confirm"
-              [class.danger]="svc.options().secondaryColor === 'danger'"
-              [class.primary]="svc.options().secondaryColor !== 'danger'"
-              (click)="svc.secondary()">
+            <button class="btn cancel" (click)="svc.secondary()">
               {{ svc.options().secondaryLabel }}
+              @if (svc.options().secondarySubLabel) {
+                <span class="btn-sub">{{ svc.options().secondarySubLabel }}</span>
+              }
             </button>
           }
-          <button class="btn confirm"
+          <button class="btn confirm" #confirmBtn
             [class.danger]="svc.options().confirmColor === 'danger'"
             [class.primary]="svc.options().confirmColor !== 'danger'"
             (click)="svc.accept()">
@@ -89,7 +98,6 @@ import { ConfirmService } from '../../services/confirm.service';
       font-size: 0.85rem;
       cursor: pointer;
       transition: background 0.2s;
-      outline: none;
     }
 
     .cancel {
@@ -98,6 +106,14 @@ import { ConfirmService } from '../../services/confirm.service';
       color: #94a3b8;
     }
     .cancel:hover { background: rgba(255, 255, 255, 0.1); }
+
+    .btn-sub {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 400;
+      opacity: 0.7;
+      margin-top: 0.1rem;
+    }
 
     .confirm.primary {
       border: 1px solid rgba(99, 102, 241, 0.5);
@@ -114,17 +130,67 @@ import { ConfirmService } from '../../services/confirm.service';
     .confirm.danger:hover { background: rgba(239, 68, 68, 0.35); }
   `],
 })
-export class ConfirmPopupComponent {
+export class ConfirmPopupComponent implements OnInit, OnDestroy {
   readonly svc = inject(ConfirmService);
+  private readonly elRef = inject(ElementRef);
+  private readonly confirmBtnRef = viewChild<ElementRef>('confirmBtn');
+  private readonly panelRef = viewChild<ElementRef>('panel');
+  private inertTarget: HTMLElement | null = null;
+
+  constructor() {
+    // Auto-focus the confirm button after render
+    afterNextRender(() => {
+      const btn = this.confirmBtnRef()?.nativeElement;
+      if (btn) btn.focus();
+    });
+  }
+
+  ngOnInit(): void {
+    const main = document.querySelector('main');
+    if (main) {
+      main.setAttribute('inert', '');
+      this.inertTarget = main;
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.inertTarget) {
+      this.inertTarget.removeAttribute('inert');
+      this.inertTarget = null;
+    }
+  }
 
   onBackdrop(event: MouseEvent): void {
-    if ((event.target as HTMLElement).classList.contains('backdrop')) {
+    const panel = this.panelRef()?.nativeElement;
+    if (panel && !panel.contains(event.target as Node)) {
       this.svc.dismiss();
     }
   }
 
-  @HostListener('window:keydown.escape')
-  onEscape(): void {
-    this.svc.dismiss();
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.svc.dismiss();
+      return;
+    }
+    // Focus trap: Tab cycles within the panel only
+    if (event.key === 'Tab') {
+      const el = this.elRef.nativeElement as HTMLElement;
+      const focusable = el.querySelectorAll<HTMLElement>('button');
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
   }
 }

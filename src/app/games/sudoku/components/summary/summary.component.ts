@@ -128,7 +128,6 @@ import { GameService } from '../../services/game.service';
       font-size: 0.9rem;
       cursor: pointer;
       transition: background 0.2s;
-      outline: none;
     }
 
     .play-again {
