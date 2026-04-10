@@ -4,29 +4,42 @@
     <li><strong>Logical Deduction</strong> — Trains your ability to eliminate possibilities through systematic reasoning</li>
     <li><strong>Constraint Satisfaction</strong> — Strengthens the capacity to hold and manage multiple constraints simultaneously</li>
     <li><strong>Working Memory</strong> — Improves how many partial solution states you can maintain in active memory</li>
-    <li><strong>Pattern Recognition</strong> — Develops the ability to spot naked singles, hidden singles, and pair patterns</li>
+    <li><strong>Pattern Recognition</strong> — Develops the ability to spot singles, pairs, triples, X-Wings, and other patterns</li>
     <li><strong>Attention to Detail</strong> — Sharpens observation of which digits are missing in rows, columns, and boxes</li>
     <li><strong>Strategic Planning</strong> — Builds the habit of scanning for the easiest deduction before attempting harder ones</li>
   </ul>
 </section>
 <section class="mechanics">
   <h3>How It Works</h3>
-  <p>Fill every row, column, and box with each digit exactly once. The game supports three grid sizes: 4×4 (digits 1–4), 6×6 (digits 1–6), and 9×9 (digits 1–9). Every puzzle has exactly one solution — no guessing required at lower difficulties.</p>
+  <p>Fill every row, column, and box with each digit exactly once. Three grid sizes are available: 4×4 (digits 1–4), 6×6 (digits 1–6), and 9×9 (digits 1–9). Every puzzle has exactly one solution.</p>
   <h4>Controls</h4>
-  <p><strong>Tap/Click:</strong> Select a cell, then tap a digit on the number pad to place it. Tap the same digit again to clear it.</p>
-  <p><strong>Keyboard:</strong> Arrow keys to navigate, number keys to enter digits, P to toggle pencil mode, Backspace to erase, H for a hint.</p>
-  <h4>Pencil Marks</h4>
-  <p>Toggle <strong>pencil mode</strong> to annotate cells with candidate digits. When you place a final digit, pencil marks in the same row, column, and box are automatically cleaned up.</p>
-  <h4>Hints &amp; Give Up</h4>
-  <p>Stuck? Request a <strong>hint</strong> to see the next logical step with an explanation of the technique used. If you give up entirely, the game walks you through the complete solution step by step — showing which technique solves each cell.</p>
+  <p><strong>Tap/Click:</strong> Select a cell, then tap a digit on the number pad to toggle it. Tap the same digit again to remove it.</p>
+  <p><strong>Multiple digits:</strong> You can enter several digits in one cell — they'll shrink to fit. When only one digit remains, it becomes your answer. Cells with multiple digits show an orange border.</p>
+  <p><strong>Number pad:</strong> Buttons light up to show which digits are currently in the selected cell.</p>
+  <p><strong>Keyboard:</strong> Arrow keys to navigate, number keys to toggle digits, Backspace to erase, H for a hint.</p>
+  <h4>Tools</h4>
+  <p><strong>↩ Undo / ↪ Redo</strong> — Step back and forward through your moves.</p>
+  <p><strong>💡 Hint</strong> — First tap highlights the next solvable cell. Second tap fills it in.</p>
+  <p><strong>🏳️ Give Up</strong> — Shows the complete solution step by step, explaining each technique used. You can also exit the game from here.</p>
+  <h4>Solution Walkthrough</h4>
+  <p>When you give up, the game walks you through the solution one step at a time. Each step highlights three types of cells:</p>
+  <p><strong>Green</strong> — The cell being solved (the answer).</p>
+  <p><strong>Amber</strong> — The cells that explain <em>why</em> the deduction works (the reason).</p>
+  <p><strong>Red</strong> — Cells where candidates are eliminated (for advanced techniques).</p>
   <h4>Solving Techniques</h4>
   <p><strong>Naked Single</strong> — A cell has only one possible digit after elimination.</p>
   <p><strong>Hidden Single</strong> — A digit can only go in one cell within a row, column, or box.</p>
   <p><strong>Naked Pair</strong> — Two cells in a unit share the same two candidates, eliminating those digits from other cells.</p>
+  <p><strong>Hidden Pair</strong> — Two digits that can only go in the same two cells within a unit.</p>
+  <p><strong>Naked Triple</strong> — Three cells in a unit whose combined candidates are exactly three digits.</p>
   <p><strong>Pointing Pair</strong> — A candidate in a box is restricted to one row or column.</p>
   <p><strong>Box Line Reduction</strong> — A candidate in a row or column is restricted to one box.</p>
+  <p><strong>X-Wing</strong> <em>(Advanced)</em> — A digit appears in exactly two cells in two rows, sharing the same columns. Eliminates that digit from the rest of those columns.</p>
+  <p><strong>XY-Wing</strong> <em>(Advanced)</em> — A pivot cell with two candidates connects to two wing cells, allowing elimination of a shared digit from cells that see both wings.</p>
   <h4>Difficulty</h4>
-  <p>Difficulty 1–100 controls the grid size, number of given cells, and which techniques are needed. Lower levels use smaller grids and simple techniques. Higher levels use 9×9 grids with fewer givens and advanced elimination patterns.</p>
+  <p>Difficulty 1–100 controls the grid size, number of given cells, and which techniques are needed. Levels 1–15 use 4×4 grids with simple techniques. Levels 16–35 use 6×6 grids. Levels 36–100 use 9×9 grids with progressively fewer givens and more advanced techniques required.</p>
+  <h4>Game State</h4>
+  <p>Your progress is saved automatically. If you leave and come back, you'll pick up right where you left off.</p>
 </section>
 <section class="references">
   <h3>References</h3>

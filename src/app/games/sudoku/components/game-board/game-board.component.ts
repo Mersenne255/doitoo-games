@@ -11,6 +11,7 @@ import {
 import { GameService } from '../../services/game.service';
 import { explain } from '../../utils/explainer.util';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { ADVANCED_TECHNIQUES } from '../../models/game.models';
 
 @Component({
   selector: 'app-game-board',
@@ -27,6 +28,8 @@ import { ConfirmService } from '../../../../shared/services/confirm.service';
                   [class.box-right]="isBoxRight(cIdx)"
                   [class.box-bottom]="isBoxBottom(rIdx)"
                   [class.wt-highlight]="isWtHighlight(rIdx, cIdx)"
+                  [class.wt-related]="isWtRelated(rIdx, cIdx)"
+                  [class.wt-elim]="isWtElim(rIdx, cIdx)"
                   [class.given]="cell.isGiven">
                   <span class="cell-value">{{ cell.value || '' }}</span>
                 </div>
@@ -36,15 +39,28 @@ import { ConfirmService } from '../../../../shared/services/confirm.service';
 
           @if (currentWtStep(); as step) {
             <div class="wt-info">
-              <span class="wt-technique">{{ formatTechnique(step.technique) }}</span>
-              <span class="wt-explanation">{{ step.explanation }}</span>
+              <div class="wt-header">
+                @if (isAdvancedTechnique(step.technique)) {
+                  <span class="wt-badge-advanced">Advanced</span>
+                }
+                <span class="wt-technique">{{ formatTechnique(step.technique) }}</span>
+              </div>
+              @for (line of splitExplanation(step.explanation); track $index; let first = $first) {
+                @if (first) {
+                  <span class="wt-explanation-main">{{ line }}</span>
+                } @else {
+                  <span class="wt-explanation-bullet">{{ line }}</span>
+                }
+              }
             </div>
           }
 
           <div class="wt-actions">
             @if (game.walkthroughIndex() < game.walkthroughSteps().length) {
+              <button class="action-btn leave" (click)="game.abortSession()">Leave</button>
               <button class="action-btn primary" (click)="game.advanceWalkthrough()">Next Step</button>
             } @else {
+              <button class="action-btn leave" (click)="game.abortSession()">Leave</button>
               <button class="action-btn primary" (click)="game.finishWalkthrough()">Continue</button>
             }
           </div>
@@ -215,6 +231,8 @@ import { ConfirmService } from '../../../../shared/services/confirm.service';
     }
 
     .cell.wt-highlight { background: rgba(34, 197, 94, 0.25); }
+    .cell.wt-related { background: rgba(245, 158, 11, 0.2); }
+    .cell.wt-elim { background: rgba(239, 68, 68, 0.15); }
 
     .controls.hidden { display: none; }
 
@@ -413,16 +431,51 @@ import { ConfirmService } from '../../../../shared/services/confirm.service';
       text-transform: capitalize;
     }
 
-    .wt-explanation {
-      color: #94a3b8;
-      font-size: 0.75rem;
+    .wt-header {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .wt-badge-advanced {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+    }
+
+    .wt-explanation-main {
+      color: #e2e8f0;
+      font-size: 0.8rem;
       text-align: center;
+      font-weight: 500;
+    }
+
+    .wt-explanation-bullet {
+      color: #94a3b8;
+      font-size: 0.7rem;
+      text-align: left;
+      width: 100%;
+      padding-left: 0.25rem;
     }
 
     .wt-actions {
       display: flex;
+      gap: 0.5rem;
       justify-content: center;
     }
+
+    .action-btn.leave {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+    }
+    .action-btn.leave:hover { background: rgba(255, 255, 255, 0.1); }
 
     @media (min-width: 600px) {
       .board { padding: 0.5rem; }
@@ -519,8 +572,34 @@ export class GameBoardComponent implements OnDestroy {
     return step.cells.some(c => c.row === row && c.col === col);
   }
 
+  isWtRelated(row: number, col: number): boolean {
+    const steps = this.game.walkthroughSteps();
+    const idx = this.game.walkthroughIndex();
+    const stepIdx = idx > 0 ? idx - 1 : 0;
+    const step = steps[stepIdx];
+    if (!step?.relatedCells) return false;
+    return step.relatedCells.some(c => c.row === row && c.col === col);
+  }
+
+  isWtElim(row: number, col: number): boolean {
+    const steps = this.game.walkthroughSteps();
+    const idx = this.game.walkthroughIndex();
+    const stepIdx = idx > 0 ? idx - 1 : 0;
+    const step = steps[stepIdx];
+    if (!step?.eliminations) return false;
+    return step.eliminations.some(e => e.cell.row === row && e.cell.col === col);
+  }
+
   formatTechnique(t: string): string {
     return t.replace(/_/g, ' ');
+  }
+
+  isAdvancedTechnique(t: string): boolean {
+    return ADVANCED_TECHNIQUES.has(t as any);
+  }
+
+  splitExplanation(text: string): string[] {
+    return text.split('\n').filter(l => l.length > 0);
   }
 
   sortedMarks(marks: Set<number>): number[] {

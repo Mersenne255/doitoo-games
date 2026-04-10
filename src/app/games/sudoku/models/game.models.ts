@@ -18,18 +18,33 @@ export type TechniqueName =
   | 'naked_single'
   | 'hidden_single'
   | 'naked_pair'
+  | 'hidden_pair'
+  | 'naked_triple'
   | 'pointing_pair'
   | 'box_line_reduction'
+  | 'x_wing'
+  | 'xy_wing'
   | 'backtrack_guess';
 
 export const TECHNIQUE_ORDER: TechniqueName[] = [
   'naked_single',
   'hidden_single',
   'naked_pair',
+  'hidden_pair',
+  'naked_triple',
   'pointing_pair',
   'box_line_reduction',
+  'x_wing',
+  'xy_wing',
   'backtrack_guess',
 ];
+
+// Techniques considered "advanced" — shown with red label in walkthrough
+export const ADVANCED_TECHNIQUES: Set<TechniqueName> = new Set([
+  'x_wing',
+  'xy_wing',
+  'backtrack_guess',
+]);
 
 // ── Cell Position ──
 export interface CellPosition {
@@ -50,6 +65,7 @@ export interface SolveStep {
   cells: CellPosition[];
   digit?: number;
   eliminations?: { cell: CellPosition; digits: number[] }[];
+  relatedCells?: CellPosition[];  // cells that explain WHY the deduction works
   explanation: string;
 }
 
