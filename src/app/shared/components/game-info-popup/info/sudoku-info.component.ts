@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-sudoku-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -48,10 +56,13 @@
   <h3>References</h3>
   <ol>
     <li>Crook, J. F. (2009). A pencil-and-paper algorithm for solving Sudoku puzzles. <em>Notices of the AMS</em>, 56(4), 460–468.</li>
-    <li>Lee, N. Y., Goodwin, G. P., & Johnson-Laird, P. N. (2008). The psychological puzzle of Sudoku. <em>Thinking & Reasoning</em>, 14(4), 342–364.</li>
-    <li>Ericsson, K. A., & Kintsch, W. (1995). Long-term working memory. <em>Psychological Review</em>, 102(2), 211–245.</li>
-    <li>McGuire, G., Tugemann, B., & Civario, G. (2014). There is no 16-clue Sudoku: Solving the Sudoku minimum number of clues problem via hitting set enumeration. <em>Experimental Mathematics</em>, 23(2), 190–217.</li>
+    <li>Lee, N. Y., Goodwin, G. P., &amp; Johnson-Laird, P. N. (2008). The psychological puzzle of Sudoku. <em>Thinking &amp; Reasoning</em>, 14(4), 342–364.</li>
+    <li>Ericsson, K. A., &amp; Kintsch, W. (1995). Long-term working memory. <em>Psychological Review</em>, 102(2), 211–245.</li>
+    <li>McGuire, G., Tugemann, B., &amp; Civario, G. (2014). There is no 16-clue Sudoku: Solving the Sudoku minimum number of clues problem via hitting set enumeration. <em>Experimental Mathematics</em>, 23(2), 190–217.</li>
     <li>Pelánek, R. (2014). Difficulty rating of Sudoku puzzles by a computational model. <em>Proceedings of the 27th International FLAIRS Conference</em>.</li>
-    <li>Ferreira, D., & Palhano-Fontes, F. (2014). Sudoku effects on brain activity: An fMRI study. <em>International Journal of Psychophysiology</em>, 94(2), 158.</li>
+    <li>Ferreira, D., &amp; Palhano-Fontes, F. (2014). Sudoku effects on brain activity: An fMRI study. <em>International Journal of Psychophysiology</em>, 94(2), 158.</li>
   </ol>
 </section>
+`
+})
+export class SudokuInfoComponent {}

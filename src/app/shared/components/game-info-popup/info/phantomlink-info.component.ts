@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-phantomlink-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -17,9 +25,12 @@
 <section class="references">
   <h3>References</h3>
   <ol>
-    <li>Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., & Wager, T. D. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
+    <li>Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., &amp; Wager, T. D. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
     <li>Oberauer, K. (2005). Binding and inhibition in working memory: Individual and age differences in short-term recognition. <em>Journal of Experimental Psychology: General</em>, 134(3), 368–387.</li>
-    <li>Ecker, U. K. H., Lewandowsky, S., Oberauer, K., & Chee, A. E. H. (2010). The components of working memory updating. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition</em>, 36(1), 170–189.</li>
-    <li>Kessler, Y., & Meiran, N. (2008). Two dissociable updating processes in working memory. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition</em>, 34(6), 1339–1348.</li>
+    <li>Ecker, U. K. H., Lewandowsky, S., Oberauer, K., &amp; Chee, A. E. H. (2010). The components of working memory updating. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition</em>, 36(1), 170–189.</li>
+    <li>Kessler, Y., &amp; Meiran, N. (2008). Two dissociable updating processes in working memory. <em>Journal of Experimental Psychology: Learning, Memory, and Cognition</em>, 34(6), 1339–1348.</li>
   </ol>
 </section>
+`
+})
+export class PhantomlinkInfoComponent {}

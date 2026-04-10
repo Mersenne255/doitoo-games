@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-numbers-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -23,3 +31,6 @@
     <li>Klingberg, T. (2010). Training and plasticity of working memory. <em>Trends in Cognitive Sciences</em>, 14(7), 317–324.</li>
   </ol>
 </section>
+`
+})
+export class NumbersInfoComponent {}

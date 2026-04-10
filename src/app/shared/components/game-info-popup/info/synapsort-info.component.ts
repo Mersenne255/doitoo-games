@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-synapsort-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -16,9 +24,12 @@
 <section class="references">
   <h3>References</h3>
   <ol>
-    <li>Grant, D. A., & Berg, E. A. (1948). A behavioral analysis of degree of reinforcement and ease of shifting to new responses in a Weigl-type card-sorting problem. <em>Journal of Experimental Psychology</em>, 38(4), 404–411.</li>
-    <li>Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., & Wager, T. D. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
-    <li>Monchi, O., Petrides, M., Petre, V., Worsley, K., & Bhagat, A. (2001). Wisconsin Card Sorting revisited: Distinct neural circuits participating in different stages of the task. <em>Brain</em>, 124(1), 176–186.</li>
+    <li>Grant, D. A., &amp; Berg, E. A. (1948). A behavioral analysis of degree of reinforcement and ease of shifting to new responses in a Weigl-type card-sorting problem. <em>Journal of Experimental Psychology</em>, 38(4), 404–411.</li>
+    <li>Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., &amp; Wager, T. D. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
+    <li>Monchi, O., Petrides, M., Petre, V., Worsley, K., &amp; Bhagat, A. (2001). Wisconsin Card Sorting revisited: Distinct neural circuits participating in different stages of the task. <em>Brain</em>, 124(1), 176–186.</li>
     <li>Diamond, A. (2013). Executive functions. <em>Annual Review of Psychology</em>, 64, 135–168.</li>
   </ol>
 </section>
+`
+})
+export class SynapsortInfoComponent {}

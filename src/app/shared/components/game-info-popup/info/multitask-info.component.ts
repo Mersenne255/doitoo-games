@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-multitask-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -28,9 +36,12 @@
 <section class="references">
   <h3>References</h3>
   <ol>
-    <li>Strobach, T., Frensch, P. A., & Schubert, T. (2012). Video game practice optimizes executive control skills in dual-task and task switching situations. <em>Acta Psychologica</em>, 140(1), 13–24.</li>
-    <li>Ophir, E., Nass, C., & Wagner, A. D. (2009). Cognitive control in media multitaskers. <em>Proceedings of the National Academy of Sciences</em>, 106(37), 15583–15587.</li>
+    <li>Strobach, T., Frensch, P. A., &amp; Schubert, T. (2012). Video game practice optimizes executive control skills in dual-task and task switching situations. <em>Acta Psychologica</em>, 140(1), 13–24.</li>
+    <li>Ophir, E., Nass, C., &amp; Wagner, A. D. (2009). Cognitive control in media multitaskers. <em>Proceedings of the National Academy of Sciences</em>, 106(37), 15583–15587.</li>
     <li>Monsell, S. (2003). Task switching. <em>Trends in Cognitive Sciences</em>, 7(3), 134–140.</li>
-    <li>Salvucci, D. D., & Taatgen, N. A. (2008). Threaded cognition: An integrated theory of concurrent multitasking. <em>Psychological Review</em>, 115(1), 101–130.</li>
+    <li>Salvucci, D. D., &amp; Taatgen, N. A. (2008). Threaded cognition: An integrated theory of concurrent multitasking. <em>Psychological Review</em>, 115(1), 101–130.</li>
   </ol>
 </section>
+`
+})
+export class MultitaskInfoComponent {}

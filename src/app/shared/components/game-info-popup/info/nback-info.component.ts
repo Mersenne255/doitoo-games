@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-nback-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -17,9 +25,12 @@
 <section class="references">
   <h3>References</h3>
   <ol>
-    <li>Jaeggi, S. M., Buschkuehl, M., Jonides, J., & Perrig, W. J. (2008). Improving fluid intelligence with training on working memory. <em>Proceedings of the National Academy of Sciences</em>, 105(19), 6829–6833.</li>
-    <li>Soveri, A., Antfolk, J., Karlsson, L., Salo, B., & Laine, M. (2017). Working memory training revisited: A multi-level meta-analysis of n-back training studies. <em>Psychonomic Bulletin & Review</em>, 24(4), 1077–1096.</li>
-    <li>Owen, A. M., McMillan, K. M., Laird, A. R., & Bullmore, E. (2005). N-back working memory paradigm: A meta-analysis of normative functional neuroimaging studies. <em>Human Brain Mapping</em>, 25(1), 46–59.</li>
-    <li>Au, J., Sheehan, E., Tsai, N., Duncan, G. J., Buschkuehl, M., & Jaeggi, S. M. (2015). Improving fluid intelligence with training on working memory: A meta-analysis. <em>Psychonomic Bulletin & Review</em>, 22(2), 366–377.</li>
+    <li>Jaeggi, S. M., Buschkuehl, M., Jonides, J., &amp; Perrig, W. J. (2008). Improving fluid intelligence with training on working memory. <em>Proceedings of the National Academy of Sciences</em>, 105(19), 6829–6833.</li>
+    <li>Soveri, A., Antfolk, J., Karlsson, L., Salo, B., &amp; Laine, M. (2017). Working memory training revisited: A multi-level meta-analysis of n-back training studies. <em>Psychonomic Bulletin &amp; Review</em>, 24(4), 1077–1096.</li>
+    <li>Owen, A. M., McMillan, K. M., Laird, A. R., &amp; Bullmore, E. (2005). N-back working memory paradigm: A meta-analysis of normative functional neuroimaging studies. <em>Human Brain Mapping</em>, 25(1), 46–59.</li>
+    <li>Au, J., Sheehan, E., Tsai, N., Duncan, G. J., Buschkuehl, M., &amp; Jaeggi, S. M. (2015). Improving fluid intelligence with training on working memory: A meta-analysis. <em>Psychonomic Bulletin &amp; Review</em>, 22(2), 366–377.</li>
   </ol>
 </section>
+`
+})
+export class NbackInfoComponent {}

@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-chromaclash-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -23,3 +31,6 @@
     <li>Aron, A. R. (2007). The neural basis of inhibition in cognitive control. <em>The Neuroscientist</em>, 13(3), 214–228.</li>
   </ol>
 </section>
+`
+})
+export class ChromaclashInfoComponent {}

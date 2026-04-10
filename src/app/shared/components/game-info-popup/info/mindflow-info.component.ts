@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-mindflow-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -18,8 +26,11 @@
   <h3>References</h3>
   <ol>
     <li>Diamond, A. (2013). Executive functions. <em>Annual Review of Psychology</em>, 64, 135–168.</li>
-    <li>Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., & Wager, T. D. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
-    <li>Hegarty, M., & Waller, D. (2005). Individual differences in spatial abilities. In P. Shah & A. Miyake (Eds.), <em>The Cambridge Handbook of Visuospatial Thinking</em>, 121–169.</li>
-    <li>Pylyshyn, Z. W., & Storm, R. W. (1988). Tracking multiple independent targets: Evidence for a parallel tracking mechanism. <em>Spatial Vision</em>, 3(3), 179–197.</li>
+    <li>Miyake, A., Friedman, N. P., Emerson, M. J., Witzki, A. H., Howerter, A., &amp; Wager, T. D. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
+    <li>Hegarty, M., &amp; Waller, D. (2005). Individual differences in spatial abilities. In P. Shah &amp; A. Miyake (Eds.), <em>The Cambridge Handbook of Visuospatial Thinking</em>, 121–169.</li>
+    <li>Pylyshyn, Z. W., &amp; Storm, R. W. (1988). Tracking multiple independent targets: Evidence for a parallel tracking mechanism. <em>Spatial Vision</em>, 3(3), 179–197.</li>
   </ol>
 </section>
+`
+})
+export class MindflowInfoComponent {}

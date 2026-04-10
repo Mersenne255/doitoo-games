@@ -6,10 +6,32 @@ import {
   viewChild,
 } from '@angular/core';
 import { GameInfoService } from '../../services/game-info.service';
+import { SudokuInfoComponent } from './info/sudoku-info.component';
+import { NbackInfoComponent } from './info/nback-info.component';
+import { MindflowInfoComponent } from './info/mindflow-info.component';
+import { MultitaskInfoComponent } from './info/multitask-info.component';
+import { VoxelInfoComponent } from './info/voxel-info.component';
+import { PhantomlinkInfoComponent } from './info/phantomlink-info.component';
+import { NumbersInfoComponent } from './info/numbers-info.component';
+import { PolyominoInfoComponent } from './info/polyomino-info.component';
+import { ChromaclashInfoComponent } from './info/chromaclash-info.component';
+import { SynapsortInfoComponent } from './info/synapsort-info.component';
 
 @Component({
   selector: 'app-game-info-popup',
   standalone: true,
+  imports: [
+    SudokuInfoComponent,
+    NbackInfoComponent,
+    MindflowInfoComponent,
+    MultitaskInfoComponent,
+    VoxelInfoComponent,
+    PhantomlinkInfoComponent,
+    NumbersInfoComponent,
+    PolyominoInfoComponent,
+    ChromaclashInfoComponent,
+    SynapsortInfoComponent,
+  ],
   template: `
     <div
       class="backdrop"
@@ -31,10 +53,21 @@ import { GameInfoService } from '../../services/game-info.service';
             aria-label="Close info popup"
           >×</button>
         </div>
-        <div class="panel-content" [innerHTML]="gameInfo.content()"></div>
-        @if (gameInfo.loading()) {
-          <div class="loading">Loading…</div>
-        }
+        <div class="panel-content">
+          @switch (gameInfo.gameId()) {
+            @case ('sudoku') { <app-sudoku-info /> }
+            @case ('nback') { <app-nback-info /> }
+            @case ('mindflow') { <app-mindflow-info /> }
+            @case ('multitask') { <app-multitask-info /> }
+            @case ('voxel') { <app-voxel-info /> }
+            @case ('phantomlink') { <app-phantomlink-info /> }
+            @case ('numbers') { <app-numbers-info /> }
+            @case ('polyomino') { <app-polyomino-info /> }
+            @case ('chromaclash') { <app-chromaclash-info /> }
+            @case ('synapsort') { <app-synapsort-info /> }
+            @default { <p>Info not available.</p> }
+          }
+        </div>
       </div>
     </div>
   `,
@@ -129,77 +162,6 @@ import { GameInfoService } from '../../services/game-info.service';
       color: #cbd5e1;
       font-size: 0.9rem;
       line-height: 1.6;
-    }
-
-    .panel-content ::ng-deep h3 {
-      margin: 0 0 0.5rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #818cf8;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .panel-content ::ng-deep ul {
-      margin: 0 0 1.25rem;
-      padding-left: 1.25rem;
-    }
-
-    .panel-content ::ng-deep li {
-      margin-bottom: 0.4rem;
-    }
-
-    .panel-content ::ng-deep li strong {
-      color: #e2e8f0;
-    }
-
-    .panel-content ::ng-deep p {
-      margin: 0 0 0.75rem;
-    }
-
-    .panel-content ::ng-deep section.mechanics {
-      border-top: 1px solid rgba(99, 102, 241, 0.1);
-      padding-top: 1rem;
-    }
-
-    .panel-content ::ng-deep section.minigames {
-      border-top: 1px solid rgba(99, 102, 241, 0.1);
-      padding-top: 1rem;
-    }
-
-    .panel-content ::ng-deep section.minigames h4 {
-      margin: 0.75rem 0 0.25rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #e2e8f0;
-    }
-
-    .panel-content ::ng-deep section.minigames h4:first-of-type {
-      margin-top: 0;
-    }
-
-    .panel-content ::ng-deep section.references {
-      border-top: 1px solid rgba(99, 102, 241, 0.1);
-      padding-top: 1rem;
-      margin-top: 0.5rem;
-    }
-
-    .panel-content ::ng-deep section.references ol {
-      margin: 0;
-      padding-left: 1.25rem;
-      font-size: 0.8rem;
-      color: #94a3b8;
-    }
-
-    .panel-content ::ng-deep section.references li {
-      margin-bottom: 0.35rem;
-    }
-
-    .loading {
-      padding: 2rem;
-      text-align: center;
-      color: #64748b;
-      font-size: 0.85rem;
     }
   `],
 })

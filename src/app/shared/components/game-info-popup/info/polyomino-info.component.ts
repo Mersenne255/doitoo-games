@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-polyomino-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -28,9 +36,12 @@
 <section class="references">
   <h3>References</h3>
   <ol>
-    <li>Shepard, R. N., & Metzler, J. (1971). Mental rotation of three-dimensional objects. <em>Science</em>, 171(3972), 701–703.</li>
+    <li>Shepard, R. N., &amp; Metzler, J. (1971). Mental rotation of three-dimensional objects. <em>Science</em>, 171(3972), 701–703.</li>
     <li>Golomb, S. W. (1994). <em>Polyominoes: Puzzles, Patterns, Problems, and Packings</em>. Princeton University Press.</li>
     <li>Logie, R. H. (1995). <em>Visuo-spatial Working Memory</em>. Lawrence Erlbaum Associates.</li>
     <li>Miyake, A., et al. (2000). The unity and diversity of executive functions. <em>Cognitive Psychology</em>, 41(1), 49–100.</li>
   </ol>
 </section>
+`
+})
+export class PolyominoInfoComponent {}

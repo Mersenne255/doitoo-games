@@ -1,3 +1,11 @@
+import { Component } from '@angular/core';
+import { GAME_INFO_STYLES } from './game-info-styles';
+
+@Component({
+  selector: 'app-voxel-info',
+  standalone: true,
+  styles: [GAME_INFO_STYLES],
+  template: `
 <section class="benefits">
   <h3>Cognitive Benefits</h3>
   <ul>
@@ -28,9 +36,12 @@
 <section class="references">
   <h3>References</h3>
   <ol>
-    <li>Shepard, R. N., & Metzler, J. (1971). Mental rotation of three-dimensional objects. <em>Science</em>, 171(3972), 701–703.</li>
-    <li>Vandenberg, S. G., & Kuse, A. R. (1978). Mental rotations, a group test of three-dimensional spatial visualization. <em>Perceptual and Motor Skills</em>, 47(2), 599–604.</li>
+    <li>Shepard, R. N., &amp; Metzler, J. (1971). Mental rotation of three-dimensional objects. <em>Science</em>, 171(3972), 701–703.</li>
+    <li>Vandenberg, S. G., &amp; Kuse, A. R. (1978). Mental rotations, a group test of three-dimensional spatial visualization. <em>Perceptual and Motor Skills</em>, 47(2), 599–604.</li>
     <li>Logie, R. H. (1995). <em>Visuo-spatial Working Memory</em>. Lawrence Erlbaum Associates.</li>
-    <li>Slamecka, N. J., & Graf, P. (1978). The generation effect: Delineation of a phenomenon. <em>Journal of Experimental Psychology: Human Learning and Memory</em>, 4(6), 592–604.</li>
+    <li>Slamecka, N. J., &amp; Graf, P. (1978). The generation effect: Delineation of a phenomenon. <em>Journal of Experimental Psychology: Human Learning and Memory</em>, 4(6), 592–604.</li>
   </ol>
 </section>
+`
+})
+export class VoxelInfoComponent {}
