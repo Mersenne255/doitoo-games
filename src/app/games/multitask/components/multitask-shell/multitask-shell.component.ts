@@ -70,7 +70,7 @@ import { CountdownComponent } from '../../../../shared/components/countdown/coun
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding: 1rem;
+      padding: 1.5rem 1rem 1rem;
       gap: 1rem;
       overflow: auto;
     }

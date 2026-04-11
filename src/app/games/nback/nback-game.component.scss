@@ -1,14 +1,13 @@
 :host {
   display: block;
   font-family: 'Inter', system-ui, sans-serif;
-  min-height: 100vh;
   position: relative;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  padding: 1.5rem 1rem 1rem;
   padding: 0.5rem 1rem;
   gap: 1rem;
   max-width: 500px;

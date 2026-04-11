@@ -1,0 +1,46 @@
+@use '../../../../shared/styles/config-panel' as cp;
+
+@include cp.config-host-centered;
+
+.config-panel { @include cp.config-panel(450px); }
+.config-card { @include cp.config-card; }
+.config-row { @include cp.config-row; }
+.section-label { @include cp.section-label; }
+.slider-row { @include cp.slider-row; }
+.range-value { @include cp.range-value; }
+.start-btn { @include cp.start-btn; }
+
+// Game-specific
+.color-preview {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+  padding: 0.25rem 0;
+}
+
+.color-dot {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.symbol-preview {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+  padding: 0.25rem 0;
+}
+
+.symbol-chip {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}

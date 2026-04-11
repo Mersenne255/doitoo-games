@@ -1,44 +1,20 @@
-:host {
-  display: block;
-  width: 100%;
-}
+@use '../../../../shared/styles/config-panel' as cp;
 
-.config {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 1rem;
+@include cp.config-host-embedded;
+
+.config-card {
+  @include cp.config-card;
   padding: 0.75rem 1rem;
-  backdrop-filter: blur(10px);
   transition: opacity 0.2s ease;
-
-  &.disabled {
-    opacity: 0.3;
-    pointer-events: none;
-  }
+  @include cp.disabled-state;
 }
 
-.section-label {
-  color: #94a3b8;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-  margin: 0;
-}
+.section-label { @include cp.section-label; }
 
-.button-group {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+.button-group { @include cp.button-group; }
 
 button {
+  // Standalone buttons outside .button-group inherit same base style
   flex: 1;
   background: rgba(255, 255, 255, 0.06);
   color: #94a3b8;
@@ -51,10 +27,7 @@ button {
   transition: all 0.15s ease;
   outline: none;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
+  &:hover { background: rgba(255, 255, 255, 0.1); }
   &.active {
     background: linear-gradient(135deg, #6366f1, #3b82f6);
     color: white;
@@ -63,44 +36,13 @@ button {
   }
 }
 
-.fields {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-end;
-}
+.fields { @include cp.fields-row; }
 
-label {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  color: #94a3b8;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-}
+label { @include cp.field-label; }
 
-input[type='number'] {
-  width: 100%;
-  padding: 0.4rem 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.5rem;
-  color: #e2e8f0;
-  font-size: 0.85rem;
-  font-family: 'Inter', system-ui, sans-serif;
-  outline: none;
-  transition: border-color 0.15s ease;
-  text-align: center;
+input[type='number'] { @include cp.number-input; }
 
-  &:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-  }
-}
-
+// Game-specific
 .modality-toggles {
   display: flex;
   gap: 0.5rem;
@@ -126,9 +68,7 @@ input[type='number'] {
   transition: all 0.15s ease;
   outline: none;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
+  &:hover { background: rgba(255, 255, 255, 0.1); }
 
   &.active {
     background: linear-gradient(135deg, #6366f1, #3b82f6);
@@ -136,9 +76,7 @@ input[type='number'] {
     border-color: transparent;
     box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
 
-    .mod-icon {
-      filter: brightness(0) invert(1);
-    }
+    .mod-icon { filter: brightness(0) invert(1); }
   }
 
   .mod-icon {

@@ -1,0 +1,10 @@
+@use '../../../../shared/styles/config-panel' as cp;
+
+@include cp.config-host-centered;
+
+.config-panel { @include cp.config-panel; }
+.config-card { @include cp.config-card; }
+.section-label { @include cp.section-label; }
+.slider-row { @include cp.slider-row; }
+.range-value { @include cp.range-value; }
+.start-btn { @include cp.start-btn; }

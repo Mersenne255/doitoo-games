@@ -1,5 +1,5 @@
-<div class="config" [class.disabled]="disabled()" [attr.inert]="disabled() || null">
-  <div class="mode-buttons">
+<div class="config-card" [class.disabled]="disabled()" [attr.inert]="disabled() || null">
+  <div class="button-group">
     <button [class.active]="mode() === 'sequence'" (click)="modeChange.emit('sequence')">Sequence</button>
     <button [class.active]="mode() === 'reverse'" (click)="modeChange.emit('reverse')">Reverse</button>
     <button [class.active]="mode() === 'complete'" (click)="modeChange.emit('complete')">Complete</button>
