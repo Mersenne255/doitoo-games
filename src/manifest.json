@@ -6,6 +6,6 @@
   "background_color": "#0f0f1a",
   "theme_color": "#0f0f1a",
   "icons": [
-    { "src": "assets/icons/doitoo-logo.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "assets/icons/brand/doitoo-logo.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

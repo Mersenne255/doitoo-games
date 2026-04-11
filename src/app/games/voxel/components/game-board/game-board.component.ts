@@ -536,7 +536,7 @@ export class GameBoardComponent implements OnDestroy {
 
   onGiveUp(): void { this.game.giveUp(); }
   onAbort(): void { this.cleanupAll(); this.game.abortSession(); }
-  onOpenInfo(): void { this.gameInfo.open('voxel', 'Voxel', 'assets/icons/voxel-icon.png'); }
+  onOpenInfo(): void { this.gameInfo.open('voxel', 'Voxel', 'assets/icons/games/voxel.png'); }
   onNextRound(): void { this.solvedBarCollapsed = false; this.clearSolvedToast(); this.game.nextRound(); }
   onEnd(): void { this.cleanupAll(); this.game.endSession(); }
 

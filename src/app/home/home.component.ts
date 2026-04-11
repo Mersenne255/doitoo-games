@@ -15,7 +15,7 @@ import { GameInfoService, routeToGameId } from '../shared/services/game-info.ser
           <button class="card-info-btn"
                   (click)="openInfo($event, game)"
                   [attr.aria-label]="'Info about ' + game.name">
-            <img src="assets/icons/info-icon.svg" alt="Info" class="card-info-icon" />
+            <img src="assets/icons/ui/info.svg" alt="Info" class="card-info-icon" />
           </button>
           <img class="card-icon" [src]="game.icon" [alt]="game.name + ' icon'" />
           <span class="card-name">{{ game.name }}</span>

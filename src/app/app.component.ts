@@ -24,14 +24,14 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
           </a>
         }
         <div class="nav-brand">
-          <img class="nav-logo" src="assets/doitoo-games.svg" alt="Doitoo Games" />
+          <img class="nav-logo" src="assets/icons/brand/doitoo-games.svg" alt="Doitoo Games" />
           @if (isGameRoute()) {
             <span class="nav-subtitle">{{ gameTitle() }}</span>
           }
         </div>
         @if (isGameRoute()) {
           <button class="info-button" (click)="openGameInfo()" aria-label="Game info">
-            <img src="assets/icons/info-icon.svg" alt="Info" class="info-icon" />
+            <img src="assets/icons/ui/info.svg" alt="Info" class="info-icon" />
           </button>
         }
       </div>
@@ -41,7 +41,7 @@ const GAME_ROUTE_MAP = new Map(GAME_LIST.map(g => [g.route, g]));
     </main>
     @if (!isGameRoute()) {
       <footer class="app-footer">
-        <img class="footer-brain" src="assets/icons/doitoo-brain.svg" alt="Doitoo Brain" />
+        <img class="footer-brain" src="assets/icons/brand/doitoo-brain.svg" alt="Doitoo Brain" />
         <span class="footer-meta">v{{ buildInfo.version }} · {{ buildInfo.buildTime }} · {{ buildInfo.gitHash }}</span>
       </footer>
     }

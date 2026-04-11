@@ -79,10 +79,10 @@ export class ConfigComponent {
   }
 
   readonly modalityIcons: Record<ModalityType, string> = {
-    spatial: 'assets/icons/position.svg',
-    auditory: 'assets/icons/auditory.svg',
-    color: 'assets/icons/color.svg',
-    shape: 'assets/icons/shape.svg',
+    spatial: 'assets/icons/nback/position.svg',
+    auditory: 'assets/icons/nback/auditory.svg',
+    color: 'assets/icons/nback/color.svg',
+    shape: 'assets/icons/nback/shape.svg',
   };
 
   isModalityActive(modality: ModalityType): boolean {
