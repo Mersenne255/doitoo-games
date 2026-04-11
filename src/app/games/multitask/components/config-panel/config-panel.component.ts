@@ -1,10 +1,12 @@
 import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { MINIGAME_REGISTRY, ProgressionSpeed } from '../../models/game.models';
+import { NumberSliderComponent } from '../../../../shared/components/number-slider/number-slider.component';
 
 @Component({
   selector: 'app-config-panel',
   standalone: true,
+  imports: [NumberSliderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="config-card">
@@ -47,13 +49,8 @@ import { MINIGAME_REGISTRY, ProgressionSpeed } from '../../models/game.models';
       }
 
       <!-- Initial Difficulty -->
-      <label class="section-label">Initial Difficulty</label>
-      <div class="slider-row">
-        <input type="range" min="1" max="100"
-          [value]="game.startingDifficulty()"
-          (input)="onDifficultyChange($event)" />
-        <span class="range-value">{{ game.startingDifficulty() }}</span>
-      </div>
+      <app-number-slider label="Initial Difficulty" [value]="game.startingDifficulty()"
+        [min]="1" [max]="100" (valueChange)="onDifficultyChange($event)" />
 
       <!-- Progression -->
       <label class="section-label">Progression</label>
@@ -82,8 +79,7 @@ export class ConfigPanelComponent {
     return configs[0].minigameId !== null;
   });
 
-  onDifficultyChange(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
+  onDifficultyChange(value: number): void {
     this.game.setStartingDifficulty(value);
   }
 

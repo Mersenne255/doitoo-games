@@ -4,8 +4,4 @@
 
 .config-panel { @include cp.config-panel(450px); }
 .config-card { @include cp.config-card; }
-.config-row { @include cp.config-row; }
-.section-label { @include cp.section-label; }
-.slider-row { @include cp.slider-row; }
-.range-value { @include cp.range-value; }
 .start-btn { @include cp.start-btn; }

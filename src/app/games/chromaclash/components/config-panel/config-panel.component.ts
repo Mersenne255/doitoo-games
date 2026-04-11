@@ -2,31 +2,21 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { GameService } from '../../services/game.service';
 import { StorageService } from '../../services/storage.service';
 import { SpeedMode } from '../../models/game.models';
+import { NumberSliderComponent } from '../../../../shared/components/number-slider/number-slider.component';
 
 @Component({
   selector: 'app-config-panel',
   standalone: true,
+  imports: [NumberSliderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="config-panel">
       <div class="config-card">
-        <label class="section-label">Difficulty</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="20" step="1"
-            [value]="game.config().difficulty"
-            (input)="onDifficulty($event)"
-            aria-label="Difficulty" />
-          <span class="range-value">{{ game.config().difficulty }}</span>
-        </div>
+        <app-number-slider label="Difficulty" [value]="game.config().difficulty"
+          [min]="1" [max]="20" (valueChange)="onDifficulty($event)" />
 
-        <label class="section-label">Trials</label>
-        <div class="slider-row">
-          <input type="range" min="10" max="50" step="5"
-            [value]="game.config().trialCount"
-            (input)="onTrialCount($event)"
-            aria-label="Trials" />
-          <span class="range-value">{{ game.config().trialCount }}</span>
-        </div>
+        <app-number-slider label="Trials" [value]="game.config().trialCount"
+          [min]="10" [max]="50" [step]="5" (valueChange)="onTrialCount($event)" />
 
         <label class="section-label">Speed</label>
         <div class="button-group">
@@ -47,14 +37,12 @@ export class ConfigPanelComponent {
   private readonly storage = inject(StorageService);
   readonly speeds: SpeedMode[] = ['relaxed', 'standard', 'intense'];
 
-  onDifficulty(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
+  onDifficulty(value: number): void {
     this.game.updateConfig({ difficulty: value });
     this.storage.saveConfig(this.game.config());
   }
 
-  onTrialCount(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
+  onTrialCount(value: number): void {
     this.game.updateConfig({ trialCount: value });
     this.storage.saveConfig(this.game.config());
   }

@@ -4,40 +4,25 @@ import { StorageService } from '../../services/storage.service';
 import { BaseSpeed } from '../../models/game.models';
 import { computeMaxStationCount } from '../../models/grid.models';
 import { TRACK_GENERATION_DEFAULTS } from '../../models/track-generation.config';
+import { NumberSliderComponent } from '../../../../shared/components/number-slider/number-slider.component';
 
 @Component({
   selector: 'app-config-panel',
   standalone: true,
+  imports: [NumberSliderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="config-panel">
       <div class="config-card">
-        <label class="section-label">Destinations</label>
-        <div class="slider-row">
-          <input type="range" min="2" [max]="maxDestinations()" step="1"
-            [value]="game.config().destinations"
-            (input)="onDestinations($event)"
-            aria-label="Destinations" />
-          <span class="range-value">{{ game.config().destinations }}</span>
-        </div>
+        <app-number-slider label="Destinations" [value]="game.config().destinations"
+          [min]="2" [max]="maxDestinations()" (valueChange)="onDestinations($event)" />
 
-        <label class="section-label">Runners</label>
-        <div class="slider-row">
-          <input type="range" min="5" max="100" step="5"
-            [value]="game.config().runners"
-            (input)="onRunners($event)"
-            aria-label="Runners" />
-          <span class="range-value">{{ game.config().runners }}</span>
-        </div>
+        <app-number-slider label="Runners" [value]="game.config().runners"
+          [min]="5" [max]="100" [step]="5" (valueChange)="onRunners($event)" />
 
-        <label class="section-label">Spawn Interval (s)</label>
-        <div class="slider-row">
-          <input type="range" min="1" max="5" step="0.5"
-            [value]="game.config().spawnInterval"
-            (input)="onSpawnInterval($event)"
-            aria-label="Spawn interval" />
-          <span class="range-value">{{ formatInterval(game.config().spawnInterval) }}s</span>
-        </div>
+        <app-number-slider label="Spawn Interval" [value]="game.config().spawnInterval"
+          [min]="1" [max]="5" [step]="0.5" [displayFn]="spawnIntervalDisplay"
+          (valueChange)="onSpawnInterval($event)" />
 
         <label class="section-label">Speed</label>
         <div class="button-group">
@@ -61,6 +46,8 @@ export class ConfigPanelComponent {
 
   /** Max destinations based on current screen size. */
   readonly maxDestinations = signal(this.calcMaxDestinations());
+
+  readonly spawnIntervalDisplay = (v: number) => this.formatInterval(v) + 's';
 
   @HostListener('window:resize')
   onResize(): void {
@@ -87,20 +74,17 @@ export class ConfigPanelComponent {
     return Number(value.toFixed(1)).toString();
   }
 
-  onDestinations(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
+  onDestinations(value: number): void {
     this.game.updateConfig({ destinations: value });
     this.storage.saveConfig(this.game.config());
   }
 
-  onRunners(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
+  onRunners(value: number): void {
     this.game.updateConfig({ runners: value });
     this.storage.saveConfig(this.game.config());
   }
 
-  onSpawnInterval(event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
+  onSpawnInterval(value: number): void {
     this.game.updateConfig({ spawnInterval: value });
     this.storage.saveConfig(this.game.config());
   }

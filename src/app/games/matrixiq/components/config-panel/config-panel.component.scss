@@ -2,8 +2,24 @@
 
 @include cp.config-host-centered;
 
+:host {
+  overflow-y: auto;
+}
+
 .config-panel { @include cp.config-panel; }
 .config-card { @include cp.config-card; }
 .section-label { @include cp.section-label; }
-.button-group { @include cp.button-group; }
+
+.button-group {
+  @include cp.button-group;
+
+  &.wrap {
+    button {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.7rem;
+      border-radius: 0.4rem;
+    }
+  }
+}
+
 .start-btn { @include cp.start-btn; }
